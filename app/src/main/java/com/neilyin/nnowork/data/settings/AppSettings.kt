@@ -1,0 +1,47 @@
+package com.neilyin.nnowork.data.settings
+
+import com.squareup.moshi.JsonClass
+
+/**
+ * 對應 iOS SwiftData 的 AppSettings。整體以 JSON 存於 DataStore。
+ * 日期欄位以 epoch millis 表示（null 代表未設定）。
+ */
+@JsonClass(generateAdapter = false)
+data class AppSettings(
+    val companyName: String = "",
+    val cardStyle: Int = 1,
+    val maxStamps: Int = 10,
+    val currentRound: Int = 1,
+    val isOnboardingFinished: Boolean = false,
+    val widgetRefreshInterval: Int = 60,
+
+    // 集點卡追蹤
+    val firstStampDate: Long? = null,
+    val isCardLocked: Boolean = false,
+    val cardCompletedDate: Long? = null,
+    val roundStartDates: List<Long> = emptyList(),
+    val roundCompletedDates: List<Long> = emptyList(),
+
+    // 金幣系統
+    val coinCount: Int = 0,
+    val lastCoinEarnedDate: Long? = null,
+    val lastTreeHoleShareDate: Long? = null,
+    val unlockedStyles: List<Int> = listOf(1, 2, 3),
+
+    // 版本通知
+    val lastSeenNoticeVersion: String = "",
+
+    // 常用蓋章原因
+    val commonReasons: List<String> = DEFAULT_REASONS,
+) {
+    companion object {
+        val DEFAULT_REASONS = listOf(
+            "老闆廢話太多",
+            "無效會議",
+            "需求一直改",
+            "同事雷",
+            "加班沒錢",
+            "心情不好",
+        )
+    }
+}
