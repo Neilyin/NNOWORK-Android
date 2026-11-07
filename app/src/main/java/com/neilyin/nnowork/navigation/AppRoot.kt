@@ -27,6 +27,7 @@ import com.neilyin.nnowork.feature.onboarding.WelcomeBackScreen
 import com.neilyin.nnowork.feature.update.UPDATE_NOTICE_VERSION
 import com.neilyin.nnowork.feature.update.AuthBindingGuideScreen
 import com.neilyin.nnowork.feature.update.UpdateNoticeScreen
+import com.neilyin.nnowork.ui.adaptive.ProvideNnoworkWindowInfo
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import com.neilyin.nnowork.ui.theme.appWideTheme
@@ -144,44 +145,46 @@ fun AppRoot(viewModel: RootViewModel = viewModel()) {
     val selectedTheme = CardTheme.fromId(current?.cardStyle ?: CardTheme.RPG.id)
     val appTheme = selectedTheme.appWideTheme(current?.unlockedStyles.orEmpty())
     NnoworkTheme(cardTheme = appTheme) {
-        when {
-            current == null || hasStoredSettings == null -> Box(
-                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-            )
-            hasStoredSettings == false && welcomeFlow == 0 -> WelcomeBackScreen(
-                onReturningUser = { welcomeFlow = 1 },
-                onNewUser = { welcomeFlow = 2 },
-            )
-            hasStoredSettings == false && welcomeFlow == 1 -> ReturningUserScreen(
-                processing = restoreState.processing,
-                message = restoreState.message,
-                isError = restoreState.isError,
-                onImport = viewModel::importBackup,
-                onSkip = { welcomeFlow = 2 },
-                onBack = { welcomeFlow = 0 },
-            )
-            else -> when {
-                !current!!.isOnboardingFinished -> OnboardingScreen(onFinished = {})
-                manualNotice || (!dismissedInSession && current.lastSeenNoticeVersion != UPDATE_NOTICE_VERSION) -> {
-                    UpdateNoticeScreen(
-                        onFinished = {
-                            manualNotice = false
-                            dismissedInSession = true
-                            viewModel.markUpdateNoticeSeen()
+        ProvideNnoworkWindowInfo {
+            when {
+                current == null || hasStoredSettings == null -> Box(
+                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                )
+                hasStoredSettings == false && welcomeFlow == 0 -> WelcomeBackScreen(
+                    onReturningUser = { welcomeFlow = 1 },
+                    onNewUser = { welcomeFlow = 2 },
+                )
+                hasStoredSettings == false && welcomeFlow == 1 -> ReturningUserScreen(
+                    processing = restoreState.processing,
+                    message = restoreState.message,
+                    isError = restoreState.isError,
+                    onImport = viewModel::importBackup,
+                    onSkip = { welcomeFlow = 2 },
+                    onBack = { welcomeFlow = 0 },
+                )
+                else -> when {
+                    !current!!.isOnboardingFinished -> OnboardingScreen(onFinished = {})
+                    manualNotice || (!dismissedInSession && current.lastSeenNoticeVersion != UPDATE_NOTICE_VERSION) -> {
+                        UpdateNoticeScreen(
+                            onFinished = {
+                                manualNotice = false
+                                dismissedInSession = true
+                                viewModel.markUpdateNoticeSeen()
+                            },
+                        )
+                    }
+                    !current.authGuideShownForV340 && !authState.isSignedIn -> AuthBindingGuideScreen(
+                        onOpenSettings = {
+                            initialMainTab = 4
+                            viewModel.markAuthGuideSeen()
                         },
+                        onLater = viewModel::markAuthGuideSeen,
+                    )
+                    else -> MainScaffold(
+                        initialSelected = initialMainTab,
+                        onShowUpdateNotice = { manualNotice = true },
                     )
                 }
-                !current.authGuideShownForV340 && !authState.isSignedIn -> AuthBindingGuideScreen(
-                    onOpenSettings = {
-                        initialMainTab = 4
-                        viewModel.markAuthGuideSeen()
-                    },
-                    onLater = viewModel::markAuthGuideSeen,
-                )
-                else -> MainScaffold(
-                    initialSelected = initialMainTab,
-                    onShowUpdateNotice = { manualNotice = true },
-                )
             }
         }
     }

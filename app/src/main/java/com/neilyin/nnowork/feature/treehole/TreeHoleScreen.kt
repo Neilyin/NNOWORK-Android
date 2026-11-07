@@ -37,6 +37,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.automirrored.filled.Chat
+import com.neilyin.nnowork.ui.adaptive.LocalNnoworkWindowInfo
+import com.neilyin.nnowork.ui.adaptive.NnoworkTwoPane
+import com.neilyin.nnowork.ui.adaptive.readableWidth
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -2283,6 +2291,7 @@ private fun TreeHoleTermsGate(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
+            .readableWidth()
             .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
     ) {
         Row(
@@ -2509,12 +2518,12 @@ private fun TreeHoleProfileSetup(
     onSave: (TreeHoleProfile) -> Unit,
 ) {
     val industryOptions = treeHoleIndustryOptions()
-    var nickname by remember(initial) { mutableStateOf(initial?.nickname.orEmpty()) }
-    var industry by remember(initial) { mutableStateOf(initial?.industry ?: TreeHoleIndustryCatalog.values.first()) }
-    var role by remember(initial) { mutableStateOf(initial?.role.orEmpty()) }
-    var company by remember(initial) { mutableStateOf(initial?.companyName.orEmpty()) }
-    var showCompany by remember(initial) { mutableStateOf(initial?.showCompany ?: false) }
-    var choosingIndustry by remember { mutableStateOf(false) }
+    var nickname by rememberSaveable(initial) { mutableStateOf(initial?.nickname.orEmpty()) }
+    var industry by rememberSaveable(initial) { mutableStateOf(initial?.industry ?: TreeHoleIndustryCatalog.values.first()) }
+    var role by rememberSaveable(initial) { mutableStateOf(initial?.role.orEmpty()) }
+    var company by rememberSaveable(initial) { mutableStateOf(initial?.companyName.orEmpty()) }
+    var showCompany by rememberSaveable(initial) { mutableStateOf(initial?.showCompany ?: false) }
+    var choosingIndustry by rememberSaveable { mutableStateOf(false) }
 
     if (choosingIndustry) {
         TreeHoleIndustryPickerSheet(
@@ -2531,6 +2540,7 @@ private fun TreeHoleProfileSetup(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
+            .readableWidth()
             .padding(NnoworkSpacing.page),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
@@ -2614,12 +2624,12 @@ private fun ProfileEditDialog(
     onSave: (TreeHoleProfile) -> Unit,
 ) {
     val industryOptions = treeHoleIndustryOptions()
-    var nickname by remember(initial) { mutableStateOf(initial?.nickname.orEmpty()) }
-    var industry by remember(initial) { mutableStateOf(initial?.industry ?: TreeHoleIndustryCatalog.values.first()) }
-    var role by remember(initial) { mutableStateOf(initial?.role.orEmpty()) }
-    var company by remember(initial) { mutableStateOf(initial?.companyName.orEmpty()) }
-    var showCompany by remember(initial) { mutableStateOf(initial?.showCompany ?: false) }
-    var choosingIndustry by remember { mutableStateOf(false) }
+    var nickname by rememberSaveable(initial) { mutableStateOf(initial?.nickname.orEmpty()) }
+    var industry by rememberSaveable(initial) { mutableStateOf(initial?.industry ?: TreeHoleIndustryCatalog.values.first()) }
+    var role by rememberSaveable(initial) { mutableStateOf(initial?.role.orEmpty()) }
+    var company by rememberSaveable(initial) { mutableStateOf(initial?.companyName.orEmpty()) }
+    var showCompany by rememberSaveable(initial) { mutableStateOf(initial?.showCompany ?: false) }
+    var choosingIndustry by rememberSaveable { mutableStateOf(false) }
 
     if (choosingIndustry) {
         TreeHoleIndustryPickerSheet(
@@ -2746,14 +2756,29 @@ private fun TreeHoleMain(
 ) {
     val industryOptions = treeHoleIndustryOptions()
     val feedbackMessage = localizedTreeHoleFeedback(state)
-    var editingProfile by remember { mutableStateOf(false) }
-    var confirmDeleteAccount by remember { mutableStateOf(false) }
-    var showIndustryFilter by remember { mutableStateOf(false) }
-    var showQuestionSheet by remember { mutableStateOf(false) }
-    var showMyTreeHole by remember { mutableStateOf(false) }
-    var safetyMenuTarget by remember { mutableStateOf<TreeHoleSafetyTarget?>(null) }
-    var reportTarget by remember { mutableStateOf<TreeHoleSafetyTarget?>(null) }
-    var blockTarget by remember { mutableStateOf<TreeHoleSafetyTarget?>(null) }
+    val twoPane = LocalNnoworkWindowInfo.current.usesListDetail
+    // 開著的 sheet／對話框、檢舉／封鎖對象、留言草稿都用 rememberSaveable，摺疊／展開、旋轉後不消失。
+    // 選中的貼文本來就在 ViewModel（state.selectedPost），重建 Activity 不受影響。
+    var editingProfile by rememberSaveable { mutableStateOf(false) }
+    var confirmDeleteAccount by rememberSaveable { mutableStateOf(false) }
+    var showIndustryFilter by rememberSaveable { mutableStateOf(false) }
+    var showQuestionSheet by rememberSaveable { mutableStateOf(false) }
+    var showMyTreeHole by rememberSaveable { mutableStateOf(false) }
+    var safetyMenuTarget by rememberSaveable(stateSaver = TreeHoleSafetyTargetSaver) { mutableStateOf<TreeHoleSafetyTarget?>(null) }
+    var reportTarget by rememberSaveable(stateSaver = TreeHoleSafetyTargetSaver) { mutableStateOf<TreeHoleSafetyTarget?>(null) }
+    var blockTarget by rememberSaveable(stateSaver = TreeHoleSafetyTargetSaver) { mutableStateOf<TreeHoleSafetyTarget?>(null) }
+    // 留言草稿提到這一層：單欄（對話框）與雙欄（右欄）共用，切換版面時不遺失（iOS TreeHoleCommentDrafts）。
+    var commentDraft by rememberSaveable { mutableStateOf("") }
+    var commentDraftPostId by rememberSaveable { mutableStateOf<String?>(null) }
+    val feedListState = rememberLazyListState()
+    LaunchedEffect(state.selectedPost?.id) {
+        val id = state.selectedPost?.id
+        // 換一篇或離開貼文才丟掉草稿；摺疊／展開時 selectedPost 不變，草稿留著。
+        if (id != commentDraftPostId) {
+            commentDraft = ""
+            commentDraftPostId = id
+        }
+    }
 
     LaunchedEffect(state.success?.kind) {
         when (state.success?.kind) {
@@ -2940,7 +2965,7 @@ private fun TreeHoleMain(
         )
     }
 
-    state.selectedPost?.let { post ->
+    val postDetail: @Composable (TreeHolePost, Boolean) -> Unit = { post, asPane ->
         val commentFeedback = feedbackMessage?.takeIf {
             state.failure?.operation == TreeHoleFeatureOperation.LOAD_COMMENTS ||
                 state.failure?.operation == TreeHoleFeatureOperation.SUBMIT_COMMENT ||
@@ -2952,6 +2977,9 @@ private fun TreeHoleMain(
         }
         CommentsDialog(
             post = post,
+            asPane = asPane,
+            draft = commentDraft,
+            onDraftChange = { commentDraft = it },
             comments = state.comments,
             loading = state.commentsLoading,
             submitting = state.submittingComment,
@@ -3002,6 +3030,10 @@ private fun TreeHoleMain(
                 null
             },
         )
+        }
+
+    if (!twoPane) {
+        state.selectedPost?.let { post -> postDetail(post, false) }
     }
 
     if (editingProfile) {
@@ -3062,226 +3094,271 @@ private fun TreeHoleMain(
             )
         }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .statusBarsPadding()
-                .padding(horizontal = NnoworkSpacing.page),
-            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy),
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.padding(top = NnoworkSpacing.md),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NnoworkPageTitle(
-                        stringResource(R.string.treehole_title),
-                        modifier = Modifier.weight(1f),
-                    )
+    val feed: @Composable () -> Unit = {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = feedListState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
+                    .padding(horizontal = NnoworkSpacing.page),
+                verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy),
+            ) {
+                item {
                     // 標題列的工具鈕一律 tonal，避免一排四顆實心色塊搶走主視覺。
-                    PixelButton(
-                        onClick = onSyncCoins,
-                        enabled = !state.syncingCoins,
-                        backgroundColor = NnoworkTheme.colors.disabledBG,
-                        modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
-                        contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
-                    ) {
-                        if (state.syncingCoins) {
-                            Text("…", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-                        } else {
-                            Icon(
-                                Icons.Filled.MonetizationOn,
-                                contentDescription = stringResource(R.string.treehole_coin_sync),
-                                tint = NnoworkTheme.colors.primaryText,
-                                modifier = Modifier.size(20.dp),
-                            )
+                    val headerActions: @Composable () -> Unit = {
+                        // 標題列的工具鈕一律 tonal，避免一排四顆實心色塊搶走主視覺。
+                        PixelButton(
+                            onClick = onSyncCoins,
+                            enabled = !state.syncingCoins,
+                            backgroundColor = NnoworkTheme.colors.disabledBG,
+                            modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
+                            contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
+                        ) {
+                            if (state.syncingCoins) {
+                                Text("…", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                            } else {
+                                Icon(
+                                    Icons.Filled.MonetizationOn,
+                                    contentDescription = stringResource(R.string.treehole_coin_sync),
+                                    tint = NnoworkTheme.colors.primaryText,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.size(NnoworkSpacing.xs))
+                        PixelButton(
+                            onClick = { showMyTreeHole = true },
+                            backgroundColor = NnoworkTheme.colors.disabledBG,
+                            modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
+                            contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
+                        ) {
+                            Text(stringResource(R.string.treehole_mine_title), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                        }
+                        Spacer(Modifier.size(NnoworkSpacing.xs))
+                        PixelButton(
+                            onClick = { confirmDeleteAccount = true },
+                            backgroundColor = NnoworkTheme.colors.disabledBG,
+                            modifier = Modifier.size(NnoworkSize.minTouchTarget),
+                            contentPadding = PaddingValues(NnoworkSpacing.snug),
+                        ) {
+                            Icon(Icons.Filled.Delete, "刪除樹洞帳號", tint = NnoworkTheme.colors.danger, modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(Modifier.size(NnoworkSpacing.xs))
+                        PixelButton(
+                            onClick = onRefresh,
+                            enabled = !state.refreshing,
+                            backgroundColor = NnoworkTheme.colors.disabledBG,
+                            modifier = Modifier.size(NnoworkSize.minTouchTarget),
+                            contentPadding = PaddingValues(NnoworkSpacing.snug),
+                        ) {
+                            Icon(Icons.Filled.Refresh, stringResource(R.string.treehole_action_refresh), tint = NnoworkTheme.colors.onElevated)
                         }
                     }
-                    Spacer(Modifier.size(NnoworkSpacing.xs))
-                    PixelButton(
-                        onClick = { showMyTreeHole = true },
-                        backgroundColor = NnoworkTheme.colors.disabledBG,
-                        modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
-                        contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
-                    ) {
-                        Text(stringResource(R.string.treehole_mine_title), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-                    }
-                    Spacer(Modifier.size(NnoworkSpacing.xs))
-                    PixelButton(
-                        onClick = { confirmDeleteAccount = true },
-                        backgroundColor = NnoworkTheme.colors.disabledBG,
-                        modifier = Modifier.size(NnoworkSize.minTouchTarget),
-                        contentPadding = PaddingValues(NnoworkSpacing.snug),
-                    ) {
-                        Icon(Icons.Filled.Delete, "刪除樹洞帳號", tint = NnoworkTheme.colors.danger, modifier = Modifier.size(18.dp))
-                    }
-                    Spacer(Modifier.size(NnoworkSpacing.xs))
-                    PixelButton(
-                        onClick = onRefresh,
-                        enabled = !state.refreshing,
-                        backgroundColor = NnoworkTheme.colors.disabledBG,
-                        modifier = Modifier.size(NnoworkSize.minTouchTarget),
-                        contentPadding = PaddingValues(NnoworkSpacing.snug),
-                    ) {
-                        Icon(Icons.Filled.Refresh, stringResource(R.string.treehole_action_refresh), tint = NnoworkTheme.colors.onElevated)
-                    }
-                }
-            }
-            item {
-                TodaysVoiceEntry(unseenCount = state.voicePosts.size, onOpen = onOpenVoice)
-            }
-            if (state.newAnswerCount > 0) {
-                item {
-                    NewAnswersBanner(
-                        count = state.newAnswerCount,
-                        hasUnmarkedHelpfulAnswers = state.hasUnmarkedHelpfulAnswers,
-                        onOpen = onOpenNewAnswers,
-                    )
-                }
-            }
-            if (state.feedMode != TreeHoleFeedMode.QUESTION) {
-                item { PostHintCard() }
-            }
-            item {
-                TreeHoleFeedFilterBar(
-                    selectedMode = state.feedMode,
-                    industryLabel = if (state.selectedIndustries.isEmpty()) {
-                        stringResource(R.string.treehole_industry_filter_all)
+                    if (twoPane) {
+                        // 雙欄時左欄較窄：標題自成一行，工具鈕排在下一行靠右，標題不被擠成一個字寬。
+                        Column(
+                            modifier = Modifier.padding(top = NnoworkSpacing.md),
+                            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                        ) {
+                            NnoworkPageTitle(stringResource(R.string.treehole_title))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) { headerActions() }
+                        }
                     } else {
-                        stringResource(R.string.treehole_industry_filter_count, state.selectedIndustries.size)
-                    },
-                    industryFilterActive = state.selectedIndustries.isNotEmpty(),
-                    onModeSelected = onFeedModeSelected,
-                    onOpenIndustryFilter = { showIndustryFilter = true },
-                    onClearIndustryFilter = onClearIndustryFilters,
-                    modifier = Modifier.padding(horizontal = 0.dp),
-                    strings = localizedFeedFilterStrings(),
-                )
-            }
-
-            feedbackMessage?.let { feedback ->
-                item {
-                    Text(
-                        feedback.first,
-                        style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, feedback.second),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(NnoworkRadius.field))
-                            .background(NnoworkTheme.colors.accentSoft)
-                            .clickable { onClearTransientFeedback() }
-                            .padding(NnoworkSpacing.snug),
-                    )
+                        Row(
+                            modifier = Modifier.padding(top = NnoworkSpacing.md),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            NnoworkPageTitle(
+                                stringResource(R.string.treehole_title),
+                                modifier = Modifier.weight(1f),
+                            )
+                            headerActions()
+                        }
+                    }
                 }
-            }
-
-            if (state.feedLoading && state.feedPosts.isEmpty()) {
                 item {
-                    Text(
-                        stringResource(R.string.treehole_feed_loading),
-                        style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
-                        modifier = Modifier.padding(vertical = 30.dp),
-                    )
+                    TodaysVoiceEntry(unseenCount = state.voicePosts.size, onOpen = onOpenVoice)
                 }
-            } else if (state.visibleFeedPosts.isEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier.padding(vertical = 30.dp),
-                        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
-                    ) {
-                        Text(
-                            when {
-                                state.feedMode == TreeHoleFeedMode.QUESTION && state.selectedIndustries.isNotEmpty() ->
-                                    stringResource(R.string.treehole_question_empty_industry)
-                                state.feedMode == TreeHoleFeedMode.QUESTION ->
-                                    stringResource(R.string.treehole_question_empty_all)
-                                else -> "目前還沒有符合篩選條件的貼文。"
-                            },
-                            style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
+                if (state.newAnswerCount > 0) {
+                    item {
+                        NewAnswersBanner(
+                            count = state.newAnswerCount,
+                            hasUnmarkedHelpfulAnswers = state.hasUnmarkedHelpfulAnswers,
+                            onOpen = onOpenNewAnswers,
                         )
-                        if (state.feedMode == TreeHoleFeedMode.QUESTION) {
-                            PixelButton(onClick = { showQuestionSheet = true }, backgroundColor = NnoworkTheme.colors.treeHole.questionAccent) {
-                                Text(stringResource(R.string.treehole_question_ask), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                    }
+                }
+                if (state.feedMode != TreeHoleFeedMode.QUESTION) {
+                    item { PostHintCard() }
+                }
+                item {
+                    TreeHoleFeedFilterBar(
+                        selectedMode = state.feedMode,
+                        industryLabel = if (state.selectedIndustries.isEmpty()) {
+                            stringResource(R.string.treehole_industry_filter_all)
+                        } else {
+                            stringResource(R.string.treehole_industry_filter_count, state.selectedIndustries.size)
+                        },
+                        industryFilterActive = state.selectedIndustries.isNotEmpty(),
+                        onModeSelected = onFeedModeSelected,
+                        onOpenIndustryFilter = { showIndustryFilter = true },
+                        onClearIndustryFilter = onClearIndustryFilters,
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        strings = localizedFeedFilterStrings(),
+                        wrap = twoPane,
+                    )
+                }
+
+                feedbackMessage?.let { feedback ->
+                    item {
+                        Text(
+                            feedback.first,
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, feedback.second),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(NnoworkRadius.field))
+                                .background(NnoworkTheme.colors.accentSoft)
+                                .clickable { onClearTransientFeedback() }
+                                .padding(NnoworkSpacing.snug),
+                        )
+                    }
+                }
+
+                if (state.feedLoading && state.feedPosts.isEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.treehole_feed_loading),
+                            style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                            modifier = Modifier.padding(vertical = 30.dp),
+                        )
+                    }
+                } else if (state.visibleFeedPosts.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(vertical = 30.dp),
+                            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
+                        ) {
+                            Text(
+                                when {
+                                    state.feedMode == TreeHoleFeedMode.QUESTION && state.selectedIndustries.isNotEmpty() ->
+                                        stringResource(R.string.treehole_question_empty_industry)
+                                    state.feedMode == TreeHoleFeedMode.QUESTION ->
+                                        stringResource(R.string.treehole_question_empty_all)
+                                    else -> "目前還沒有符合篩選條件的貼文。"
+                                },
+                                style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
+                            )
+                            if (state.feedMode == TreeHoleFeedMode.QUESTION) {
+                                PixelButton(onClick = { showQuestionSheet = true }, backgroundColor = NnoworkTheme.colors.treeHole.questionAccent) {
+                                    Text(stringResource(R.string.treehole_question_ask), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                                }
                             }
                         }
                     }
+                } else {
+                    items(state.visibleFeedPosts, key = { it.id }) { post ->
+                        PostCard(
+                            post = post,
+                            mine = false,
+                            onOpen = { onOpenPost(post) },
+                            onOpenAuthor = {
+                                onOpenAuthor(
+                                    post.nickname.orEmpty(),
+                                    post.industry,
+                                    post.authorKey,
+                                )
+                            },
+                            onReact = { reaction -> onReact(post.id, reaction) },
+                            onDelete = {},
+                            onShare = { onShare(post, TreeHoleShareSource.FeedList) },
+                            onSafetyActions = if (state.myPosts.none { it.id == post.id }) {
+                                {
+                                    safetyMenuTarget = TreeHoleSafetyTarget(
+                                        targetType = TreeHoleReportTargetType.POST,
+                                        targetId = post.id,
+                                        authorKey = post.authorKey,
+                                        nickname = post.nickname?.ifBlank { "職場倖存者" }
+                                            ?: "職場倖存者",
+                                        preview = post.content,
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                        )
+                    }
                 }
-            } else {
-                items(state.visibleFeedPosts, key = { it.id }) { post ->
-                    PostCard(
-                        post = post,
-                        mine = false,
-                        onOpen = { onOpenPost(post) },
-                        onOpenAuthor = {
-                            onOpenAuthor(
-                                post.nickname.orEmpty(),
-                                post.industry,
-                                post.authorKey,
-                            )
-                        },
-                        onReact = { reaction -> onReact(post.id, reaction) },
-                        onDelete = {},
-                        onShare = { onShare(post, TreeHoleShareSource.FeedList) },
-                        onSafetyActions = if (state.myPosts.none { it.id == post.id }) {
-                            {
-                                safetyMenuTarget = TreeHoleSafetyTarget(
-                                    targetType = TreeHoleReportTargetType.POST,
-                                    targetId = post.id,
-                                    authorKey = post.authorKey,
-                                    nickname = post.nickname?.ifBlank { "職場倖存者" }
-                                        ?: "職場倖存者",
-                                    preview = post.content,
+
+                // 當第一頁沒有命中本機行業篩選時，只要 server feed
+                // 尚未到底，仍要讓使用者繼續載入後續頁。
+                if (!state.feedLoading && (state.visibleFeedPosts.isNotEmpty() || state.hasMorePosts)) {
+                    item {
+                        if (state.hasMorePosts) {
+                            PixelButton(
+                                onClick = onLoadMore,
+                                enabled = !state.feedLoadingMore,
+                                backgroundColor = NnoworkTheme.colors.buttonBG,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    if (state.feedLoadingMore) stringResource(R.string.treehole_common_loading)
+                                    else stringResource(R.string.treehole_feed_load_more),
+                                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated),
                                 )
                             }
                         } else {
-                            null
-                        },
-                    )
-                }
-            }
-
-            // 當第一頁沒有命中本機行業篩選時，只要 server feed
-            // 尚未到底，仍要讓使用者繼續載入後續頁。
-            if (!state.feedLoading && (state.visibleFeedPosts.isNotEmpty() || state.hasMorePosts)) {
-                item {
-                    if (state.hasMorePosts) {
-                        PixelButton(
-                            onClick = onLoadMore,
-                            enabled = !state.feedLoadingMore,
-                            backgroundColor = NnoworkTheme.colors.buttonBG,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
                             Text(
-                                if (state.feedLoadingMore) stringResource(R.string.treehole_common_loading)
-                                else stringResource(R.string.treehole_feed_load_more),
-                                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated),
+                                stringResource(R.string.treehole_feed_end),
+                                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         }
-                    } else {
-                        Text(
-                            stringResource(R.string.treehole_feed_end),
-                            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
                     }
                 }
+                item { Spacer(Modifier.height(82.dp)) }
             }
-            item { Spacer(Modifier.height(82.dp)) }
-        }
 
-        PixelButton(
-            onClick = { showQuestionSheet = true },
-            backgroundColor = NnoworkTheme.colors.treeHole.questionAccent,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(NnoworkSpacing.page)
-                .heightIn(min = 52.dp),
-            contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
-        ) {
-            Text("?", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-            Spacer(Modifier.size(7.dp))
-            Text(stringResource(R.string.treehole_question_ask), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            PixelButton(
+                onClick = { showQuestionSheet = true },
+                backgroundColor = NnoworkTheme.colors.treeHole.questionAccent,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(NnoworkSpacing.page)
+                    .heightIn(min = 52.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
+            ) {
+                Text("?", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Spacer(Modifier.size(7.dp))
+                Text(stringResource(R.string.treehole_question_ask), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (twoPane) {
+            // 寬螢幕（iOS TreeHoleView wideBody）：左動態牆、右貼文細節與留言。
+            NnoworkTwoPane(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                first = feed,
+                second = {
+                    val post = state.selectedPost
+                    if (post != null) {
+                        key(post.id) { postDetail(post, true) }
+                    } else {
+                        TreeHoleDetailPlaceholder()
+                    }
+                },
+            )
+        } else {
+            feed()
         }
 
         if (state.showVoice) {
@@ -4062,45 +4139,234 @@ internal fun CommentsDialog(
     onSafetyActionsPost: (() -> Unit)?,
     onSafetyActionsComment: (TreeHoleComment) -> Unit,
     onShare: (() -> Unit)?,
-    /** debug 截圖用：預先填入的草稿。 */
-    initialDraft: String = "",
+    /** 留言草稿由呼叫端保存（rememberSaveable），單欄對話框與雙欄右欄共用，摺疊／展開不遺失。 */
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    /** true＝雙欄右欄內嵌顯示（iOS 寬螢幕 postDetail）；false＝原本的對話框。 */
+    asPane: Boolean = false,
 ) {
-    var draft by remember(post.id) { mutableStateOf(initialDraft) }
     val canSendComment = TreeHoleCommentPolicy.normalizedContentOrNull(draft) != null
     val badgeStrings = localizedAnswerBadgeStrings()
 
     // 保留草稿直到 server 成功；驗證、gate 或網路失敗都不清空。
     LaunchedEffect(submissionSucceeded) {
-        if (submissionSucceeded) draft = ""
+        if (submissionSucceeded) onDraftChange("")
+    }
+
+    val titleRow: @Composable () -> Unit = {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.treehole_comments_title),
+            style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
+            modifier = Modifier.weight(1f),
+        )
+        onShare?.let {
+            PixelButton(
+                onClick = it,
+                backgroundColor = NnoworkTheme.colors.highlight,
+                modifier = Modifier.size(NnoworkSize.minTouchTarget),
+                contentPadding = PaddingValues(NnoworkSpacing.xs),
+            ) {
+                Icon(Icons.Filled.Share, "分享貼文", tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
+            }
+        }
+        onSafetyActionsPost?.let {
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            TreeHoleSafetyActionButton(onClick = it)
+        }
+    }
+    }
+    val body: @Composable () -> Unit = {
+    Text(post.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+    TreeHolePostProgressLabel(post)
+    if (loading) {
+        Text(stringResource(R.string.treehole_common_loading), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
+    } else if (comments.isEmpty()) {
+        Text(stringResource(R.string.treehole_comments_empty), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
+    } else {
+        comments.forEach { comment ->
+            val helpfulPending = comment.id in pendingHelpfulCommentIds
+            val isOwnComment = sameTreeHoleAuthor(
+                firstAuthorKey = post.authorKey,
+                secondAuthorKey = comment.authorKey,
+                firstNickname = ownNickname,
+                secondNickname = comment.nickname,
+            )
+            val canToggleThisComment = canMarkHelpful &&
+                !isOwnComment && comment.id.isNotBlank()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.elevatedSurface)
+                    .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
+                    .padding(NnoworkSpacing.snug),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(NnoworkSize.minTouchTarget)
+                        .clickable(
+                            enabled = !submitting,
+                            role = Role.Button,
+                            onClickLabel = stringResource(R.string.treehole_author_view_posts),
+                            onClick = { onOpenAuthor(comment) },
+                        ),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    TreeHoleInitialsAvatar(nickname = comment.nickname, size = 34.dp)
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
+                    ) {
+                        Text(
+                            comment.nickname,
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (canToggleThisComment) {
+                            val actionLabel = stringResource(
+                                if (comment.isHelpful) R.string.treehole_helpful_unmark
+                                else R.string.treehole_helpful_mark,
+                            )
+                            PixelButton(
+                                onClick = { onToggleHelpful(comment.id) },
+                                enabled = !helpfulPending,
+                                backgroundColor = if (comment.isHelpful) NnoworkTheme.colors.highlight else NnoworkTheme.colors.elevatedSurface,
+                                modifier = Modifier.size(NnoworkSize.minTouchTarget),
+                                contentPadding = PaddingValues(NnoworkSpacing.xs),
+                            ) {
+                                Icon(
+                                    imageVector = if (comment.isHelpful) Icons.Filled.Star else Icons.Filled.StarBorder,
+                                    contentDescription = if (helpfulPending) {
+                                        stringResource(R.string.treehole_helpful_updating)
+                                    } else {
+                                        actionLabel
+                                    },
+                                    tint = NnoworkTheme.colors.treeHole.noticeStroke,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+                        if (comment.id !in ownCommentIds) {
+                            TreeHoleSafetyActionButton(
+                                onClick = { onSafetyActionsComment(comment) },
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
+                    ) {
+                        TreeHoleAnswerBadgeMark(
+                            exp = comment.authorExp,
+                            strings = badgeStrings,
+                        )
+                        if (comment.isHelpful) HelpfulAnswerTag()
+                    }
+                    comment.industry?.takeIf(String::isNotBlank)?.let { industry ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
+                        ) {
+                            Icon(
+                                treeHoleIndustryIcon(industry),
+                                contentDescription = null,
+                                tint = NnoworkTheme.colors.mutedText,
+                                modifier = Modifier.size(13.dp),
+                            )
+                            Text(
+                                localizedIndustryLabel(industry),
+                                style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.mutedText),
+                            )
+                        }
+                    }
+                    Text(comment.content, style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.primaryText))
+                }
+            }
+        }
+    }
+    // 不限字數、不顯示剩餘字數（§5.9）；多行輸入，超過最大高度時在框內捲動並顯示捲軸。
+    NnoworkField(
+        value = draft,
+        onValueChange = onDraftChange,
+        enabled = !submitting,
+        placeholder = stringResource(R.string.treehole_comment_placeholder),
+        singleLine = false,
+        minHeight = 82.dp,
+        maxHeight = NnoworkSize.multilineFieldMaxHeight,
+        textStyle = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    feedback?.let { (message, color) ->
+        Text(message, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, color))
+    }
+    }
+    val confirmButton: @Composable () -> Unit = {
+    PixelButton(
+        onClick = { onSubmit(draft) },
+        enabled = canSendComment && !loading && !submitting,
+        backgroundColor = if (canSendComment) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+    ) {
+        Text(
+            stringResource(
+                if (submitting) R.string.treehole_comment_sending
+                else R.string.treehole_comment_send,
+            ),
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+        )
+    }
+    }
+    val dismissButton: @Composable () -> Unit = {
+    PixelButton(
+        onClick = onDismiss,
+        enabled = !submitting,
+        backgroundColor = NnoworkTheme.colors.disabledBG,
+    ) {
+        Text(stringResource(R.string.treehole_action_close), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+    }
+    }
+
+    if (asPane) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
+                .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
+        ) {
+            titleRow()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
+            ) {
+                body()
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs, Alignment.End),
+            ) {
+                dismissButton()
+                confirmButton()
+            }
+        }
+        return
     }
 
     AlertDialog(
         onDismissRequest = { if (!submitting) onDismiss() },
         containerColor = NnoworkDialogDefaults.containerColor,
         shape = NnoworkDialogDefaults.shape,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.treehole_comments_title),
-                    style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
-                    modifier = Modifier.weight(1f),
-                )
-                onShare?.let {
-                    PixelButton(
-                        onClick = it,
-                        backgroundColor = NnoworkTheme.colors.highlight,
-                        modifier = Modifier.size(NnoworkSize.minTouchTarget),
-                        contentPadding = PaddingValues(NnoworkSpacing.xs),
-                    ) {
-                        Icon(Icons.Filled.Share, "分享貼文", tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
-                    }
-                }
-                onSafetyActionsPost?.let {
-                    Spacer(Modifier.size(NnoworkSpacing.xs))
-                    TreeHoleSafetyActionButton(onClick = it)
-                }
-            }
-        },
+        title = titleRow,
         text = {
             Column(
                 modifier = Modifier
@@ -4108,163 +4374,57 @@ internal fun CommentsDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
             ) {
-                Text(post.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
-                TreeHolePostProgressLabel(post)
-                if (loading) {
-                    Text(stringResource(R.string.treehole_common_loading), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
-                } else if (comments.isEmpty()) {
-                    Text(stringResource(R.string.treehole_comments_empty), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
-                } else {
-                    comments.forEach { comment ->
-                        val helpfulPending = comment.id in pendingHelpfulCommentIds
-                        val isOwnComment = sameTreeHoleAuthor(
-                            firstAuthorKey = post.authorKey,
-                            secondAuthorKey = comment.authorKey,
-                            firstNickname = ownNickname,
-                            secondNickname = comment.nickname,
-                        )
-                        val canToggleThisComment = canMarkHelpful &&
-                            !isOwnComment && comment.id.isNotBlank()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.elevatedSurface)
-                                .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
-                                .padding(NnoworkSpacing.snug),
-                            horizontalArrangement = Arrangement.spacedBy(9.dp),
-                            verticalAlignment = Alignment.Top,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(NnoworkSize.minTouchTarget)
-                                    .clickable(
-                                        enabled = !submitting,
-                                        role = Role.Button,
-                                        onClickLabel = stringResource(R.string.treehole_author_view_posts),
-                                        onClick = { onOpenAuthor(comment) },
-                                    ),
-                                contentAlignment = Alignment.TopCenter,
-                            ) {
-                                TreeHoleInitialsAvatar(nickname = comment.nickname, size = 34.dp)
-                            }
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
-                                ) {
-                                    Text(
-                                        comment.nickname,
-                                        style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    if (canToggleThisComment) {
-                                        val actionLabel = stringResource(
-                                            if (comment.isHelpful) R.string.treehole_helpful_unmark
-                                            else R.string.treehole_helpful_mark,
-                                        )
-                                        PixelButton(
-                                            onClick = { onToggleHelpful(comment.id) },
-                                            enabled = !helpfulPending,
-                                            backgroundColor = if (comment.isHelpful) NnoworkTheme.colors.highlight else NnoworkTheme.colors.elevatedSurface,
-                                            modifier = Modifier.size(NnoworkSize.minTouchTarget),
-                                            contentPadding = PaddingValues(NnoworkSpacing.xs),
-                                        ) {
-                                            Icon(
-                                                imageVector = if (comment.isHelpful) Icons.Filled.Star else Icons.Filled.StarBorder,
-                                                contentDescription = if (helpfulPending) {
-                                                    stringResource(R.string.treehole_helpful_updating)
-                                                } else {
-                                                    actionLabel
-                                                },
-                                                tint = NnoworkTheme.colors.treeHole.noticeStroke,
-                                                modifier = Modifier.size(20.dp),
-                                            )
-                                        }
-                                    }
-                                    if (comment.id !in ownCommentIds) {
-                                        TreeHoleSafetyActionButton(
-                                            onClick = { onSafetyActionsComment(comment) },
-                                        )
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
-                                ) {
-                                    TreeHoleAnswerBadgeMark(
-                                        exp = comment.authorExp,
-                                        strings = badgeStrings,
-                                    )
-                                    if (comment.isHelpful) HelpfulAnswerTag()
-                                }
-                                comment.industry?.takeIf(String::isNotBlank)?.let { industry ->
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
-                                    ) {
-                                        Icon(
-                                            treeHoleIndustryIcon(industry),
-                                            contentDescription = null,
-                                            tint = NnoworkTheme.colors.mutedText,
-                                            modifier = Modifier.size(13.dp),
-                                        )
-                                        Text(
-                                            localizedIndustryLabel(industry),
-                                            style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.mutedText),
-                                        )
-                                    }
-                                }
-                                Text(comment.content, style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.primaryText))
-                            }
-                        }
-                    }
-                }
-                // 不限字數、不顯示剩餘字數（§5.9）；多行輸入，超過最大高度時在框內捲動並顯示捲軸。
-                NnoworkField(
-                    value = draft,
-                    onValueChange = { draft = it },
-                    enabled = !submitting,
-                    placeholder = stringResource(R.string.treehole_comment_placeholder),
-                    singleLine = false,
-                    minHeight = 82.dp,
-                    maxHeight = NnoworkSize.multilineFieldMaxHeight,
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                feedback?.let { (message, color) ->
-                    Text(message, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, color))
-                }
+                body()
             }
         },
-        confirmButton = {
-            PixelButton(
-                onClick = { onSubmit(draft) },
-                enabled = canSendComment && !loading && !submitting,
-                backgroundColor = if (canSendComment) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
-            ) {
-                Text(
-                    stringResource(
-                        if (submitting) R.string.treehole_comment_sending
-                        else R.string.treehole_comment_send,
-                    ),
-                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
-                )
-            }
-        },
-        dismissButton = {
-            PixelButton(
-                onClick = onDismiss,
-                enabled = !submitting,
-                backgroundColor = NnoworkTheme.colors.disabledBG,
-            ) {
-                Text(stringResource(R.string.treehole_action_close), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-            }
-        },
+        confirmButton = confirmButton,
+        dismissButton = dismissButton,
     )
 }
+
+/** 寬螢幕右欄尚未選貼文時的提示（iOS wideDetailRoot 空狀態）。 */
+@Composable
+private fun TreeHoleDetailPlaceholder() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(NnoworkSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.Chat,
+            contentDescription = null,
+            tint = NnoworkTheme.colors.accentForeground.copy(alpha = 0.8f),
+            modifier = Modifier.size(NnoworkSize.icon * 2),
+        )
+        Spacer(Modifier.height(NnoworkSpacing.cozy))
+        Text(
+            "點左邊的貼文，在這裡看留言與回應",
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.secondaryText),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** [TreeHoleSafetyTarget] 的 rememberSaveable saver（只存字串與 enum 名稱）。 */
+private val TreeHoleSafetyTargetSaver = listSaver<TreeHoleSafetyTarget?, String?>(
+    save = { target ->
+        if (target == null) emptyList()
+        else listOf(target.targetType.name, target.targetId, target.authorKey, target.nickname, target.preview)
+    },
+    restore = { values ->
+        if (values.size < 5) null
+        else TreeHoleSafetyTarget(
+            targetType = TreeHoleReportTargetType.valueOf(values[0]!!),
+            targetId = values[1]!!,
+            authorKey = values[2],
+            nickname = values[3]!!,
+            preview = values[4]!!,
+        )
+    },
+)
 
 @Composable
 private fun HelpfulAnswerTag() {

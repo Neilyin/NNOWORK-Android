@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.history
 
+import com.neilyin.nnowork.ui.adaptive.readableWidth
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.neilyin.nnowork.ui.theme.PixelButtonVariant
 import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import androidx.activity.compose.BackHandler
@@ -53,7 +55,7 @@ fun FreedomScreen(
     onViewHistory: () -> Unit,
     onStartNewCompany: () -> Unit,
 ) {
-    var confirmRestart by remember { mutableStateOf(false) }
+    var confirmRestart by rememberSaveable { mutableStateOf(false) }
     BackHandler(onBack = onViewHistory)
 
     if (confirmRestart) {
@@ -82,6 +84,7 @@ fun FreedomScreen(
             .background(NnoworkTheme.colors.accent)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
+            .readableWidth()
             .padding(horizontal = NnoworkSpacing.lg, vertical = NnoworkSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.lg),

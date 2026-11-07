@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
 import com.neilyin.nnowork.ui.theme.contentColorFor
 import com.neilyin.nnowork.ui.theme.NnoworkSheetDefaults
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
@@ -200,6 +201,8 @@ fun TreeHoleMyContentSheet(
     }
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,

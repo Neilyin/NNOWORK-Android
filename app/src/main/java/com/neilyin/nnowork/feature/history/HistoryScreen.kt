@@ -22,6 +22,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.key
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import com.neilyin.nnowork.ui.adaptive.LocalNnoworkWindowInfo
+import com.neilyin.nnowork.ui.adaptive.NnoworkTwoPane
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -162,14 +177,33 @@ private fun HistoryContent(
     onUpdateReason: (StampRecordEntity, String) -> Unit,
     onDelete: (StampRecordEntity) -> Unit,
 ) {
-    var editing by remember { mutableStateOf<StampRecordEntity?>(null) }
-    var showReceipt by remember { mutableStateOf(false) }
-    var showFreedom by remember { mutableStateOf(false) }
+    val twoPane = LocalNnoworkWindowInfo.current.usesListDetail
+    // 選中的紀錄／過往工作、編輯中的文字、對話框開關都用 rememberSaveable（只存 id 與字串），
+    // 摺疊／展開、旋轉後仍停在同一筆，雙欄 ↔ 單欄切換時也接得上（雙欄右欄 ↔ 單欄編輯對話框）。
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editDraft by rememberSaveable { mutableStateOf("") }
+    val editing = editingId?.let { id -> state.records.firstOrNull { it.id == id } }
+    var showReceipt by rememberSaveable { mutableStateOf(false) }
+    var showFreedom by rememberSaveable { mutableStateOf(false) }
     var showJobTransition by rememberSaveable { mutableStateOf(false) }
     var selectedArchiveId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedArchive = selectedArchiveId?.let { id -> state.archives.firstOrNull { it.id == id } }
+    // 清單捲動位置放在不隨版面變動的位置，單欄／雙欄共用同一個 state。
+    val listState = rememberLazyListState()
     val context = LocalContext.current
     val shareScope = rememberCoroutineScope()
+
+    val selectRecord: (StampRecordEntity) -> Unit = { record ->
+        selectedArchiveId = null
+        editingId = record.id
+        editDraft = record.reason
+    }
+    val closeEditor: () -> Unit = { editingId = null }
+    val selectArchive: (String) -> Unit = { id ->
+        // 右欄一次只顯示一種（iOS：selectedArchive 與 editingRecord 互斥）
+        editingId = null
+        selectedArchiveId = id
+    }
 
     LaunchedEffect(receiptRequest, state.records.size) {
         if (receiptRequest > 0 && state.records.isNotEmpty()) {
@@ -177,18 +211,20 @@ private fun HistoryContent(
         }
     }
 
-    if (editing != null) {
+    if (editing != null && !twoPane) {
         EditRecordDialog(
-            record = editing!!,
-            canDelete = canDelete(editing!!, state.settings),
-            onDismiss = { editing = null },
+            record = editing,
+            reason = editDraft,
+            onReasonChange = { editDraft = it },
+            canDelete = canDelete(editing, state.settings),
+            onDismiss = closeEditor,
             onSave = {
-                onUpdateReason(editing!!, it)
-                editing = null
+                onUpdateReason(editing, it)
+                closeEditor()
             },
             onDelete = {
-                onDelete(editing!!)
-                editing = null
+                onDelete(editing)
+                closeEditor()
             },
         )
     }
@@ -232,12 +268,183 @@ private fun HistoryContent(
         return
     }
 
-    if (selectedArchive != null) {
-        JobArchiveDetailScreen(archive = selectedArchive, onBack = { selectedArchiveId = null })
+    if (!twoPane) {
+        if (selectedArchive != null) {
+            JobArchiveDetailScreen(archive = selectedArchive, onBack = { selectedArchiveId = null })
+            return
+        }
+        HistoryList(
+            state = state,
+            listState = listState,
+            selectedRecordId = null,
+            onSelectRecord = null,
+            onEdit = selectRecord,
+            onSelectArchive = selectArchive,
+            onOpenReceipt = { showReceipt = true },
+        )
         return
     }
 
+    // 寬螢幕（iOS HistoryView wideBody）：左紀錄列表、右選中紀錄／過往工作。
+    NnoworkTwoPane(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        first = {
+            HistoryList(
+                state = state,
+                listState = listState,
+                selectedRecordId = editing?.id,
+                onSelectRecord = selectRecord,
+                onEdit = selectRecord,
+                onSelectArchive = selectArchive,
+                onOpenReceipt = { showReceipt = true },
+            )
+        },
+        second = {
+            when {
+                selectedArchive != null -> {
+                    // 過往工作詳情直接顯示在右欄；返回鈕＝關閉右欄（iOS「關閉」）。
+                    key(selectedArchive.id) {
+                        JobArchiveDetailScreen(archive = selectedArchive, onBack = { selectedArchiveId = null })
+                    }
+                }
+                editing != null -> key(editing.id) {
+                    EditRecordPane(
+                        record = editing,
+                        reason = editDraft,
+                        onReasonChange = { editDraft = it },
+                        canDelete = canDelete(editing, state.settings),
+                        onCancel = closeEditor,
+                        onSave = {
+                            onUpdateReason(editing, it)
+                            closeEditor()
+                        },
+                        onDelete = {
+                            onDelete(editing)
+                            closeEditor()
+                        },
+                    )
+                }
+                else -> HistoryDetailPlaceholder(
+                    nothingAtAll = state.records.isEmpty() && state.archives.isEmpty(),
+                )
+            }
+        },
+    )
+}
+
+/** 寬螢幕右欄的編輯表單（iOS editRecordForm，單欄時是 [EditRecordDialog]）。 */
+@Composable
+private fun EditRecordPane(
+    record: StampRecordEntity,
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    canDelete: Boolean,
+    onCancel: () -> Unit,
+    onSave: (String) -> Unit,
+    onDelete: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "編輯記錄",
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onCancel) {
+                Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.accentForeground))
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pixelCard()
+                .padding(NnoworkSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
+        ) {
+            Text(
+                "${dateFormat.format(Date(record.date))} ${timeFormat.format(Date(record.date))}",
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText, monospace = true),
+            )
+            NnoworkTextField(
+                value = reason,
+                onValueChange = onReasonChange,
+                label = "離職理由",
+                placeholder = "寫下這次想離職的原因…",
+                singleLine = false,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs), verticalAlignment = Alignment.CenterVertically) {
+            if (canDelete) {
+                PixelButton(onClick = onDelete, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Icon(Icons.Filled.Delete, "刪除記錄", tint = NnoworkTheme.colors.danger)
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            PixelButton(
+                onClick = { onSave(reason) },
+                enabled = reason.isNotBlank(),
+                backgroundColor = if (reason.isNotBlank()) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
+            ) {
+                Icon(Icons.Filled.Save, null, tint = NnoworkTheme.colors.primaryText)
+                Spacer(Modifier.size(NnoworkSpacing.tight))
+                Text("儲存", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            }
+        }
+    }
+}
+
+/** 寬螢幕右欄尚未選取時的提示（iOS wideDetailColumn 的空狀態）。 */
+@Composable
+private fun HistoryDetailPlaceholder(nothingAtAll: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(NnoworkSpacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            if (nothingAtAll) Icons.Filled.Book else Icons.Filled.EditNote,
+            contentDescription = null,
+            tint = NnoworkTheme.colors.accentForeground,
+            modifier = Modifier.size(NnoworkSize.icon * 2),
+        )
+        Spacer(Modifier.height(NnoworkSpacing.md))
+        Text(
+            if (nothingAtAll) "還沒有離職紀錄" else "點左邊的紀錄，在這裡查看與編輯",
+            style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun HistoryList(
+    state: HistoryUiState,
+    listState: LazyListState,
+    selectedRecordId: String?,
+    /** 雙欄時整列可點選；單欄維持只用編輯鈕。 */
+    onSelectRecord: ((StampRecordEntity) -> Unit)?,
+    onEdit: (StampRecordEntity) -> Unit,
+    onSelectArchive: (String) -> Unit,
+    onOpenReceipt: () -> Unit,
+) {
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -250,18 +457,23 @@ private fun HistoryContent(
         }
         if (state.archives.isNotEmpty()) {
             item(key = "past-jobs") {
-                PastJobsSection(archives = state.archives, onSelect = { selectedArchiveId = it.id })
+                PastJobsSection(archives = state.archives, onSelect = { onSelectArchive(it.id) })
             }
         }
         if (state.records.isEmpty()) {
             item { EmptyHistory() }
         } else {
-            item { ReceiptSummaryCard(state = state, onOpen = { showReceipt = true }) }
+            item { ReceiptSummaryCard(state = state, onOpen = onOpenReceipt) }
             item { Stats(state) }
             state.grouped.keys.sortedDescending().forEach { round ->
                 item { RoundHeader(round = round, count = state.grouped[round].orEmpty().size) }
                 items(state.grouped[round].orEmpty(), key = { it.id }) { record ->
-                    RecordRow(record = record, onEdit = { editing = record })
+                    RecordRow(
+                        record = record,
+                        selected = record.id == selectedRecordId,
+                        onSelect = onSelectRecord?.let { select -> { select(record) } },
+                        onEdit = { onEdit(record) },
+                    )
                 }
             }
         }
@@ -509,11 +721,29 @@ private fun RoundHeader(round: Int, count: Int) {
 }
 
 @Composable
-private fun RecordRow(record: StampRecordEntity, onEdit: () -> Unit) {
+private fun RecordRow(
+    record: StampRecordEntity,
+    onEdit: () -> Unit,
+    selected: Boolean = false,
+    /** 雙欄時整列可點，選中的那列用 accentSoft 底＋accent 框標示。 */
+    onSelect: (() -> Unit)? = null,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard()
+            .then(
+                if (selected) {
+                    Modifier.pixelCard(
+                        backgroundColor = NnoworkTheme.colors.accentSoft,
+                        borderColor = NnoworkTheme.colors.accent,
+                        borderWidth = NnoworkLine.control,
+                        borderAlpha = 1f,
+                    )
+                } else {
+                    Modifier.pixelCard()
+                },
+            )
+            .then(if (onSelect != null) Modifier.clip(RoundedCornerShape(NnoworkRadius.card)).clickable(onClick = onSelect) else Modifier)
             .padding(NnoworkSpacing.cozy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -549,12 +779,13 @@ private fun RecordRow(record: StampRecordEntity, onEdit: () -> Unit) {
 @Composable
 private fun EditRecordDialog(
     record: StampRecordEntity,
+    reason: String,
+    onReasonChange: (String) -> Unit,
     canDelete: Boolean,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
     onDelete: () -> Unit,
 ) {
-    var reason by remember(record.id) { mutableStateOf(record.reason) }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = NnoworkDialogDefaults.containerColor,
@@ -565,7 +796,7 @@ private fun EditRecordDialog(
                 Text("${dateFormat.format(Date(record.date))} ${timeFormat.format(Date(record.date))}", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
                 NnoworkTextField(
                     value = reason,
-                    onValueChange = { reason = it },
+                    onValueChange = onReasonChange,
                     label = "離職理由",
                     placeholder = "寫下這次想離職的原因…",
                     singleLine = false,

@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.update
 
+import com.neilyin.nnowork.ui.adaptive.readableWidth
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -147,6 +148,7 @@ fun UpdateNoticeScreen(onFinished: () -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
+            .readableWidth()
             .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.sm),
     ) {
         Row(

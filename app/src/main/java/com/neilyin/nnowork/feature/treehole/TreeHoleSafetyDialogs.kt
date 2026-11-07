@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.treehole
 
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.neilyin.nnowork.ui.theme.NnoworkField
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
@@ -172,9 +173,9 @@ fun TreeHoleReportDialog(
     onSubmit: (TreeHoleReportReason, String, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var reason by remember(target.targetId) { mutableStateOf(TreeHoleReportReason.OFFENSIVE) }
-    var note by remember(target.targetId) { mutableStateOf("") }
-    var alsoBlock by remember(target.targetId) { mutableStateOf(false) }
+    var reason by rememberSaveable(target.targetId) { mutableStateOf(TreeHoleReportReason.OFFENSIVE) }
+    var note by rememberSaveable(target.targetId) { mutableStateOf("") }
+    var alsoBlock by rememberSaveable(target.targetId) { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = { if (!submitting) onDismiss() },

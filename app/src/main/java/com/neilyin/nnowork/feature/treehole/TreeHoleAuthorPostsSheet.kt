@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -106,6 +107,8 @@ fun TreeHoleAuthorPostsSheet(
     val questionCount = posts.count(TreeHolePost::isQuestion)
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,

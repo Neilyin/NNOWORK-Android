@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
+import com.neilyin.nnowork.ui.adaptive.readableWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -66,7 +69,13 @@ fun StampInputDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(NnoworkTheme.colors.elevatedSurface)
-                .statusBarsPadding()
+                .statusBarsPadding(),
+        ) {
+        // 大螢幕：表單（含取消鈕）限寬置中，不全寬拉伸；手機寬度小於上限，外觀不變。
+        Box(
+            modifier = Modifier
+                .readableWidth(NnoworkAdaptive.formMaxWidth)
+                .fillMaxHeight()
                 .padding(NnoworkSpacing.lg),
         ) {
             // 取消按鈕
@@ -184,6 +193,7 @@ fun StampInputDialog(
                     }
                 }
             }
+        }
         }
     }
 }

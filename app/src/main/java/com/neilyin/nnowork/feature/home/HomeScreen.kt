@@ -26,6 +26,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.neilyin.nnowork.ui.adaptive.HomeLayout
+import com.neilyin.nnowork.ui.adaptive.LocalNnoworkWindowInfo
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
+import com.neilyin.nnowork.ui.adaptive.NnoworkTwoPane
+import com.neilyin.nnowork.ui.adaptive.readableWidth
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -101,16 +111,32 @@ fun HomeScreen(
     val theme = state.theme
     val haptic = LocalHapticFeedback.current
 
-    var showStampDialog by remember { mutableStateOf(false) }
+    // 對話框開關與彩蛋流程用 rememberSaveable：摺疊／展開、旋轉重建 Activity 後仍開著（輸入中的原因在 StampInputDialog 內）。
+    var showStampDialog by rememberSaveable { mutableStateOf(false) }
     var showAnimation by remember { mutableStateOf(false) }
-    var showMasterOverlay by remember { mutableStateOf(false) }
-    var showCompletionDialog by remember { mutableStateOf(false) }
+    var showMasterOverlay by rememberSaveable { mutableStateOf(false) }
+    var showCompletionDialog by rememberSaveable { mutableStateOf(false) }
+    // StampCreationResult 不是 Parcelable，且分享對話框只在剛蓋完章時出現，維持 remember。
     var pendingTreeHoleShare by remember { mutableStateOf<StampCreationResult?>(null) }
     var treeHoleShareMessage by remember { mutableStateOf<String?>(null) }
     var isTreeHoleSharing by remember { mutableStateOf(false) }
-    var easterTapCount by remember { mutableStateOf(0) }
-    var showEasterDialog by remember { mutableStateOf(false) }
-    var isEasterFlow by remember { mutableStateOf(false) }
+    var easterTapCount by rememberSaveable { mutableStateOf(0) }
+    var showEasterDialog by rememberSaveable { mutableStateOf(false) }
+    var isEasterFlow by rememberSaveable { mutableStateOf(false) }
+
+    val onEasterTap: () -> Unit = {
+        if (state.hasStampedToday && !state.isCurrentCardComplete) {
+            easterTapCount++
+            if (easterTapCount >= 10) {
+                easterTapCount = 0
+                showEasterDialog = true
+            }
+        }
+    }
+    val onStamp: () -> Unit = { showStampDialog = true }
+    val onNext: () -> Unit = {
+        if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
+    }
 
     Box(
         modifier = Modifier
@@ -119,67 +145,10 @@ fun HomeScreen(
                 Brush.verticalGradient(listOf(NnoworkTheme.colors.appBG, NnoworkTheme.colors.appBGBottom)),
             ),
     ) {
-        // 金幣 HUD（右上角）
-        CoinHud(
-            coins = state.settings.coinCount,
-            theme = theme,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(top = NnoworkSpacing.xs, end = NnoworkSpacing.md),
-        )
-
-        // 版面對齊 iOS HomeView（直向）：標題靠上，回合列＋集點卡＋按鈕成一組在剩餘空間置中。
-        // 集點卡依內容高度（不再撐滿整個畫面），空間不夠（例如 30 格的小螢幕）時整頁可捲動。
-        BoxWithConstraints(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .widthIn(max = 640.dp)
-                .fillMaxSize()
-                .statusBarsPadding(),
-        ) {
-        val viewportHeight = maxHeight
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .heightIn(min = viewportHeight)
-                .padding(horizontal = NnoworkSpacing.lg),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            // SpaceBetween＋最小高度＝視窗高：標題貼頂、卡片＋按鈕這組落在剩餘空間中間。
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Spacer(Modifier.height(NnoworkSpacing.md))
-                HeaderSection(state, theme)
-                Spacer(Modifier.height(NnoworkSpacing.lg))
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            StampCardSection(
-                state = state,
-                theme = theme,
-                onEasterTap = {
-                    if (state.hasStampedToday && !state.isCurrentCardComplete) {
-                        easterTapCount++
-                        if (easterTapCount >= 10) {
-                            easterTapCount = 0
-                            showEasterDialog = true
-                        }
-                    }
-                },
-            )
-            Spacer(Modifier.height(NnoworkSpacing.lg))
-            BottomButton(
-                state = state,
-                theme = theme,
-                onStamp = { showStampDialog = true },
-                onNext = {
-                    if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
-                },
-            )
-            }
-            Spacer(Modifier.height(NnoworkSpacing.xl))
-        }
+        when (LocalNnoworkWindowInfo.current.homeLayout) {
+            HomeLayout.Phone -> PhoneHomeContent(state, theme, onEasterTap, onStamp, onNext)
+            HomeLayout.WideStacked -> WideStackedHomeContent(state, theme, onEasterTap, onStamp, onNext)
+            HomeLayout.WideSideBySide -> WideSideBySideHomeContent(state, theme, onEasterTap, onStamp, onNext)
         }
 
         AnimatedVisibility(visible = showAnimation) {
@@ -312,6 +281,279 @@ fun HomeScreen(
     }
 }
 
+/** 一般手機直向：原本版面（不變）。 */
+@Composable
+private fun BoxScope.PhoneHomeContent(
+    state: HomeUiState,
+    theme: CardTheme,
+    onEasterTap: () -> Unit,
+    onStamp: () -> Unit,
+    onNext: () -> Unit,
+) {
+    // 金幣 HUD（右上角）
+    CoinHud(
+        coins = state.settings.coinCount,
+        theme = theme,
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .statusBarsPadding()
+            .padding(top = NnoworkSpacing.xs, end = NnoworkSpacing.md),
+    )
+
+    // 版面對齊 iOS HomeView（直向）：標題靠上，回合列＋集點卡＋按鈕成一組在剩餘空間置中。
+    // 集點卡依內容高度（不再撐滿整個畫面），空間不夠（例如 30 格的小螢幕）時整頁可捲動。
+    BoxWithConstraints(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .widthIn(max = 640.dp)
+            .fillMaxSize()
+            .statusBarsPadding(),
+    ) {
+        val viewportHeight = maxHeight
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = viewportHeight)
+                .padding(horizontal = NnoworkSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // SpaceBetween＋最小高度＝視窗高：標題貼頂、卡片＋按鈕這組落在剩餘空間中間。
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(NnoworkSpacing.md))
+                HeaderSection(state, theme)
+                Spacer(Modifier.height(NnoworkSpacing.lg))
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                StampCardSection(state = state, theme = theme, onEasterTap = onEasterTap)
+                Spacer(Modifier.height(NnoworkSpacing.lg))
+                BottomButton(state = state, theme = theme, onStamp = onStamp, onNext = onNext)
+            }
+            Spacer(Modifier.height(NnoworkSpacing.xl))
+        }
+    }
+}
+
+/**
+ * 寬螢幕直立（摺疊機展開直向）：iOS wideStackedContent。
+ * 標題列（公司＋金幣）→ 日期 → 集點卡 → 回合 → 進度統計 → 按鈕，限寬 560 置中，可捲動。
+ */
+@Composable
+private fun WideStackedHomeContent(
+    state: HomeUiState,
+    theme: CardTheme,
+    onEasterTap: () -> Unit,
+    onStamp: () -> Unit,
+    onNext: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Column(
+            modifier = Modifier
+                .readableWidth(NnoworkAdaptive.homeStackedMaxWidth + NnoworkSpacing.xl * 2)
+                .padding(horizontal = NnoworkSpacing.xl, vertical = NnoworkSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.page),
+        ) {
+            WideTitleRow(state, theme)
+            DateChip()
+            StampCardBox(state = state, theme = theme, onEasterTap = onEasterTap)
+            RoundIndicator(state)
+            HomeWideInfoPanel(state, showsRecentRecords = true)
+            BottomButton(state = state, theme = theme, onStamp = onStamp, onNext = onNext)
+        }
+    }
+}
+
+/**
+ * 寬螢幕橫向（或高度不足）：iOS wideSideBySideContent。
+ * 上方標題列（公司＋金幣，對應 iOS 導覽列那一排）；下方左集點卡、右日期＋回合＋進度統計＋最近紀錄＋按鈕。
+ * 分界走 [NnoworkTwoPane]（有摺痕時對準摺痕）。
+ */
+@Composable
+private fun WideSideBySideHomeContent(
+    state: HomeUiState,
+    theme: CardTheme,
+    onEasterTap: () -> Unit,
+    onStamp: () -> Unit,
+    onNext: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(horizontal = NnoworkSpacing.xl)
+            .padding(top = NnoworkSpacing.md),
+    ) {
+        WideTitleRow(state, theme)
+        Spacer(Modifier.height(NnoworkSpacing.md))
+        NnoworkTwoPane(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            spacing = NnoworkSpacing.xxl,
+            showDivider = false,
+            first = {
+                // 左欄集點卡在可用高度內垂直置中，太矮時可捲動。
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val viewportHeight = maxHeight
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .heightIn(min = viewportHeight)
+                            .padding(bottom = NnoworkSpacing.md),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        StampCardBox(state = state, theme = theme, onEasterTap = onEasterTap)
+                    }
+                }
+            },
+            second = {
+                // 右欄靠上對齊、限寬 440 置中（iOS wideSecondaryColumn）。
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .readableWidth(NnoworkAdaptive.homeSecondaryMaxWidth)
+                            .padding(bottom = NnoworkSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
+                    ) {
+                        DateChip()
+                        RoundIndicator(state)
+                        HomeWideInfoPanel(state, showsRecentRecords = true)
+                        Spacer(Modifier.height(NnoworkSpacing.xs))
+                        BottomButton(state = state, theme = theme, onStamp = onStamp, onNext = onNext)
+                    }
+                }
+            },
+        )
+    }
+}
+
+/** 寬螢幕標題列：左公司標題（iOS DuoNavTitle）、右金幣（iOS DuoNavPlainItem）。 */
+@Composable
+private fun WideTitleRow(state: HomeUiState, theme: CardTheme) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = NnoworkSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val company = state.settings.companyName.ifBlank { "公司" }
+        Text(
+            "$company 離職集點卡",
+            style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(NnoworkSpacing.md))
+        CoinHud(coins = state.settings.coinCount, theme = theme)
+    }
+}
+
+/**
+ * 寬螢幕右欄的第二層資訊（iOS homeWideInfoPanel）：本張進度條、累計統計、最近 3 筆蓋章。
+ * 純顯示，只讀既有資料。
+ */
+@Composable
+private fun HomeWideInfoPanel(state: HomeUiState, showsRecentRecords: Boolean) {
+    val maxStamps = state.settings.maxStamps.coerceAtLeast(1)
+    val progress = state.currentRoundStamps.toFloat() / maxStamps
+    val recent = remember(state.stamps) { state.stamps.sortedByDescending { it.date }.take(3) }
+    val enduredDays = remember(state.stamps) {
+        state.stamps.minOfOrNull { it.date }?.let { first ->
+            ((DateUtils.startOfDay(System.currentTimeMillis()) - DateUtils.startOfDay(first)) / 86_400_000L)
+                .coerceAtLeast(0L).toInt()
+        } ?: 0
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pixelCard()
+            .padding(NnoworkSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(NnoworkSpacing.sm)
+                    .clip(RoundedCornerShape(NnoworkRadius.small))
+                    .background(NnoworkTheme.colors.disabledBG),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .clip(RoundedCornerShape(NnoworkRadius.small))
+                        .background(NnoworkTheme.colors.accent),
+                )
+            }
+            Spacer(Modifier.width(NnoworkSpacing.sm))
+            Text(
+                "${(progress * 100).toInt()}%",
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
+            WideStatTile(Icons.Filled.CheckCircle, state.stamps.size.toString(), "總蓋章數", Modifier.weight(1f))
+            WideStatTile(Icons.Filled.CalendarMonth, "$enduredDays 天", "忍耐天數", Modifier.weight(1f))
+        }
+        if (showsRecentRecords && recent.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
+                Text(
+                    "離職紀錄",
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
+                )
+                recent.forEach { record ->
+                    Row(verticalAlignment = Alignment.Top) {
+                        Text(
+                            DateUtils.format("M/d", record.date),
+                            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.secondaryText, monospace = true),
+                            modifier = Modifier.width(NnoworkSize.minTouchTarget),
+                        )
+                        Text(
+                            record.reason,
+                            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (record.isEasterEgg) {
+                            Icon(
+                                Icons.Filled.AutoAwesome,
+                                contentDescription = null,
+                                tint = NnoworkTheme.colors.warning,
+                                modifier = Modifier.size(NnoworkSize.compactIcon),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WideStatTile(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.divider, RoundedCornerShape(NnoworkRadius.small))
+            .padding(vertical = NnoworkSpacing.sm),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
+    ) {
+        Icon(icon, contentDescription = null, tint = NnoworkTheme.colors.accent, modifier = Modifier.size(NnoworkSize.compactIcon))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true), maxLines = 1)
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.SemiBold, NnoworkTheme.colors.secondaryText), maxLines = 1)
+    }
+}
+
 @Composable
 private fun CoinHud(
     coins: Int,
@@ -399,7 +641,7 @@ private fun CardCompletionDialog(
     onReceipt: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedMax by remember { mutableStateOf(10) }
+    var selectedMax by rememberSaveable { mutableStateOf(10) }
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -448,17 +690,22 @@ private fun HeaderSection(state: HomeUiState, theme: CardTheme) {
             overflow = TextOverflow.Ellipsis,
         )
         Spacer(Modifier.height(NnoworkSpacing.sm))
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(NnoworkRadius.small))
-                .background(NnoworkTheme.colors.accentSoft)
-                .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xxs),
-        ) {
-            Text(
-                DateUtils.formattedToday(),
-                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.accentForeground, monospace = true),
-            )
-        }
+        DateChip()
+    }
+}
+
+@Composable
+private fun DateChip() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(NnoworkRadius.small))
+            .background(NnoworkTheme.colors.accentSoft)
+            .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xxs),
+    ) {
+        Text(
+            DateUtils.formattedToday(),
+            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.accentForeground, monospace = true),
+        )
     }
 }
 
@@ -473,32 +720,51 @@ private fun StampCardSection(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pixelCard()
-                .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                "第 ${state.settings.currentRound} 張卡片",
-                style = pixelTextStyle(
-                    NnoworkTheme.type.subtitle,
-                    FontWeight.Bold,
-                    NnoworkTheme.colors.primaryText,
-                ),
-            )
-            Spacer(Modifier.weight(1f))
-            PixelBadge(backgroundColor = NnoworkTheme.colors.accent) {
-                Text(
-                    "${state.currentRoundStamps} / ${state.settings.maxStamps}",
-                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onAccent, monospace = true),
-                )
-            }
-        }
-
+        RoundIndicator(state)
         Spacer(Modifier.height(NnoworkSpacing.md))
+        StampCardBox(state = state, theme = theme, onEasterTap = onEasterTap)
+    }
+}
 
+/** 「第 N 張卡片｜x / y」回合列（iOS roundIndicator）。 */
+@Composable
+private fun RoundIndicator(state: HomeUiState) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pixelCard()
+            .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "第 ${state.settings.currentRound} 張卡片",
+            style = pixelTextStyle(
+                NnoworkTheme.type.subtitle,
+                FontWeight.Bold,
+                NnoworkTheme.colors.primaryText,
+            ),
+        )
+        Spacer(Modifier.weight(1f))
+        PixelBadge(backgroundColor = NnoworkTheme.colors.accent) {
+            Text(
+                "${state.currentRoundStamps} / ${state.settings.maxStamps}",
+                style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onAccent, monospace = true),
+            )
+        }
+    }
+}
+
+/** 集點卡主視覺＋集滿橫幅（iOS stampCardWithBanner）。 */
+@Composable
+private fun StampCardBox(
+    state: HomeUiState,
+    theme: CardTheme,
+    onEasterTap: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         // 卡片高度貼合格子（iOS stampCard：padding 24、格子上限 70pt），不再撐滿畫面留大片空白。
         Box(
             modifier = Modifier

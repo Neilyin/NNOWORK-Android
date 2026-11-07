@@ -24,7 +24,10 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.NNOWORK"
+            android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize">
+            <!-- 大螢幕／摺疊機：允許分割畫面、自由縮放，不鎖方向（Android 大螢幕品質指南）。
+                 不宣告 configChanges：摺疊／展開走一般重建，狀態由 rememberSaveable／ViewModel 保留。 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -70,6 +70,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import com.neilyin.nnowork.ui.adaptive.ReadableWidthContainer
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -280,50 +283,76 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
     val progress = if (plan.targetAmount <= 0.0) 0f else
         (plan.currentSaved / plan.targetAmount).coerceIn(0.0, 1.0).toFloat()
 
-    LazyColumn(
+    // 大螢幕：內容限寬置中（iOS duoReadableWidth）；手機寬度時左右內距＝page，與原本相同。
+    ReadableWidthContainer(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .padding(horizontal = NnoworkSpacing.page),
-        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
-    ) {
-        item {
-            NnoworkPageTitle("離職計畫", modifier = Modifier.padding(top = NnoworkSpacing.md))
-        }
-        item { HeaderCard() }
-        item { SalaryTimerCard(plan = plan, viewModel = viewModel) }
-        item { FundCard(plan, progress, viewModel::setTarget, viewModel::setSaved, viewModel::addFunds) }
-        item { ResumeCard(plan.hasResume, viewModel::toggleResume) }
-        item { TodoComposer(onAdd = viewModel::addTodo) }
-        items(plan.todoItems, key = { it.id }) { item ->
-            TodoRow(item, false, { viewModel.completeTodo(item) }, {}, { viewModel.deleteTodo(item) })
-        }
-        if (plan.completedTodoItems.isNotEmpty()) {
-            item { Text("已完成", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.secondaryText)) }
-            items(plan.completedTodoItems, key = { it.id }) { item ->
-                TodoRow(item, true, {}, { viewModel.restoreTodo(item) }, { viewModel.deleteTodo(item) })
-            }
-        }
-        if (plan.todoItems.isEmpty() && plan.completedTodoItems.isEmpty()) {
+            .statusBarsPadding(),
+        minPadding = NnoworkSpacing.page,
+    ) { sidePadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = sidePadding),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
+        ) {
             item {
-                Text(
-                    "還沒有待辦事項，先寫下一件能讓自由更靠近的小事。",
-                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = NnoworkSpacing.lg),
-                )
+                NnoworkPageTitle("離職計畫", modifier = Modifier.padding(top = NnoworkSpacing.md))
             }
+            item { HeaderCard() }
+            item { SalaryTimerCard(plan = plan, viewModel = viewModel) }
+            item { FundCard(plan, progress, viewModel::setTarget, viewModel::setSaved, viewModel::addFunds) }
+            item { ResumeCard(plan.hasResume, viewModel::toggleResume) }
+            item { TodoComposer(onAdd = viewModel::addTodo) }
+            items(plan.todoItems, key = { it.id }) { item ->
+                TodoRow(item, false, { viewModel.completeTodo(item) }, {}, { viewModel.deleteTodo(item) })
+            }
+            if (plan.completedTodoItems.isNotEmpty()) {
+                item { Text("已完成", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.secondaryText)) }
+                items(plan.completedTodoItems, key = { it.id }) { item ->
+                    TodoRow(item, true, {}, { viewModel.restoreTodo(item) }, { viewModel.deleteTodo(item) })
+                }
+            }
+            if (plan.todoItems.isEmpty() && plan.completedTodoItems.isEmpty()) {
+                item {
+                    Text(
+                        "還沒有待辦事項，先寫下一件能讓自由更靠近的小事。",
+                        style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = NnoworkSpacing.lg),
+                    )
+                }
+            }
+            item { Spacer(Modifier.height(NnoworkSpacing.sm)) }
         }
-        item { Spacer(Modifier.height(NnoworkSpacing.sm)) }
     }
 }
+
+/** [Shift] 的 rememberSaveable saver。 */
+private val ShiftSaver = listSaver<Shift?, Any>(
+    save = { shift ->
+        if (shift == null) emptyList()
+        else listOf(shift.id, shift.name, shift.startMinutes, shift.endMinutes, shift.colorHex, shift.icon)
+    },
+    restore = { v ->
+        if (v.size < 6) null
+        else Shift(
+            id = v[0] as String,
+            name = v[1] as String,
+            startMinutes = v[2] as Int,
+            endMinutes = v[3] as Int,
+            colorHex = v[4] as String,
+            icon = v[5] as String,
+        )
+    },
+)
 
 // ───────────────────────── 薪水計時器 §4 ─────────────────────────
 
 @Composable
 private fun SalaryTimerCard(plan: ResignationPlan, viewModel: PlanViewModel) {
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
-    var expanded by remember { mutableStateOf(!plan.isConfigured) }
+    var expanded by rememberSaveable { mutableStateOf(!plan.isConfigured) }
     val snapshot = remember(plan, now) { SalaryCalculator.snapshot(plan, now) }
     val usesManualTimer = plan.salaryPayMode == 1 &&
         HourlyTrackingMode.normalize(plan.hourlyTrackingMode) == HourlyTrackingMode.MANUAL
@@ -512,8 +541,9 @@ private fun SalaryStat(label: String, value: String, color: Color, modifier: Mod
 
 @Composable
 private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now: Long) {
-    var showAllPaydays by remember { mutableStateOf(false) }
-    var editingShift by remember { mutableStateOf<Shift?>(null) }
+    var showAllPaydays by rememberSaveable { mutableStateOf(false) }
+    // 編輯中的班別（可能是尚未存檔的新班別）整筆存進 saved state，摺疊／旋轉後對話框仍開著。
+    var editingShift by rememberSaveable(stateSaver = ShiftSaver) { mutableStateOf<Shift?>(null) }
 
     editingShift?.let { shift ->
         ShiftEditorDialog(
@@ -695,7 +725,7 @@ private fun ShiftTemplateSection(shifts: List<Shift>, onAdd: () -> Unit, onEdit:
 @Composable
 private fun ScheduleCalendar(plan: ResignationPlan, now: Long, viewModel: PlanViewModel) {
     val multiShift = plan.monthlyScheduleMode == 1 && plan.shiftUseTemplates
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
@@ -805,11 +835,11 @@ private fun androidx.compose.foundation.layout.RowScope.DayCell(
 
 @Composable
 private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shift) -> Unit, onDelete: (Shift) -> Unit) {
-    var name by remember(shift.id) { mutableStateOf(shift.name) }
-    var start by remember(shift.id) { mutableStateOf(shift.startMinutes) }
-    var end by remember(shift.id) { mutableStateOf(shift.endMinutes) }
-    var color by remember(shift.id) { mutableStateOf(shift.colorHex) }
-    var icon by remember(shift.id) { mutableStateOf(shift.icon) }
+    var name by rememberSaveable(shift.id) { mutableStateOf(shift.name) }
+    var start by rememberSaveable(shift.id) { mutableStateOf(shift.startMinutes) }
+    var end by rememberSaveable(shift.id) { mutableStateOf(shift.endMinutes) }
+    var color by rememberSaveable(shift.id) { mutableStateOf(shift.colorHex) }
+    var icon by rememberSaveable(shift.id) { mutableStateOf(shift.icon) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -867,7 +897,7 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
 
 @Composable
 private fun MoneyField(label: String, value: Double, currency: String, onCurrency: () -> Unit, onSave: (Double) -> Unit) {
-    var text by remember(value) { mutableStateOf(if (value == 0.0) "" else value.toLong().toString()) }
+    var text by rememberSaveable(value) { mutableStateOf(if (value == 0.0) "" else value.toLong().toString()) }
     Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         Row(
@@ -1038,8 +1068,8 @@ private fun ResumeCard(checked: Boolean, onToggle: () -> Unit) {
 @Composable
 private fun TodoComposer(onAdd: (String, Long?) -> Unit) {
     val context = LocalContext.current
-    var text by remember { mutableStateOf("") }
-    var reminderAt by remember { mutableStateOf<Long?>(null) }
+    var text by rememberSaveable { mutableStateOf("") }
+    var reminderAt by rememberSaveable { mutableStateOf<Long?>(null) }
 
     Column(
         modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),

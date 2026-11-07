@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.treehole
 
+import androidx.compose.foundation.layout.FlowRow
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
 import com.neilyin.nnowork.ui.theme.NnoworkField
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
@@ -119,6 +121,7 @@ data class TreeHoleFeedFilterStrings(
  * Feed 的雙軸篩選列。類型是單選 tab，行業由另一個 multi-select sheet 處理。
  * 整排可水平捲動，避免長文案或多語系擠壓 touch target。
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun TreeHoleFeedFilterBar(
     selectedMode: TreeHoleFeedMode,
@@ -129,15 +132,10 @@ fun TreeHoleFeedFilterBar(
     onClearIndustryFilter: () -> Unit,
     modifier: Modifier = Modifier,
     strings: TreeHoleFeedFilterStrings = TreeHoleFeedFilterStrings(),
+    /** true＝窄欄（雙欄的左欄）時換行排列，職業篩選鈕不會被擠到要橫捲才看得到。 */
+    wrap: Boolean = false,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.xs),
-        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    val pills: @Composable () -> Unit = {
         FeedModePill(
             label = strings.all,
             icon = Icons.AutoMirrored.Filled.List,
@@ -164,7 +162,7 @@ fun TreeHoleFeedFilterBar(
             onClick = { onModeSelected(TreeHoleFeedMode.QUESTION) },
         )
 
-        Box(
+        if (!wrap) Box(
             modifier = Modifier
                 .padding(horizontal = 3.dp)
                 .width(1.dp)
@@ -225,6 +223,24 @@ fun TreeHoleFeedFilterBar(
                 onClick = onClearIndustryFilter,
             )
         }
+    }
+    if (wrap) {
+        FlowRow(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
+        ) { pills() }
+    } else {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
+            verticalAlignment = Alignment.CenterVertically,
+        ) { pills() }
     }
 }
 
@@ -333,6 +349,8 @@ fun TreeHoleIndustryFilterSheet(
     }
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = onDismiss,
         modifier = modifier,
         shape = NnoworkSheetDefaults.shape,
@@ -482,6 +500,8 @@ fun TreeHoleIndustryPickerSheet(
     }
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = onDismiss,
         modifier = modifier,
         shape = NnoworkSheetDefaults.shape,
@@ -777,6 +797,8 @@ fun TreeHoleQuestionSheet(
     }
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = { if (!busy) onDismiss() },
         modifier = modifier,
         shape = NnoworkSheetDefaults.shape,

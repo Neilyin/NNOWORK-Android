@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.settings
 
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
 import androidx.compose.material3.HorizontalDivider
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.PixelButtonVariant
@@ -257,6 +258,8 @@ internal fun ThemePreviewSheet(
     // 預覽 sheet 直接套用被預覽主題的整套語意色，使用者看到的就是購買後的實際外觀。
     NnoworkTheme(cardTheme = theme, applySystemBars = false) {
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = { onDismiss(false, didStamp) },
         sheetState = sheetState,
         shape = NnoworkSheetDefaults.shape,

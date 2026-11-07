@@ -71,6 +71,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.ParentDataModifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import com.neilyin.nnowork.ui.adaptive.LocalNnoworkWindowInfo
+import com.neilyin.nnowork.ui.adaptive.twoPaneSplit
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -531,10 +540,13 @@ private fun SettingsContent(
     accountDeleteFailed: Boolean = false,
     onDismissAccountDeleteFailure: () -> Unit = {},
 ) {
-    var company by remember(settings.companyName) { mutableStateOf(settings.companyName) }
-    var newReason by remember { mutableStateOf("") }
-    var showReset by remember { mutableStateOf(false) }
-    var themeToPreview by remember { mutableStateOf<CardTheme?>(null) }
+    // 輸入中的公司名稱／新原因、重置確認、主題預覽都用 rememberSaveable，摺疊／展開、旋轉後不消失。
+    var company by rememberSaveable(settings.companyName) { mutableStateOf(settings.companyName) }
+    var newReason by rememberSaveable { mutableStateOf("") }
+    var showReset by rememberSaveable { mutableStateOf(false) }
+    var themeToPreviewId by rememberSaveable { mutableStateOf<Int?>(null) }
+    val themeToPreview = themeToPreviewId?.let { CardTheme.fromId(it) }
+    val twoColumns = LocalNnoworkWindowInfo.current.usesTwoColumnSettings
 
     themeToPreview?.let { theme ->
         ThemePreviewSheet(
@@ -547,7 +559,7 @@ private fun SettingsContent(
                     "theme_name" to theme.name,
                     "did_stamp" to didStamp.toString(),
                 )
-                themeToPreview = null
+                themeToPreviewId = null
             },
         )
     }
@@ -578,16 +590,20 @@ private fun SettingsContent(
         )
     }
 
-    Column(
+    // 手機：單欄（原本順序）。寬螢幕：iOS SettingsView regular 分支的左右兩欄。
+    // 兩種版面用同一個 SettingsColumns、同樣的子元件順序，只由 [settingsColumn] 決定放哪一欄，
+    // 所以切換版面時各區塊的輸入與展開狀態都保留。
+    SettingsColumns(
+        twoColumns = twoColumns,
+        spacing = NnoworkSpacing.roomy,
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(NnoworkSpacing.page),
-        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
-        NnoworkPageTitle("設定")
+        NnoworkPageTitle("設定", modifier = Modifier.settingsColumn(SettingsColumn.Header))
         ManualSection()
         AccountSection(
             state = authState,
@@ -603,6 +619,7 @@ private fun SettingsContent(
         )
         CoinSection(settings.coinCount)
         TreeHoleSafetySettingsSection(
+            modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 1),
             blockedAuthors = blockedAuthors,
             onUnblock = onUnblockTreeHoleAuthor,
         )
@@ -630,7 +647,7 @@ private fun SettingsContent(
                 onSelect = onSelectTheme,
                 onPreview = { theme ->
                     Analytics.log("theme_preview_opened", "theme_name" to theme.name)
-                    themeToPreview = theme
+                    themeToPreviewId = theme.id
                 },
             )
         }
@@ -675,7 +692,7 @@ private fun SettingsContent(
                 Spacer(Modifier.height(NnoworkSpacing.xs))
             }
         }
-        SettingsSection(icon = Icons.Filled.Timer, title = "小工具設定") {
+        SettingsSection(icon = Icons.Filled.Timer, title = "小工具設定", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 0)) {
             Text("語錄刷新頻率", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
             Spacer(Modifier.height(NnoworkSpacing.xs))
             Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs), modifier = Modifier.horizontalScroll(rememberScrollState())) {
@@ -692,15 +709,16 @@ private fun SettingsContent(
             Spacer(Modifier.height(NnoworkSpacing.xs))
             Text("注意：Android 小工具實際刷新可能受系統省電策略影響。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
-        FeedbackSection(onSubmit = onSubmitFeedback)
+        FeedbackSection(onSubmit = onSubmitFeedback, modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 2))
         BackupSection(
+            modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 3),
             state = backupUiState,
             onExport = onExportBackup,
             onPrepareImport = onPrepareBackupImport,
             onImport = onImportBackup,
             onDismissPreparedImport = onDismissPreparedBackupImport,
         )
-        SettingsSection(icon = Icons.Filled.Campaign, title = "更新與公告") {
+        SettingsSection(icon = Icons.Filled.Campaign, title = "更新與公告", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 4)) {
             Text(
                 "查看這次的資料保護更新、道歉啟事與後續說明。",
                 style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
@@ -714,7 +732,7 @@ private fun SettingsContent(
                 Text("查看本次更新", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
-        SettingsSection(icon = Icons.Filled.RestartAlt, title = "重置") {
+        SettingsSection(icon = Icons.Filled.RestartAlt, title = "重置", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 5)) {
             // 頁面上的破壞性入口用 tonal＋紅色 icon；真正的確認鈕在對話框裡才是實心紅。
             PixelButton(onClick = { showReset = true }, backgroundColor = NnoworkTheme.colors.disabledBG, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.danger)
@@ -726,7 +744,10 @@ private fun SettingsContent(
             "離職集點卡 Android ${BuildConfig.VERSION_NAME}\nMade By Neil 尼歐",
             style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = NnoworkSpacing.xs, bottom = NnoworkSpacing.md),
+            modifier = Modifier
+                .settingsColumn(SettingsColumn.Trailing, order = 6)
+                .fillMaxWidth()
+                .padding(top = NnoworkSpacing.xs, bottom = NnoworkSpacing.md),
         )
     }
 }
@@ -735,6 +756,7 @@ private fun SettingsContent(
 private fun TreeHoleSafetySettingsSection(
     blockedAuthors: List<BlockedTreeHoleAuthor>,
     onUnblock: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val supportEmail = stringResource(com.neilyin.nnowork.R.string.treehole_support_email)
@@ -742,6 +764,7 @@ private fun TreeHoleSafetySettingsSection(
     SettingsSection(
         icon = Icons.Filled.Block,
         title = stringResource(com.neilyin.nnowork.R.string.treehole_blocked_users_title),
+        modifier = modifier,
     ) {
         Text(
             stringResource(com.neilyin.nnowork.R.string.treehole_blocked_users_hint),
@@ -838,11 +861,11 @@ private fun AccountSection(
     deleteFailed: Boolean,
     onDismissDeleteFailure: () -> Unit,
 ) {
-    var showAuth by remember { mutableStateOf(false) }
-    var registerMode by remember { mutableStateOf(false) }
+    var showAuth by rememberSaveable { mutableStateOf(false) }
+    var registerMode by rememberSaveable { mutableStateOf(false) }
     // 兩段式確認（iOS）：第一段講清楚後果（含過往工作會一併刪除）並提供「先匯出備份」，第二段最終確認。
-    var confirmDelete by remember { mutableStateOf(false) }
-    var finalConfirmDelete by remember { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var finalConfirmDelete by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val exportBeforeDelete = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json"),
@@ -1063,7 +1086,8 @@ internal fun AuthDialog(
     onSubmit: (String, String) -> Unit,
     onGoogle: () -> Unit,
 ) {
-    var email by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    // 密碼刻意不存進 saved state（Bundle），重建後需重新輸入。
     var password by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = { if (!state.isProcessing) onDismiss() },
@@ -1132,8 +1156,8 @@ private val manualChapters = listOf(
 
 @Composable
 private fun ManualSection() {
-    var expanded by remember { mutableStateOf(false) }
-    var openChapter by remember { mutableStateOf(-1) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var openChapter by rememberSaveable { mutableStateOf(-1) }
     Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(22.dp))
@@ -1178,11 +1202,11 @@ private fun ManualSection() {
 }
 
 @Composable
-private fun FeedbackSection(onSubmit: (String, (String) -> Unit) -> Unit) {
-    var text by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf<String?>(null) }
+private fun FeedbackSection(onSubmit: (String, (String) -> Unit) -> Unit, modifier: Modifier = Modifier) {
+    var text by rememberSaveable { mutableStateOf("") }
+    var message by rememberSaveable { mutableStateOf<String?>(null) }
     var sending by remember { mutableStateOf(false) }
-    SettingsSection(icon = Icons.Filled.Favorite, title = "分享使用心得") {
+    SettingsSection(icon = Icons.Filled.Favorite, title = "分享使用心得", modifier = modifier) {
         Text("把對 App 的想法或建議丟給我，審核通過後會送你金幣。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         Spacer(Modifier.height(NnoworkSpacing.snug))
         NnoworkField(
@@ -1231,6 +1255,7 @@ private fun BackupSection(
     onPrepareImport: (Uri) -> Unit,
     onImport: () -> Unit,
     onDismissPreparedImport: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json"),
@@ -1287,7 +1312,7 @@ private fun BackupSection(
         )
     }
 
-    SettingsSection(icon = Icons.Filled.FileDownload, title = "資料備份與移轉") {
+    SettingsSection(icon = Icons.Filled.FileDownload, title = "資料備份與移轉", modifier = modifier) {
         Text(
             "將集點紀錄、離職計畫、薪水設定與 App 設定存成版本化 JSON 檔案。",
             style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
@@ -1390,9 +1415,10 @@ private fun CoinSection(coins: Int) {
 private fun SettingsSection(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(22.dp))
             Spacer(Modifier.size(NnoworkSpacing.xs))
@@ -1474,4 +1500,98 @@ private fun SettingsContentPreview() {
         onClearAuthMessage = {},
         onUnblockTreeHoleAuthor = {},
     )
+}
+
+/**
+ * 寬螢幕設定分兩欄時，區塊放哪一欄（iOS SettingsView：左＝帳號、公司、卡片、主題、原因；右＝小工具、安全、回饋、備份、重置、版本）。
+ * Header＝橫跨兩欄的頁面標題，兩欄都從標題下方開始。
+ */
+private enum class SettingsColumn { Header, Leading, Trailing }
+
+private data class SettingsColumnData(val column: SettingsColumn, val order: Int) : ParentDataModifier {
+    override fun Density.modifyParentData(parentData: Any?): Any = this@SettingsColumnData
+}
+
+/** 標記區塊在雙欄時的欄位與欄內順序；單欄時忽略，維持原本順序。 */
+private fun Modifier.settingsColumn(column: SettingsColumn, order: Int = 0): Modifier =
+    this.then(SettingsColumnData(column, order))
+
+/**
+ * 設定頁的欄位排版：單欄＝像 Column(spacedBy) 依序往下排（手機外觀不變）；
+ * 雙欄＝Header 橫跨頂端、未標記的放左欄、標記 Trailing 的依 order 放右欄，左右兩欄並排、一起捲動。
+ * 兩種版面共用同一棵 composition，切換版面時各區塊內的 rememberSaveable 狀態不會遺失。
+ * 分界走 [twoPaneSplit]（有摺痕時對準摺痕）。
+ */
+@Composable
+private fun SettingsColumns(
+    twoColumns: Boolean,
+    spacing: Dp,
+    modifier: Modifier = Modifier,
+    columnGap: Dp = NnoworkSpacing.xl,
+    content: @Composable () -> Unit,
+) {
+    val fold = LocalNnoworkWindowInfo.current.fold
+    var containerStart by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    Layout(
+        content = content,
+        modifier = modifier.onGloballyPositioned { coords ->
+            containerStart = with(density) { coords.positionInWindow().x.toDp() }
+        },
+    ) { measurables, constraints ->
+        val gapPx = spacing.roundToPx()
+        val itemConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+        if (!twoColumns) {
+            val placeables = measurables.map { it.measure(itemConstraints) }
+            val height = placeables.sumOf { it.height } + gapPx * (placeables.size - 1).coerceAtLeast(0)
+            return@Layout layout(constraints.maxWidth, height.coerceAtLeast(constraints.minHeight)) {
+                var y = 0
+                placeables.forEach { placeable ->
+                    placeable.placeRelative(0, y)
+                    y += placeable.height + gapPx
+                }
+            }
+        }
+        val split = twoPaneSplit(
+            containerWidth = constraints.maxWidth.toDp(),
+            containerStart = containerStart,
+            spacing = columnGap,
+            fold = fold,
+        )
+        val leadingWidth = split.leading.roundToPx()
+        val trailingX = leadingWidth + split.gap.roundToPx()
+        val trailingWidth = (constraints.maxWidth - trailingX).coerceAtLeast(0)
+        val indexed = measurables.mapIndexed { index, m -> index to m }
+        fun columnOf(m: androidx.compose.ui.layout.Measurable) =
+            (m.parentData as? SettingsColumnData)?.column ?: SettingsColumn.Leading
+        val headerPlaceables = indexed
+            .filter { columnOf(it.second) == SettingsColumn.Header }
+            .map { it.second.measure(itemConstraints) }
+        val leading = indexed.filter { columnOf(it.second) == SettingsColumn.Leading }
+        val trailing = indexed
+            .filter { (it.second.parentData as? SettingsColumnData)?.column == SettingsColumn.Trailing }
+            .sortedBy { (it.second.parentData as SettingsColumnData).order }
+        val leadingPlaceables = leading.map { it.second.measure(itemConstraints.copy(maxWidth = leadingWidth)) }
+        val trailingPlaceables = trailing.map { it.second.measure(itemConstraints.copy(maxWidth = trailingWidth)) }
+        fun columnHeight(list: List<androidx.compose.ui.layout.Placeable>) =
+            list.sumOf { it.height } + gapPx * (list.size - 1).coerceAtLeast(0)
+        val headerHeight = headerPlaceables.sumOf { it.height + gapPx }
+        val height = headerHeight + maxOf(columnHeight(leadingPlaceables), columnHeight(trailingPlaceables))
+        layout(constraints.maxWidth, height.coerceAtLeast(constraints.minHeight)) {
+            var y = 0
+            headerPlaceables.forEach { placeable ->
+                placeable.placeRelative(0, y)
+                y += placeable.height + gapPx
+            }
+            leadingPlaceables.forEach { placeable ->
+                placeable.placeRelative(0, y)
+                y += placeable.height + gapPx
+            }
+            y = headerHeight
+            trailingPlaceables.forEach { placeable ->
+                placeable.placeRelative(trailingX, y)
+                y += placeable.height + gapPx
+            }
+        }
+    }
 }

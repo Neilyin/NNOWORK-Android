@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.jobarchive
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.neilyin.nnowork.ui.adaptive.NnoworkAdaptive
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -213,8 +215,8 @@ fun JobTransitionSheet(
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val currentJob by viewModel.currentJob.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var showAuth by remember { mutableStateOf(false) }
-    var registerMode by remember { mutableStateOf(false) }
+    var showAuth by rememberSaveable { mutableStateOf(false) }
+    var registerMode by rememberSaveable { mutableStateOf(false) }
     val processing by rememberUpdatedState(state.processing)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -231,6 +233,8 @@ fun JobTransitionSheet(
     }
 
     ModalBottomSheet(
+        // 大螢幕上限寬置中（不全寬拉伸）。
+        sheetMaxWidth = NnoworkAdaptive.sheetMaxWidth,
         onDismissRequest = { if (!state.processing) close() },
         sheetState = sheetState,
         shape = NnoworkSheetDefaults.shape,

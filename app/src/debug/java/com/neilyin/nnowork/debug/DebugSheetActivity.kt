@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.neilyin.nnowork.data.jobarchive.JobArchiveCoding
@@ -70,6 +73,7 @@ class DebugSheetActivity : ComponentActivity() {
                     )
                     "comment_long" -> {
                         PageWithTitle("取暖樹洞") {}
+                        var draft by remember { mutableStateOf(DebugJobArchiveSamples.longComment) }
                         CommentsDialog(
                             post = DebugJobArchiveSamples.secondRunPost,
                             comments = listOf(
@@ -90,7 +94,8 @@ class DebugSheetActivity : ComponentActivity() {
                             onSafetyActionsPost = null,
                             onSafetyActionsComment = {},
                             onShare = null,
-                            initialDraft = DebugJobArchiveSamples.longComment,
+                            draft = draft,
+                            onDraftChange = { draft = it },
                         )
                     }
                     "transition_discard" -> {
