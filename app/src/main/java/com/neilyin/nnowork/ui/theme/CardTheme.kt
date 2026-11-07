@@ -12,13 +12,16 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.neilyin.nnowork.R
 
 /**
- * 集點卡主題。對應 iOS 版 CardTheme（rawValue 1~6）。
+ * 集點卡主題。id 與商品 ID 已寫入 iOS／Supabase 正式資料，不可重新編號或改名。
  * iOS 使用 SF Symbols，這裡映射到 Material Icons。
  */
 enum class CardTheme(val id: Int) {
@@ -27,7 +30,38 @@ enum class CardTheme(val id: Int) {
     VACATION(3),
     SAKURA(4),
     LAZY_CAT(5),
-    NOTION(6);
+    NOTION(6),
+    SUMMER(7),
+    PANDA(8),
+    SLOTH(9);
+
+    @get:StringRes
+    val titleRes: Int
+        get() = when (this) {
+            RPG -> R.string.theme_rpg_title
+            CYBERPUNK -> R.string.theme_cyberpunk_title
+            VACATION -> R.string.theme_vacation_title
+            SAKURA -> R.string.theme_sakura_title
+            LAZY_CAT -> R.string.theme_lazy_cat_title
+            NOTION -> R.string.theme_notion_title
+            SUMMER -> R.string.theme_summer_title
+            PANDA -> R.string.theme_panda_title
+            SLOTH -> R.string.theme_sloth_title
+        }
+
+    @get:StringRes
+    val descriptionRes: Int
+        get() = when (this) {
+            RPG -> R.string.theme_rpg_description
+            CYBERPUNK -> R.string.theme_cyberpunk_description
+            VACATION -> R.string.theme_vacation_description
+            SAKURA -> R.string.theme_sakura_description
+            LAZY_CAT -> R.string.theme_lazy_cat_description
+            NOTION -> R.string.theme_notion_description
+            SUMMER -> R.string.theme_summer_description
+            PANDA -> R.string.theme_panda_description
+            SLOTH -> R.string.theme_sloth_description
+        }
 
     val title: String
         get() = when (this) {
@@ -37,6 +71,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> "春日花香"
             LAZY_CAT -> "慵懶寵物"
             NOTION -> "極簡筆記"
+            SUMMER -> "夏日海風"
+            PANDA -> "厭世熊貓"
+            SLOTH -> "樹懶模式"
         }
 
     val description: String
@@ -47,6 +84,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> "讓每一個不想上班的日子，\n都開出一朵櫻花。"
             LAZY_CAT -> "就算天塌下來，\n也要先睡個午覺。"
             NOTION -> "如同一張空白的 Notion 頁面，\n用純粹的黑白極簡，\n記錄離職的每一步。"
+            SUMMER -> "把辦公室的冷氣，\n想像成海邊的風。"
+            PANDA -> "黑眼圈是與生俱來的，\n不是加班加出來的。"
+            SLOTH -> "再快也是這樣，\n再慢也是這樣。\n那就慢慢來吧。"
         }
 
     val primaryColor: Color
@@ -57,6 +97,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraPrimary
             LAZY_CAT -> PixelColors.catPrimary
             NOTION -> PixelColors.notionText
+            SUMMER -> PixelColors.summerPrimary
+            PANDA -> PixelColors.pandaPrimary
+            SLOTH -> PixelColors.slothPrimary
         }
 
     val backgroundColor: Color
@@ -67,6 +110,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraBackground
             LAZY_CAT -> PixelColors.catBackground
             NOTION -> PixelColors.notionBackground
+            SUMMER -> PixelColors.summerBackground
+            PANDA -> PixelColors.pandaBackground
+            SLOTH -> PixelColors.slothBackground
         }
 
     val accentColor: Color
@@ -77,6 +123,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraAccent
             LAZY_CAT -> PixelColors.catAccent
             NOTION -> PixelColors.notionAccent
+            SUMMER -> PixelColors.summerAccent
+            PANDA -> PixelColors.pandaAccent
+            SLOTH -> PixelColors.slothAccent
         }
 
     val stampIcon: ImageVector
@@ -87,6 +136,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> Icons.Filled.LocalFlorist
             LAZY_CAT -> Icons.Filled.Pets
             NOTION -> Icons.Filled.Check
+            SUMMER -> Icons.Filled.WbSunny
+            PANDA -> Icons.Filled.LocalFlorist
+            SLOTH -> Icons.Filled.Hotel
         }
 
     val borderColor: Color
@@ -97,6 +149,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraBorder
             LAZY_CAT -> PixelColors.catBorder
             NOTION -> PixelColors.notionBorder
+            SUMMER -> PixelColors.summerBorder
+            PANDA -> PixelColors.pandaBorder
+            SLOTH -> PixelColors.slothBorder
         }
 
     val titleColor: Color
@@ -107,6 +162,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraText
             LAZY_CAT -> PixelColors.catText
             NOTION -> PixelColors.notionText
+            SUMMER -> PixelColors.summerText
+            PANDA -> PixelColors.pandaText
+            SLOTH -> PixelColors.slothText
         }
 
     val buttonActionIcon: ImageVector
@@ -116,16 +174,24 @@ enum class CardTheme(val id: Int) {
             else -> Icons.Filled.ThumbUp
         }
 
+    /** 首頁 CTA 與蓋章輸入頁共用，避免同一動作在兩個畫面出現不同配色。 */
+    val stampActionBackgroundColor: Color get() = primaryColor
+    val stampActionContentColor: Color get() = palette.onPrimary
+
     val sheetIcon: ImageVector
         get() = when (this) {
             LAZY_CAT -> Icons.Filled.Hotel
             NOTION -> Icons.Filled.Description
+            SUMMER -> Icons.Filled.WbSunny
+            PANDA -> Icons.Filled.LocalFlorist
+            SLOTH -> Icons.Filled.Hotel
             else -> Icons.Filled.Edit
         }
 
     val sheetTitle: String
         get() = when (this) {
             LAZY_CAT -> "今天又想睡覺了？"
+            SLOTH -> "今天又想耍廢了？"
             else -> "今天又想離職了？"
         }
 
@@ -140,6 +206,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> 12.dp
             LAZY_CAT -> 16.dp
             NOTION -> 6.dp
+            SUMMER -> 14.dp
+            PANDA -> 18.dp
+            SLOTH -> 20.dp
             else -> 0.dp
         }
 
@@ -148,6 +217,9 @@ enum class CardTheme(val id: Int) {
             SAKURA -> PixelColors.sakuraStamp
             LAZY_CAT -> PixelColors.catStamp
             NOTION -> PixelColors.notionStamp
+            SUMMER -> PixelColors.summerStamp
+            PANDA -> PixelColors.pandaStamp
+            SLOTH -> PixelColors.slothStamp
             else -> PixelColors.yellow
         }
 
@@ -156,17 +228,61 @@ enum class CardTheme(val id: Int) {
             SAKURA -> colorHex("#FFDFEB")
             LAZY_CAT -> colorHex("#FFECCC")
             NOTION -> PixelColors.notionBackground
+            SUMMER -> PixelColors.summerEmptyCell
+            PANDA -> PixelColors.pandaEmptyCell
+            SLOTH -> PixelColors.slothEmptyCell
             else -> PixelColors.white
         }
 
     val requiresCoins: Boolean
-        get() = this == SAKURA || this == LAZY_CAT || this == NOTION
+        get() = id >= SAKURA.id
 
     val coinCost: Int
-        get() = if (!requiresCoins) 0 else if (this == NOTION) 15 else 10
+        get() = if (requiresCoins) 15 else 0
+
+    /** 與 iOS/Supabase 銷售統計共用的穩定商品 ID。 */
+    val shopProductId: String
+        get() = when (this) {
+            RPG -> "theme.rpg"
+            CYBERPUNK -> "theme.cyberpunk"
+            VACATION -> "theme.vacation"
+            SAKURA -> "theme.sakura"
+            LAZY_CAT -> "theme.lazy_cat"
+            NOTION -> "theme.notion"
+            SUMMER -> "theme.summer"
+            PANDA -> "theme.panda"
+            SLOTH -> "theme.sloth"
+        }
+
+    /** 熊貓／樹懶沒有 Material 對應圖示，依格子序號固定輪替去背 PNG。 */
+    @DrawableRes
+    fun stampImageResource(index: Int): Int? {
+        val variant = Math.floorMod(index, 3)
+        return when (this) {
+            PANDA -> when (variant) {
+                0 -> R.drawable.stamp_panda_1
+                1 -> R.drawable.stamp_panda_2
+                else -> R.drawable.stamp_panda_3
+            }
+            SLOTH -> when (variant) {
+                0 -> R.drawable.stamp_sloth_1
+                1 -> R.drawable.stamp_sloth_2
+                else -> R.drawable.stamp_sloth_3
+            }
+            else -> null
+        }
+    }
 
     val stampIconColor: Color
-        get() = if (this == NOTION) PixelColors.white else accentColor
+        get() = when (this) {
+            // RPG/Cyberpunk/Vacation 的已蓋章底色相近，使用各自 accent 會失去對比；
+            // 亮色印章格統一用深色 icon，Notion 黑底則反轉為白色。
+            NOTION -> PixelColors.white
+            PANDA -> PixelColors.pandaPrimary
+            SLOTH -> PixelColors.slothPrimary
+            SUMMER -> PixelColors.summerText
+            else -> PixelColors.black
+        }
 
     val emptyCellBorderOpacity: Float
         get() = if (this == NOTION) 1.0f else 0.3f
@@ -175,12 +291,31 @@ enum class CardTheme(val id: Int) {
         get() = if (this == NOTION) 0.0f else 0.8f
 
     val cardSurfaceColor: Color
-        get() = if (this == NOTION) PixelColors.notionSurface else backgroundColor
+        get() = when (this) {
+            NOTION -> PixelColors.notionSurface
+            SUMMER -> PixelColors.summerSurface
+            PANDA -> PixelColors.pandaSurface
+            SLOTH -> PixelColors.slothSurface
+            else -> backgroundColor
+        }
 
     val isLightTheme: Boolean
-        get() = this == VACATION || this == SAKURA || this == LAZY_CAT || this == NOTION
+        get() = this != RPG && this != CYBERPUNK
 
     companion object {
         fun fromId(id: Int): CardTheme = entries.firstOrNull { it.id == id } ?: RPG
     }
+}
+
+fun CardTheme.isUnlocked(unlockedStyles: Collection<Int>): Boolean =
+    !requiresCoins || id in unlockedStyles
+
+/** 只有未解鎖的付費風格需要安全退回 RPG；免費風格一律可套用到整個 App。 */
+fun CardTheme.appWideTheme(unlockedStyles: Collection<Int>): CardTheme =
+    if (isUnlocked(unlockedStyles)) this else CardTheme.RPG
+
+/** 固定傾斜角，避免畫面重組後印章抖動。 */
+fun stampTiltDegrees(index: Int): Float {
+    val steps = floatArrayOf(-11f, 7f, -4f, 12f, -8f, 3f, -13f, 9f, -6f, 5f)
+    return steps[Math.floorMod(index, steps.size)]
 }

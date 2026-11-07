@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -26,6 +27,9 @@ interface StampDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(record: StampRecordEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(records: List<StampRecordEntity>)
+
     @Update
     suspend fun update(record: StampRecordEntity)
 
@@ -34,4 +38,11 @@ interface StampDao {
 
     @Query("DELETE FROM stamp_records")
     suspend fun deleteAll()
+
+    /** 備份還原的「全刪全換」語意；中途失敗時 Room 會整筆回滾。 */
+    @Transaction
+    suspend fun replaceAll(records: List<StampRecordEntity>) {
+        deleteAll()
+        if (records.isNotEmpty()) insertAll(records)
+    }
 }

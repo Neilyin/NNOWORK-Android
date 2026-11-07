@@ -10,3 +10,9 @@
 .cxx
 local.properties
 /app/build
+
+# 簽章金鑰與密碼，絕對不要進版控
+*.jks
+*.keystore
+keystore.properties
+google-services.json

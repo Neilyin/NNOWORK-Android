@@ -5,27 +5,36 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,8 +48,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,10 +65,16 @@ import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.PixelBadge
 import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.PixelColors
+import com.neilyin.nnowork.ui.theme.NnoworkElevation
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.ThemeStampMark
+import com.neilyin.nnowork.ui.theme.palette
+import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
+import com.neilyin.nnowork.ui.theme.stampTiltDegrees
 import com.neilyin.nnowork.util.DateUtils
 import kotlinx.coroutines.delay
-import kotlin.random.Random
 
 @Composable
 fun HomeScreen(
@@ -65,11 +84,18 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = state.theme
+    val haptic = LocalHapticFeedback.current
 
     var showStampDialog by remember { mutableStateOf(false) }
     var showAnimation by remember { mutableStateOf(false) }
     var showMasterOverlay by remember { mutableStateOf(false) }
     var showCompletionDialog by remember { mutableStateOf(false) }
+    var pendingTreeHoleShare by remember { mutableStateOf<StampCreationResult?>(null) }
+    var treeHoleShareMessage by remember { mutableStateOf<String?>(null) }
+    var isTreeHoleSharing by remember { mutableStateOf(false) }
+    var easterTapCount by remember { mutableStateOf(0) }
+    var showEasterDialog by remember { mutableStateOf(false) }
+    var isEasterFlow by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -77,33 +103,43 @@ fun HomeScreen(
             .background(theme.backgroundColor),
     ) {
         // 金幣 HUD（右上角）
-        Row(
+        CoinHud(
+            coins = state.settings.coinCount,
+            theme = theme,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
                 .padding(top = 8.dp, end = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("🪙", style = pixelTextStyle(14.sp))
-            Spacer(Modifier.width(4.dp))
-            Text(
-                "${state.settings.coinCount}",
-                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.titleColor),
-            )
-        }
+        )
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .align(Alignment.TopCenter)
+                .widthIn(max = 640.dp)
+                .fillMaxWidth()
+                .fillMaxHeight()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = NnoworkSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             HeaderSection(state, theme)
-            Spacer(Modifier.weight(1f))
-            StampCardSection(state, theme)
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(16.dp))
+            StampCardSection(
+                state = state,
+                theme = theme,
+                modifier = Modifier.weight(1f),
+                onEasterTap = {
+                    if (state.hasStampedToday && !state.isCurrentCardComplete) {
+                        easterTapCount++
+                        if (easterTapCount >= 10) {
+                            easterTapCount = 0
+                            showEasterDialog = true
+                        }
+                    }
+                },
+            )
+            Spacer(Modifier.height(16.dp))
             BottomButton(
                 state = state,
                 theme = theme,
@@ -112,7 +148,7 @@ fun HomeScreen(
                     if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
                 },
             )
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(24.dp))
         }
 
         AnimatedVisibility(visible = showAnimation) {
@@ -134,13 +170,51 @@ fun HomeScreen(
         StampInputDialog(
             theme = theme,
             commonReasons = state.settings.commonReasons,
-            onDismiss = { showStampDialog = false },
+            onDismiss = {
+                showStampDialog = false
+                isEasterFlow = false
+            },
             onConfirm = { reason, addToCommon ->
                 showStampDialog = false
-                viewModel.addStamp(reason, addToCommon) { justCompleted ->
+                val onResult: (StampCreationResult) -> Unit = { result ->
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     showAnimation = true
-                    if (justCompleted) {
-                        if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
+                    pendingTreeHoleShare = result
+                    if (result.justCompleted) {
+                        if (result.roundNumber >= 3) showMasterOverlay = true else showCompletionDialog = true
+                    }
+                }
+                if (isEasterFlow) {
+                    isEasterFlow = false
+                    viewModel.addEasterEggStamp(reason, addToCommon, onResult)
+                } else {
+                    viewModel.addStamp(reason, addToCommon, onResult)
+                }
+            },
+        )
+    }
+
+    pendingTreeHoleShare?.let { stamp ->
+        TreeHoleShareDialog(
+            content = stamp.shareContent,
+            hasProfile = state.treeHoleProfile?.isComplete == true,
+            isSharing = isTreeHoleSharing,
+            message = treeHoleShareMessage,
+            onDismiss = {
+                if (!isTreeHoleSharing) {
+                    pendingTreeHoleShare = null
+                    treeHoleShareMessage = null
+                }
+            },
+            onShare = {
+                if (!isTreeHoleSharing) {
+                    isTreeHoleSharing = true
+                    viewModel.shareToTreeHole(stamp) { message ->
+                        isTreeHoleSharing = false
+                        treeHoleShareMessage = message
+                        if (message.startsWith("已")) {
+                            pendingTreeHoleShare = null
+                        }
                     }
                 }
             },
@@ -161,12 +235,125 @@ fun HomeScreen(
         )
     }
 
+    if (showEasterDialog) {
+        AlertDialog(
+            onDismissRequest = { showEasterDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("😤 看起來你很生氣", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.yellow)) },
+            text = {
+                Text(
+                    "戳這麼多下…要再多蓋一個章嗎？\n（這次不算每日上限，但也不會多給金幣）",
+                    style = pixelTextStyle(14.sp, color = PixelColors.white),
+                )
+            },
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        showEasterDialog = false
+                        isEasterFlow = true
+                        showStampDialog = true
+                    },
+                    backgroundColor = PixelColors.orange,
+                ) {
+                    Text("再蓋一個！", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                }
+            },
+            dismissButton = {
+                PixelButton(onClick = { showEasterDialog = false }, backgroundColor = PixelColors.gray) {
+                    Text("算了", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                }
+            },
+        )
+    }
+
     LaunchedEffect(showAnimation) {
         if (showAnimation) {
             delay(1000)
             showAnimation = false
         }
     }
+}
+
+@Composable
+private fun CoinHud(
+    coins: Int,
+    theme: CardTheme,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .pixelCard(
+                backgroundColor = theme.cardSurfaceColor,
+                borderColor = theme.borderColor,
+                shape = RoundedCornerShape(50),
+                elevation = NnoworkElevation.control,
+            )
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Filled.MonetizationOn,
+            contentDescription = "離職金幣",
+            tint = theme.accentColor,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(5.dp))
+        Text(
+            coins.toString(),
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = if (theme.cardSurfaceColor.luminance() > 0.5f) PixelColors.black else PixelColors.white,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun TreeHoleShareDialog(
+    content: String,
+    hasProfile: Boolean,
+    isSharing: Boolean,
+    message: String?,
+    onDismiss: () -> Unit,
+    onShare: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isSharing) onDismiss() },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("分享到取暖樹洞？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Park, null, tint = PixelColors.green, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("審核通過後會公開，並獲得離職金幣。", style = pixelTextStyle(13.sp, color = PixelColors.gray))
+                }
+                Text(content, style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.white))
+                if (!hasProfile) {
+                    Text("你還沒建立樹洞身份，先到「樹洞」分頁設定暱稱、產業與職稱。", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.yellow))
+                }
+                message?.let {
+                    Text(it, style = pixelTextStyle(13.sp, FontWeight.Bold, if (it.startsWith("已")) PixelColors.green else PixelColors.yellow))
+                }
+            }
+        },
+        confirmButton = {
+            PixelButton(
+                onClick = onShare,
+                enabled = hasProfile && !isSharing,
+                backgroundColor = if (hasProfile) PixelColors.green else PixelColors.gray,
+            ) {
+                Text(
+                    if (isSharing) "分享中…" else "分享",
+                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                )
+            }
+        },
+        dismissButton = {
+            PixelButton(onClick = onDismiss, enabled = !isSharing, backgroundColor = PixelColors.gray) {
+                Text("略過", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+            }
+        },
+    )
 }
 
 @Composable
@@ -179,7 +366,7 @@ private fun CardCompletionDialog(
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
-                .background(PixelColors.darkGray)
+                .background(MaterialTheme.colorScheme.surface)
                 .border(3.dp, PixelColors.black, RectangleShape)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -224,51 +411,70 @@ private fun HeaderSection(state: HomeUiState, theme: CardTheme) {
         Spacer(Modifier.height(12.dp))
         Box(
             modifier = Modifier
-                .background(theme.primaryColor)
-                .border(2.dp, PixelColors.black, RectangleShape)
+                .pixelCard(
+                    backgroundColor = theme.primaryColor,
+                    borderColor = PixelColors.black,
+                    shape = RoundedCornerShape(NnoworkRadius.compact),
+                    elevation = 2.dp,
+                )
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Text(
                 DateUtils.formattedToday(),
-                style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.palette.onPrimary),
             )
         }
     }
 }
 
 @Composable
-private fun StampCardSection(state: HomeUiState, theme: CardTheme) {
+private fun StampCardSection(
+    state: HomeUiState,
+    theme: CardTheme,
+    modifier: Modifier = Modifier,
+    onEasterTap: () -> Unit = {},
+) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(theme.cardSurfaceColor)
-                .border(3.dp, theme.borderColor, RectangleShape)
+                .pixelCard(
+                    backgroundColor = theme.cardSurfaceColor,
+                    borderColor = theme.borderColor,
+                    shape = RoundedCornerShape(NnoworkRadius.card),
+                    elevation = NnoworkElevation.card,
+                )
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 "第 ${state.settings.currentRound} 張卡片",
-                style = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.black),
+                style = pixelTextStyle(
+                    18.sp,
+                    FontWeight.Bold,
+                    if (theme.cardSurfaceColor.luminance() > 0.5f) PixelColors.black else PixelColors.white,
+                ),
             )
             Spacer(Modifier.weight(1f))
             PixelBadge(backgroundColor = theme.accentColor) {
                 Text(
                     "${state.currentRoundStamps} / ${state.settings.maxStamps}",
-                    style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(20.sp, FontWeight.Bold, theme.palette.onAccent),
                 )
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
+        // 卡片佔據剩餘空間，格子依空間自動縮放，整頁不需捲動。
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.75f)
+                .weight(1f)
+                .shadow(NnoworkElevation.hero, RoundedCornerShape(NnoworkRadius.hero), clip = false)
                 .clip(RoundedCornerShape(20.dp))
                 .background(theme.cardSurfaceColor)
                 .border(
@@ -276,15 +482,19 @@ private fun StampCardSection(state: HomeUiState, theme: CardTheme) {
                     theme.borderColor,
                     RoundedCornerShape(20.dp),
                 )
-                .padding(24.dp),
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onEasterTap,
+                )
+                .padding(20.dp),
             contentAlignment = Alignment.Center,
         ) {
             StampGrid(state, theme)
         }
 
-        Spacer(Modifier.height(20.dp))
-
         if (state.isCurrentCardComplete) {
+            Spacer(Modifier.height(12.dp))
             CompletionBanner(state.isMasterLevel)
         }
     }
@@ -296,27 +506,35 @@ private fun StampGrid(state: HomeUiState, theme: CardTheme) {
     val columns = if (maxStamps == 30) 6 else 5
     val rows = (maxStamps + columns - 1) / columns
     val stamped = state.currentRoundStamps
+    val gap = 8.dp
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.fillMaxWidth(),
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
-        for (r in 0 until rows) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                for (c in 0 until columns) {
-                    val index = r * columns + c
-                    if (index < maxStamps) {
-                        StampCell(
-                            index = index,
-                            isStamped = index < stamped,
-                            theme = theme,
-                            modifier = Modifier.weight(1f),
-                        )
-                    } else {
-                        Spacer(Modifier.weight(1f))
+        // 取寬高限制中較小者算出方形格子尺寸，確保整個集點卡完整顯示。
+        val cellByWidth = (maxWidth - gap * (columns - 1)) / columns
+        val cellByHeight = (maxHeight - gap * (rows - 1)) / rows
+        val cell = minOf(cellByWidth, cellByHeight)
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(gap, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            for (r in 0 until rows) {
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    for (c in 0 until columns) {
+                        val index = r * columns + c
+                        if (index < maxStamps) {
+                            StampCell(
+                                index = index,
+                                isStamped = index < stamped,
+                                theme = theme,
+                                modifier = Modifier.size(cell),
+                            )
+                        } else {
+                            Spacer(Modifier.size(cell))
+                        }
                     }
                 }
             }
@@ -329,7 +547,7 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
     val shape = if (theme.cellCornerRadius > 0.dp) RoundedCornerShape(theme.cellCornerRadius) else RectangleShape
     val fill = if (isStamped) theme.stampedCellColor else theme.emptyCellColor
     val borderOpacity = if (isStamped) theme.stampedCellBorderOpacity else theme.emptyCellBorderOpacity
-    val rotation = remember(index) { Random.nextInt(-15, 16).toFloat() }
+    val rotation = stampTiltDegrees(index)
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -339,8 +557,9 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
         contentAlignment = Alignment.Center,
     ) {
         if (isStamped) {
-            Icon(
-                theme.stampIcon,
+            ThemeStampMark(
+                theme = theme,
+                index = index,
                 contentDescription = null,
                 tint = theme.stampIconColor,
                 modifier = Modifier
@@ -350,7 +569,7 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
         } else {
             Text(
                 "${index + 1}",
-                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.borderColor.copy(alpha = 0.7f)),
+                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.palette.onContent),
             )
         }
     }
@@ -383,17 +602,22 @@ private fun BottomButton(
     onNext: () -> Unit,
 ) {
     val bg: Color
+    val contentColor: Color
     val text: String
     val icon = when {
-        state.isCurrentCardComplete -> Icons.Filled.ArrowForward
+        state.isCurrentCardComplete -> Icons.AutoMirrored.Filled.ArrowForward
         state.hasStampedToday -> Icons.Filled.Check
         else -> theme.buttonActionIcon
     }
     when {
-        state.isMasterLevel -> { bg = PixelColors.purple; text = "What's Next" }
-        state.isCurrentCardComplete -> { bg = PixelColors.orange; text = "What's Next" }
-        state.hasStampedToday -> { bg = PixelColors.gray; text = "今天已蓋章" }
-        else -> { bg = PixelColors.blue; text = "我要蓋章" }
+        state.isMasterLevel -> { bg = PixelColors.purple; contentColor = PixelColors.white; text = "What's Next" }
+        state.isCurrentCardComplete -> { bg = PixelColors.orange; contentColor = PixelColors.black; text = "What's Next" }
+        state.hasStampedToday -> { bg = PixelColors.gray; contentColor = PixelColors.black; text = "今天已蓋章" }
+        else -> {
+            bg = theme.stampActionBackgroundColor
+            contentColor = theme.stampActionContentColor
+            text = "我要蓋章"
+        }
     }
     PixelButton(
         onClick = { if (state.isCurrentCardComplete) onNext() else if (state.canStamp) onStamp() },
@@ -402,11 +626,11 @@ private fun BottomButton(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Icon(icon, contentDescription = null, tint = PixelColors.white, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
             Spacer(Modifier.width(12.dp))
-            Text(text, style = pixelTextStyle(22.sp, FontWeight.Bold, PixelColors.white))
+            Text(text, style = MaterialTheme.typography.titleLarge.copy(color = contentColor))
             Spacer(Modifier.width(12.dp))
-            Icon(icon, contentDescription = null, tint = PixelColors.white, modifier = Modifier.size(24.dp))
+            Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
         }
     }
 }
@@ -432,7 +656,13 @@ private fun StampSuccessOverlay(theme: CardTheme) {
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(theme.stampIcon, contentDescription = null, tint = theme.primaryColor, modifier = Modifier.size(50.dp))
+                ThemeStampMark(
+                    theme = theme,
+                    index = 0,
+                    contentDescription = null,
+                    tint = theme.primaryColor,
+                    modifier = Modifier.size(50.dp),
+                )
                 Text("蓋章成功", style = pixelTextStyle(16.sp, FontWeight.Bold, theme.primaryColor))
             }
         }

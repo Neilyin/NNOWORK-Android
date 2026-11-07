@@ -55,28 +55,58 @@ object PixelColors {
     val cyberpunkBackground = colorHex("#050505")
     val vacationBackground = colorHex("#FAD7A0")
 
-    // Sakura
-    val sakuraBackground = colorHex("#FFF5F8")
-    val sakuraPrimary = colorHex("#FFACCF")
-    val sakuraStamp = colorHex("#FF7597")
-    val sakuraAccent = colorHex("#FF5E8E")
-    val sakuraBorder = colorHex("#FF9CBF")
-    val sakuraText = colorHex("#8A3A4E")
+    // Sakura（低彩度底色，高對比文字）
+    val sakuraBackground = colorHex("#FFF8FA")
+    val sakuraPrimary = colorHex("#E58EAE")
+    val sakuraStamp = colorHex("#C94F79")
+    val sakuraAccent = colorHex("#B93C68")
+    val sakuraBorder = colorHex("#D9A2B5")
+    val sakuraText = colorHex("#442431")
 
-    // Lazy Cat
-    val catBackground = colorHex("#FFF9E6")
-    val catPrimary = colorHex("#FFB067")
-    val catStamp = colorHex("#FF8C42")
-    val catAccent = colorHex("#F9A826")
-    val catBorder = colorHex("#FFD099")
-    val catText = colorHex("#7A431D")
+    // Lazy Cat（暖米色底，焦糖橘互動色）
+    val catBackground = colorHex("#F8F3E8")
+    val catPrimary = colorHex("#E9A15C")
+    val catStamp = colorHex("#C96B20")
+    val catAccent = colorHex("#B85C0D")
+    val catBorder = colorHex("#D4A56F")
+    val catText = colorHex("#3F2B21")
 
     // Notion 極簡黑白
     val notionBackground = colorHex("#F7F6F3")
     val notionSurface = colorHex("#FFFFFF")
     val notionText = colorHex("#191919")
-    val notionSecondary = colorHex("#9B9A97")
+    val notionSecondary = colorHex("#5F5E5B")
     val notionBorder = colorHex("#E9E9E7")
     val notionStamp = colorHex("#191919")
     val notionAccent = colorHex("#37352F")
+
+    // Summer（水藍）
+    val summerBackground = colorHex("#EAF7FA")
+    val summerSurface = colorHex("#FFFFFF")
+    val summerPrimary = colorHex("#0E7C93")
+    val summerAccent = colorHex("#2BB3C7")
+    val summerBorder = colorHex("#BFE6EE")
+    val summerStamp = colorHex("#2BB3C7")
+    val summerText = colorHex("#0B4A57")
+    val summerEmptyCell = colorHex("#D8F0F5")
+
+    // Panda（黑白灰；用較大的圓角與 Notion 區隔）
+    val pandaBackground = colorHex("#F2F2F0")
+    val pandaSurface = colorHex("#FFFFFF")
+    val pandaPrimary = colorHex("#1C1C1C")
+    val pandaAccent = colorHex("#4A4A4A")
+    val pandaBorder = colorHex("#DCDCD8")
+    val pandaStamp = colorHex("#FFFFFF")
+    val pandaText = colorHex("#1C1C1C")
+    val pandaEmptyCell = colorHex("#E6E6E2")
+
+    // Sloth（大地色）
+    val slothBackground = colorHex("#F5EFE3")
+    val slothSurface = colorHex("#FFFBF3")
+    val slothPrimary = colorHex("#6B5B45")
+    val slothAccent = colorHex("#8FA37A")
+    val slothBorder = colorHex("#E0D5C0")
+    val slothStamp = colorHex("#FFFBF3")
+    val slothText = colorHex("#4A3F31")
+    val slothEmptyCell = colorHex("#EAE0CE")
 }

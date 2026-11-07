@@ -24,12 +24,15 @@ data class AppSettings(
 
     // 金幣系統
     val coinCount: Int = 0,
+    /** 與 iOS v2+ 備份格式對齊；金幣流水帳實作後可用於一次性遷移。 */
+    val hasMigratedToLedger: Boolean = false,
     val lastCoinEarnedDate: Long? = null,
     val lastTreeHoleShareDate: Long? = null,
     val unlockedStyles: List<Int> = listOf(1, 2, 3),
 
     // 版本通知
     val lastSeenNoticeVersion: String = "",
+    val authGuideShownForV340: Boolean = false,
 
     // 常用蓋章原因
     val commonReasons: List<String> = DEFAULT_REASONS,

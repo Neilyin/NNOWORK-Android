@@ -1,13 +1,17 @@
 package com.neilyin.nnowork.ui.theme
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
@@ -17,19 +21,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 
 /**
  * 像素／等寬字體（對應 iOS .monospaced design）。
@@ -46,17 +53,30 @@ fun pixelTextStyle(
 )
 
 /** 方角邊框（像素風格不用圓角）。 */
-fun Modifier.pixelBorder(color: Color, width: Dp = 3.dp, shape: Shape = RectangleShape): Modifier =
+fun Modifier.pixelBorder(
+    color: Color,
+    width: Dp = 2.dp,
+    shape: Shape = RoundedCornerShape(NnoworkRadius.control),
+): Modifier =
     this.border(width, color, shape)
 
 /** 像素卡片：底色 + 方角邊框。 */
+@Composable
 fun Modifier.pixelCard(
-    backgroundColor: Color = PixelColors.white,
-    borderColor: Color = PixelColors.black,
-    borderWidth: Dp = 3.dp,
-): Modifier = this
-    .background(backgroundColor)
-    .border(borderWidth, borderColor, RectangleShape)
+    backgroundColor: Color = Color.Unspecified,
+    borderColor: Color = Color.Unspecified,
+    borderWidth: Dp = 2.dp,
+    shape: Shape = RoundedCornerShape(NnoworkRadius.card),
+    elevation: Dp = NnoworkElevation.card,
+): Modifier {
+    val resolvedBackground = backgroundColor.takeOrElse { MaterialTheme.colorScheme.surfaceVariant }
+    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
+    return this
+        .shadow(elevation, shape, clip = false)
+        .clip(shape)
+        .background(resolvedBackground, shape)
+        .border(borderWidth, resolvedBorder, shape)
+}
 
 /** 集點卡格子。 */
 fun Modifier.pixelCell(
@@ -80,13 +100,17 @@ fun Modifier.pixelCell(
 fun PixelBadge(
     modifier: Modifier = Modifier,
     backgroundColor: Color = PixelColors.red,
-    borderColor: Color = PixelColors.black,
+    borderColor: Color = Color.Unspecified,
     content: @Composable () -> Unit,
 ) {
+    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
+    val shape = RoundedCornerShape(NnoworkRadius.compact)
     Box(
         modifier = modifier
-            .background(backgroundColor)
-            .border(2.dp, borderColor, RectangleShape)
+            .shadow(2.dp, shape, clip = false)
+            .clip(shape)
+            .background(backgroundColor, shape)
+            .border(2.dp, resolvedBorder, shape)
             .padding(horizontal = 12.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) { content() }
@@ -101,40 +125,54 @@ fun PixelButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     backgroundColor: Color = PixelColors.blue,
-    borderColor: Color = PixelColors.black,
+    borderColor: Color = Color.Unspecified,
     enabled: Boolean = true,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
-    content: @Composable () -> Unit,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 13.dp),
+    shape: Shape = RoundedCornerShape(NnoworkRadius.control),
+    content: @Composable RowScope.() -> Unit,
 ) {
+    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 600f),
+    val pressProgress by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = tween(NnoworkMotion.fast),
         label = "pixelButtonScale",
     )
-    val offsetPx = if (pressed) 2 else 0
 
-    Box(
+    Row(
         modifier = modifier
-            .scale(scale)
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                layout(placeable.width, placeable.height) {
-                    placeable.placeRelative(IntOffset(offsetPx, offsetPx))
-                }
+            .defaultMinSize(minHeight = NnoworkSize.minTouchTarget)
+            // 透明度圖層必須包住完整按鈕；若放在 background 之後，
+            // Compose 在 disabled -> enabled 時可能移除圖層卻沒有重畫容器色。
+            .alpha(if (enabled) 1f else 0.55f)
+            .graphicsLayer {
+                val pressedScale = 1f - (0.015f * pressProgress)
+                scaleX = pressedScale
+                scaleY = pressedScale
+                translationX = 2.dp.toPx() * pressProgress
+                translationY = 2.dp.toPx() * pressProgress
             }
-            .background(backgroundColor)
-            .border(3.dp, borderColor, RectangleShape)
+            .shadow(
+                elevation = if (pressed) 1.dp else NnoworkElevation.control,
+                shape = shape,
+                clip = false,
+            )
+            .clip(shape)
+            .background(backgroundColor, shape)
+            .border(2.dp, resolvedBorder, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
+                role = Role.Button,
                 onClick = onClick,
             )
             .padding(contentPadding),
-        contentAlignment = Alignment.Center,
-    ) { content() }
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        content = content,
+    )
 }
 
 // 便利：常用字級

@@ -1,4 +1,275 @@
 <resources>
-    <string name="app_name">離職集點卡</string>
+    <string name="app_name" translatable="false">離職集點卡</string>
     <string name="salary_widget_description">薪水計時器 — 即時看今天賺了多少</string>
+    <string name="quote_widget_description">離職語錄 — 每天給你一點厭世能量</string>
+
+    <!-- Tree hole industries. These are localized labels; API/storage values stay canonical zh-Hant. -->
+    <string name="treehole_industry_technology">科技業</string>
+    <string name="treehole_industry_finance">金融業</string>
+    <string name="treehole_industry_food_beverage">餐飲業</string>
+    <string name="treehole_industry_retail">零售業</string>
+    <string name="treehole_industry_education">教育業</string>
+    <string name="treehole_industry_healthcare">醫療業</string>
+    <string name="treehole_industry_manufacturing">製造業</string>
+    <string name="treehole_industry_media">媒體業</string>
+    <string name="treehole_industry_service">服務業</string>
+    <string name="treehole_industry_civil_service">公職</string>
+    <string name="treehole_industry_construction">營建業</string>
+    <string name="treehole_industry_logistics">物流運輸</string>
+    <string name="treehole_industry_hospitality">旅宿觀光</string>
+    <string name="treehole_industry_beauty">美容美髮</string>
+    <string name="treehole_industry_design">設計創意</string>
+    <string name="treehole_industry_legal">法律</string>
+    <string name="treehole_industry_real_estate">不動產</string>
+    <string name="treehole_industry_marketing_pr">行銷公關</string>
+    <string name="treehole_industry_insurance">保險</string>
+    <string name="treehole_industry_agriculture">農林漁牧</string>
+    <string name="treehole_industry_aviation">航空</string>
+    <string name="treehole_industry_social_work">社福社工</string>
+    <string name="treehole_industry_freelance">自由接案</string>
+    <string name="treehole_industry_other">其他</string>
+
+    <!-- Tree hole feed filters and question flow. -->
+    <string name="treehole_feed_filter_all">全部</string>
+    <string name="treehole_feed_filter_mood">心情</string>
+    <string name="treehole_feed_filter_answers">解惑</string>
+    <string name="treehole_industry_filter_all">全部職業</string>
+    <string name="treehole_industry_filter_count">%1$d 個職業</string>
+    <string name="treehole_question_tag">提問</string>
+    <string name="treehole_question_ask">我想問</string>
+    <string name="treehole_question_submitted">問題已送出，審核通過後就會出現在樹洞</string>
+    <string name="treehole_question_reply_count">%1$d 人回答</string>
+    <string name="treehole_question_waiting_for_answer">等你回答</string>
+    <string name="treehole_industry_filter_choose">選擇職業</string>
+    <string name="treehole_industry_filter_showing_all">目前顯示全部</string>
+    <string name="treehole_industry_filter_selected_count">已選 %1$d 個</string>
+    <string name="treehole_industry_filter_mine">我的職業</string>
+    <string name="treehole_industry_filter_show_all_posts">顯示全部貼文</string>
+    <string name="treehole_industry_filter_apply">套用（%1$d 個職業）</string>
+    <string name="treehole_question_sheet_title">問問大家</string>
+    <string name="treehole_question_review_notice">你的問題會經過審核後出現在樹洞</string>
+    <string name="treehole_question_quota_unknown">沒通過的問題不算額度，可以再問一次</string>
+    <string name="treehole_question_quota_exhausted">今天的提問額度用完了，明天再來</string>
+    <string name="treehole_question_quota_remaining">今天還能問 %1$d 則（沒通過的不算額度）</string>
+    <string name="treehole_question_placeholder">想問問同溫層什麼？例如：這種主管該忍多久？</string>
+    <string name="treehole_question_send">送出問題</string>
+    <string name="treehole_question_not_now">先不問</string>
+    <string name="treehole_question_error_not_joined">要先加入樹洞才能發問</string>
+    <string name="treehole_question_error_rate_limited">今天已經問了 %1$d 則，明天再來吧</string>
+    <string name="treehole_question_error_invalid_length">問題請寫 5～200 字</string>
+    <string name="treehole_question_error_send_failed">送出失敗，請稍後再試</string>
+    <string name="treehole_question_error_network">送出失敗，請檢查網路後再試</string>
+    <string name="treehole_question_share_title">來自樹洞的提問</string>
+    <string name="treehole_feed_load_more">載入更多心情</string>
+    <string name="treehole_feed_end">已經到底啦～</string>
+    <string name="treehole_question_zone_title">職場解惑區</string>
+    <string name="treehole_question_empty_all">還沒有人發問\n當第一個問的人吧</string>
+    <string name="treehole_question_empty_industry">這個行業還沒有人發問</string>
+
+    <!-- Tree hole answer badges. -->
+    <string name="treehole_answer_badge_title">解答者</string>
+    <string name="treehole_answer_badge_rookie">樹洞新人</string>
+    <string name="treehole_answer_badge_good_samaritan">熱心路人</string>
+    <string name="treehole_answer_badge_corner_regular">樹洞前輩</string>
+    <string name="treehole_answer_badge_work_strategist">職場軍師</string>
+    <string name="treehole_answer_badge_answer_master">解惑大師</string>
+    <string name="treehole_answer_badge_exp_summary">%1$d EXP · %2$s 個有用解答</string>
+    <string name="treehole_answer_badge_next_exp">再 %1$d EXP 成為「%2$s」</string>
+    <string name="treehole_answer_badge_max">已經是最高級了，謝謝你一直在回答</string>
+
+    <!-- Comments, helpful answers, and new-answer activity. -->
+    <string name="treehole_comments_title">樹洞回聲</string>
+    <string name="treehole_comments_empty">還沒有通過審核的留言。</string>
+    <string name="treehole_comment_placeholder">回一點溫暖…</string>
+    <string name="treehole_comment_count">%1$d / 50</string>
+    <string name="treehole_comment_send">送出留言</string>
+    <string name="treehole_comment_sending">送出中…</string>
+    <string name="treehole_comment_submitted">留言已送出，審核通過後會顯示。</string>
+    <string name="treehole_helpful_tag">有用解答</string>
+    <string name="treehole_helpful_mark">標記為有用解答</string>
+    <string name="treehole_helpful_unmark">取消有用解答</string>
+    <string name="treehole_helpful_updating">更新中…</string>
+    <string name="treehole_helpful_updated">已更新有用解答。</string>
+    <string name="treehole_helpful_error">無法更新有用解答，請稍後再試。</string>
+    <string name="treehole_new_answers_title">你的問題有 %1$d 則新回答</string>
+    <string name="treehole_new_answers_hint">覺得有幫助的話，記得幫他標記</string>
+    <string name="treehole_new_answers_open">查看新回答</string>
+    <string name="treehole_new_answers_error">無法開啟新回答，請重新整理後再試。</string>
+
+    <!-- Public posts by author (db/025 author_key). -->
+    <string name="treehole_author_view_posts">查看這個人的貼文</string>
+    <string name="treehole_author_posts_title">這個人的公開貼文</string>
+    <string name="treehole_author_posts_close">關閉作者貼文</string>
+    <string name="treehole_author_stat_posts">公開分享</string>
+    <string name="treehole_author_stat_reactions">收到共鳴</string>
+    <string name="treehole_author_stat_questions">職場解惑</string>
+    <string name="treehole_author_loading">正在載入公開貼文…</string>
+    <string name="treehole_author_empty">還沒有公開的分享</string>
+    <string name="treehole_author_load_failed">無法載入這個人的貼文。</string>
+    <string name="treehole_author_retry">重新載入</string>
+    <string name="treehole_author_open_post">查看貼文與留言</string>
+    <string name="treehole_author_fallback_industry">職場倖存者</string>
+    <string name="treehole_reaction_like">按讚</string>
+    <string name="treehole_reaction_cheer">加油</string>
+    <string name="treehole_reaction_cry">難過</string>
+    <string name="treehole_profile_nickname_synced">身份已儲存，並更新 %1$d 則舊貼文與留言的暱稱。</string>
+
+    <!-- Tree hole shared actions and accessibility labels. -->
+    <string name="treehole_title">取暖樹洞</string>
+    <string name="treehole_common_loading">載入中…</string>
+    <string name="treehole_action_apply">套用</string>
+    <string name="treehole_action_cancel">取消</string>
+    <string name="treehole_action_close">關閉</string>
+    <string name="treehole_action_delete">刪除</string>
+    <string name="treehole_action_edit">編輯</string>
+    <string name="treehole_action_refresh">重新整理</string>
+
+    <!-- Feed state and industry-filter accessibility. -->
+    <string name="treehole_feed_open_industry_filter">開啟職業篩選</string>
+    <string name="treehole_feed_clear_industry_filter">清除職業篩選</string>
+    <string name="treehole_feed_industry_selected">已選擇 %1$s</string>
+    <string name="treehole_feed_industry_unselected">未選擇 %1$s</string>
+    <string name="treehole_feed_loading">正在載入貼文…</string>
+    <string name="treehole_feed_load_error">貼文載入失敗，請稍後再試</string>
+
+    <!-- Question editor. -->
+    <string name="treehole_question_close">關閉提問視窗</string>
+    <string name="treehole_question_editor_label">你的問題</string>
+    <string name="treehole_question_submitting">送出中…</string>
+    <string name="treehole_question_avatar_suffix">的頭像</string>
+
+    <!-- Tree hole profile. -->
+    <string name="treehole_profile_title">樹洞身份</string>
+    <string name="treehole_profile_setup_title">先設定樹洞身份</string>
+    <string name="treehole_profile_edit_title">編輯樹洞身份</string>
+    <string name="treehole_profile_help">身份會保存在這台裝置，並同步到取暖樹洞，用於發文、提問與管理你的內容。</string>
+    <string name="treehole_coin_sync">同步金幣</string>
+    <string name="treehole_profile_nickname_label">暱稱</string>
+    <string name="treehole_profile_nickname_placeholder">例如：快下班的小 N</string>
+    <string name="treehole_profile_role_label">職稱</string>
+    <string name="treehole_profile_role_placeholder">例如：工程師、設計師、店員</string>
+    <string name="treehole_profile_industry_label">產業</string>
+    <string name="treehole_profile_company_label">公司名稱（選填）</string>
+    <string name="treehole_profile_company_placeholder">不想填也可以</string>
+    <string name="treehole_profile_show_company">發文時顯示公司名稱</string>
+    <string name="treehole_profile_join">加入樹洞</string>
+    <string name="treehole_profile_save">儲存身份</string>
+
+    <!-- My Tree Hole. -->
+    <string name="treehole_mine_title">我的樹洞</string>
+    <string name="treehole_mine_posts">我的貼文</string>
+    <string name="treehole_mine_comments">我的留言</string>
+    <string name="treehole_mine_status_all">全部</string>
+    <string name="treehole_mine_status_pending">審核中</string>
+    <string name="treehole_mine_status_approved">已通過</string>
+    <string name="treehole_mine_status_rejected">未通過</string>
+    <string name="treehole_mine_post_count">貼文：%1$d 則</string>
+    <string name="treehole_mine_comment_count">留言：%1$d 則</string>
+    <string name="treehole_mine_date">日期：%1$s</string>
+    <string name="treehole_mine_empty_posts">還沒有貼文</string>
+    <string name="treehole_mine_empty_comments">還沒有留言</string>
+    <string name="treehole_mine_delete_post_title">刪除這則貼文？</string>
+    <string name="treehole_mine_delete_post_body">刪除後無法復原，也不會再出現在樹洞。</string>
+    <string name="treehole_mine_delete_comment_title">刪除這則留言？</string>
+    <string name="treehole_mine_delete_comment_body">刪除後無法復原。</string>
+    <string name="treehole_mine_delete_success">已刪除</string>
+
+    <!-- Past-post industry synchronization. -->
+    <string name="treehole_industry_sync_title">更新過去貼文的職業</string>
+    <string name="treehole_industry_sync_unset_title">要更新未分類的貼文嗎？</string>
+    <string name="treehole_industry_sync_unset_body">有 %1$d 則過去貼文仍標為「其他」或未分類，要更新成「%2$s」嗎？</string>
+    <string name="treehole_industry_sync_mismatch_title">有貼文使用不同的具體職業</string>
+    <string name="treehole_industry_sync_mismatch_body">有 %1$d 則過去貼文使用另一個具體職業，可能是換工作的紀錄。也要更新成「%2$s」嗎？</string>
+    <string name="treehole_industry_sync_action_update_unset">更新未分類貼文</string>
+    <string name="treehole_industry_sync_action_update_all">全部一起更新</string>
+    <string name="treehole_industry_sync_action_keep_mismatched">保留不同職業</string>
+    <string name="treehole_industry_sync_decline">先不要</string>
+    <string name="treehole_industry_sync_success">已將 %1$d 則貼文更新為「%2$s」</string>
+    <string name="treehole_industry_sync_error">無法更新過去貼文，請稍後再試</string>
+
+    <!-- Theme shop and isolated preview. -->
+    <string name="theme_shop_title">主題商店</string>
+    <string name="theme_shop_count">%1$d 款主題</string>
+    <string name="theme_shop_expand">展開</string>
+    <string name="theme_shop_collapse">收合</string>
+    <string name="theme_shop_hint">點未解鎖的主題可先預覽配色與印章。</string>
+    <string name="theme_rpg_title">經典 RPG</string>
+    <string name="theme_cyberpunk_title">系統錯誤</string>
+    <string name="theme_vacation_title">度假模式</string>
+    <string name="theme_sakura_title">春日花香</string>
+    <string name="theme_lazy_cat_title">慵懶寵物</string>
+    <string name="theme_notion_title">極簡筆記</string>
+    <string name="theme_summer_title">夏日海風</string>
+    <string name="theme_panda_title">厭世熊貓</string>
+    <string name="theme_sloth_title">樹懶模式</string>
+    <string name="theme_rpg_description">把職場當作一場冒險遊戲，\n用像素劍斬斷社畜命運！</string>
+    <string name="theme_cyberpunk_description">覺醒的駭客，\n打破這個名為公司的矩陣。</string>
+    <string name="theme_vacation_description">心已經飛去海島退休了，\n只差肉體還在這裡。</string>
+    <string name="theme_sakura_description">讓每一個不想上班的日子，\n都開出一朵櫻花。</string>
+    <string name="theme_lazy_cat_description">就算天塌下來，\n也要先睡個午覺。</string>
+    <string name="theme_notion_description">如同一張空白的 Notion 頁面，\n用純粹的黑白極簡，\n記錄離職的每一步。</string>
+    <string name="theme_summer_description">把辦公室的冷氣，\n想像成海邊的風。</string>
+    <string name="theme_panda_description">黑眼圈是與生俱來的，\n不是加班加出來的。</string>
+    <string name="theme_sloth_description">再快也是這樣，\n再慢也是這樣。\n那就慢慢來吧。</string>
+    <string name="theme_state_using">使用中</string>
+    <string name="theme_state_available">可套用</string>
+    <string name="theme_state_locked">尚未解鎖，%1$d 金幣</string>
+    <string name="theme_preview_badge">預覽</string>
+    <string name="theme_preview_hint">以下是這個主題的配色與印章範例，畫面內容為示意。</string>
+    <string name="theme_preview_sample">範例畫面</string>
+    <string name="theme_preview_card_title">離職集點卡</string>
+    <string name="theme_preview_post">今天又想離職了</string>
+    <string name="theme_preview_time">3 分鐘前</string>
+    <string name="theme_preview_add_stamp">蓋一個章</string>
+    <string name="theme_preview_full">已經蓋滿了</string>
+    <string name="theme_preview_buy">購買（%1$d 金幣）</string>
+    <string name="theme_preview_balance">目前持有 %1$d 枚金幣</string>
+    <string name="theme_preview_insufficient">金幣不足，目前持有 %1$d 枚</string>
+    <string name="theme_preview_close">關閉預覽</string>
+    <string name="theme_preview_open">預覽%1$s</string>
+
+    <!-- UGC safety, reporting, blocking, and support. -->
+    <string name="treehole_safety_more_actions">檢舉或封鎖</string>
+    <string name="treehole_safety_title">回報不當內容或行為</string>
+    <string name="treehole_report_post">檢舉這則貼文</string>
+    <string name="treehole_report_comment">檢舉這則留言</string>
+    <string name="treehole_block_author">封鎖這個人</string>
+    <string name="treehole_block_unavailable">這則舊內容暫時無法封鎖</string>
+    <string name="treehole_report_post_title">你要檢舉這則貼文</string>
+    <string name="treehole_report_comment_title">你要檢舉這則留言</string>
+    <string name="treehole_report_reason">檢舉原因</string>
+    <string name="treehole_report_note">補充說明（選填）</string>
+    <string name="treehole_report_note_placeholder">最多 200 字</string>
+    <string name="treehole_report_note_count">%1$d / 200</string>
+    <string name="treehole_report_also_block">同時封鎖這個人</string>
+    <string name="treehole_report_review_24h">我們會在 24 小時內審視你的檢舉</string>
+    <string name="treehole_report_submit">送出檢舉</string>
+    <string name="treehole_report_submitting">送出中…</string>
+    <string name="treehole_report_cancel">先不檢舉</string>
+    <string name="treehole_report_reason_offensive">冒犯、仇恨或色情內容</string>
+    <string name="treehole_report_reason_harassment">騷擾、霸凌或威脅</string>
+    <string name="treehole_report_reason_privacy">洩露隱私或個人資料</string>
+    <string name="treehole_report_reason_spam">垃圾訊息或重複內容</string>
+    <string name="treehole_report_reason_illegal">非法內容</string>
+    <string name="treehole_report_reason_other">其他</string>
+    <string name="treehole_block_confirm_title">封鎖這個人？</string>
+    <string name="treehole_block_confirm_body">封鎖「%1$s」後，你不會再看到這個人的貼文與留言。對方不會收到通知。</string>
+    <string name="treehole_blocked_success">已封鎖這個人</string>
+    <string name="treehole_report_success">檢舉已送出，我們會在 24 小時內審視</string>
+    <string name="treehole_report_and_block_success">檢舉已送出，並已封鎖這個人</string>
+    <string name="treehole_report_rate_limited">今天的檢舉次數已達上限，請稍後再試</string>
+    <string name="treehole_report_not_found">這則內容已不存在</string>
+    <string name="treehole_report_failed">檢舉送出失敗，請稍後再試</string>
+    <string name="treehole_author_banned">這個樹洞身份已被停權，無法發表內容</string>
+    <string name="treehole_comment_rate_limited">留言太快了，請稍後再試</string>
+    <string name="treehole_comment_invalid_length">留言需為 1–50 字</string>
+    <string name="treehole_blocked_users_title">已封鎖的使用者</string>
+    <string name="treehole_blocked_users_empty">目前沒有封鎖任何人</string>
+    <string name="treehole_blocked_users_hint">封鎖後，對方的貼文與留言會從這台裝置隱藏。</string>
+    <string name="treehole_blocked_users_notice">解除封鎖後，內容會在下次重新載入時出現。</string>
+    <string name="treehole_unblock">解除封鎖</string>
+    <string name="treehole_support_title">聯絡我們</string>
+    <string name="treehole_support_body">如果你遇到檳急的安全問題，可以直接寄信聯絡我們。</string>
+    <string name="treehole_support_email" translatable="false">hi.iamneil.yin@gmail.com</string>
+    <string name="treehole_support_email_action">寄信給客服</string>
 </resources>
