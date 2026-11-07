@@ -103,10 +103,13 @@ object YearReviewSource {
                         parseIso(stamp.date)?.let { YearReviewStamp(it, stamp.reason, stamp.isEasterEgg) }
                     }
                 }
-            val archiveSnapshots = archives.mapNotNull { (entity, payload) ->
+            val archiveSnapshots = archives.map { (entity, payload) ->
                 val receipt = payload.receipt
-                val completion = parseIso(receipt.completionDate) ?: return@mapNotNull null
-                val issued = parseIso(receipt.issuedAt) ?: return@mapNotNull null
+                val parsedCompletion = parseIso(receipt.completionDate)
+                val parsedIssued = parseIso(receipt.issuedAt)
+                // iOS 備援收據：日期解析不了時 completion＝issued＝endDate（判成沒集滿，保守），封存仍算進換工作。
+                val completion = if (parsedCompletion != null && parsedIssued != null) parsedCompletion else entity.endDate
+                val issued = if (parsedCompletion != null && parsedIssued != null) parsedIssued else entity.endDate
                 val isMaster = receipt.kind == JobReceiptSnapshot.KIND_MASTER
                 YearReviewArchiveSnapshot(
                     endDate = entity.endDate,

@@ -51,7 +51,8 @@ import com.neilyin.nnowork.ui.theme.pixelTextStyle
 @Composable
 fun YearReviewSettingsSection(cardTheme: CardTheme, modifier: Modifier = Modifier) {
     val flags by YearReviewPrefs.flags.collectAsStateWithLifecycle()
-    val today = remember { YearReviewWindow.today() }
+    // 不 remember：App 開著跨過 12/10 或 2/1 時，下次重組（例如回到設定頁）入口就會跟著出現／消失。
+    val today = YearReviewWindow.today()
     val year = YearReviewWindow.availableYear(today, flags.earlyAccess)
     var openYear by rememberSaveable { mutableStateOf<Int?>(null) }
     if (year == null && !BuildConfig.DEBUG) return

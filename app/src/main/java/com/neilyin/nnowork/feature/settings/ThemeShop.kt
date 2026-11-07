@@ -75,6 +75,7 @@ import com.neilyin.nnowork.ui.theme.ThemeStampMark
 import com.neilyin.nnowork.ui.theme.isUnlocked
 import com.neilyin.nnowork.ui.theme.palette
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
+import com.neilyin.nnowork.ui.theme.appWideTheme
 import com.neilyin.nnowork.ui.theme.stampTiltDegrees
 
 @Composable
@@ -127,7 +128,7 @@ internal fun ThemeShopGrid(
                         val unlocked = theme.isUnlocked(unlockedStyles)
                         ThemeShopTile(
                             theme = theme,
-                            selected = selectedThemeId == theme.id,
+                            selected = CardTheme.fromId(selectedThemeId).appWideTheme(unlockedStyles) == theme,
                             unlocked = unlocked,
                             onClick = { if (unlocked) onSelect(theme) else onPreview(theme) },
                             modifier = Modifier.weight(1f),
