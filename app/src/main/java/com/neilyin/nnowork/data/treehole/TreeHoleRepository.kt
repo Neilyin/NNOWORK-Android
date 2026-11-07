@@ -288,6 +288,29 @@ class TreeHoleRepository(
         )
     }
 
+    /**
+     * 年度回顧用（iOS fetchMyPostsForReview）：同一條「我的資料」路由，但只讀自己的資料，
+     * 不擋條款版本；失敗照實拋出，由呼叫端決定略過該頁。
+     */
+    suspend fun fetchMyPostsForReview(): List<TreeHolePost> {
+        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
+        return withV2Fallback(
+            v2 = { authorization -> api.getMyPostsV2(authorization, request) },
+            v1 = { authorization -> api.getMyPosts(authorization, request) },
+            mode = V2FallbackMode.USER_SCOPED_READ,
+        )
+    }
+
+    /** 年度回顧用（iOS fetchMyCommentsForReview）。 */
+    suspend fun fetchMyCommentsForReview(): List<MyTreeHoleComment> {
+        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
+        return withV2Fallback(
+            v2 = { authorization -> api.getMyCommentsV2(authorization, request) },
+            v1 = { authorization -> api.getMyComments(authorization, request) },
+            mode = V2FallbackMode.USER_SCOPED_READ,
+        )
+    }
+
     suspend fun fetchPostsByAuthor(authorKey: String, limit: Int = 200): List<TreeHolePost> =
         withTermsAccess {
             val normalizedKey = authorKey.trim().lowercase()
@@ -440,10 +463,15 @@ class TreeHoleRepository(
         )
     }
 
-    suspend fun fetchMyAnswerStats(): TreeHoleAnswerStats = withTermsAccess {
+    suspend fun fetchMyAnswerStats(): TreeHoleAnswerStats = withTermsAccess { fetchMyAnswerStatsUnchecked() }
+
+    /** 年度回顧用：同 [fetchMyAnswerStats]，不擋條款版本（只讀自己的累積值）。 */
+    suspend fun fetchMyAnswerStatsForReview(): TreeHoleAnswerStats = fetchMyAnswerStatsUnchecked()
+
+    private suspend fun fetchMyAnswerStatsUnchecked(): TreeHoleAnswerStats {
         val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
         val response = tokenCaller.call { authorization -> api.getMyAnswerStats(authorization, request) }
-        TreeHoleAnswerStats(
+        return TreeHoleAnswerStats(
             answerCount = response.answerCount.coerceAtLeast(0),
             helpfulCount = response.helpfulCount.coerceAtLeast(0),
             exp = response.exp.coerceAtLeast(0),

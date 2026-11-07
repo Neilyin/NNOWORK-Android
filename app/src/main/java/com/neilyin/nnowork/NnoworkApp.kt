@@ -27,6 +27,10 @@ class NnoworkApp : Application() {
     override fun onCreate() {
         super.onCreate()
         ServiceLocator.init(this)
+        // 年度回顧（§22）：本機測試開關／邀請卡紀錄，以及原因關鍵字的 ICU 字典斷詞。
+        com.neilyin.nnowork.feature.yearreview.YearReviewPrefs.init(this)
+        com.neilyin.nnowork.feature.yearreview.YearReviewReasonAnalyzer.tokenizer =
+            com.neilyin.nnowork.feature.yearreview.YearReviewIcuTokenizer
         Notifications.ensureChannels(this)
         Analytics.init(this)
 

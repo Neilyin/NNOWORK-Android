@@ -502,4 +502,192 @@
     <string name="manual_close_desc">關閉使用手冊</string>
     <string name="settings_rate_open_desc">前往 Google Play</string>
     <!-- END phase5 -->
+    <!-- Year in Review (android開發.md §22; translations from iOS Localizable.strings) -->
+    <string name="yr_feature_name">年度回顧</string>
+    <string name="yr_year_in_review">%1$d 年度回顧</string>
+    <string name="yr_limited_time">限時開放</string>
+    <string name="yr_settings_subtitle">回顧這一年的離職冒險，還能存成限動分享</string>
+    <string name="yr_journey">你的離職之旅</string>
+    <string name="yr_greeting_named">冒險者 %1$s，</string>
+    <string name="yr_greeting_anonymous">無名的冒險者，</string>
+    <string name="yr_greeting_body">這一年辛苦了。\n來看看你的離職冒險紀錄吧！</string>
+    <string name="yr_tap_hint">點右側看下一頁</string>
+    <string name="yr_stamp_count_lead">今年你蓋了</string>
+    <string name="yr_stamp_none_headline">這一年，一次都沒想離職？</string>
+    <string name="yr_stamp_one_headline">一整年只想離職這一次</string>
+    <string name="yr_stamp_every_n_days">平均每 %1$d 天就想離職一次</string>
+    <string name="yr_stamp_n_per_day">平均一天想離職 %1$d 次</string>
+    <string name="yr_stamp_almost_daily">幾乎每天都想離職一次</string>
+    <string name="yr_stamp_flavor_0">不是工作太順心，就是忙到沒空想。明年記得常來蓋章！</string>
+    <string name="yr_stamp_flavor_1">這份忍耐力，根本是職場聖人。</string>
+    <string name="yr_stamp_flavor_2">偶爾想走，大致還撐得住。</string>
+    <string name="yr_stamp_flavor_10">離職的念頭，固定來報到。</string>
+    <string name="yr_stamp_flavor_50">這不是想離職，是在練離職。</string>
+    <string name="yr_stamp_flavor_150">印章都快被你蓋到沒墨水了。</string>
+    <string name="yr_share_page">分享這一頁</string>
+    <string name="yr_share_no_company">分享圖不含公司名稱</string>
+    <string name="yr_page_position">第 %1$d 頁，共 %2$d 頁</string>
+    <string name="yr_previous_page">上一頁</string>
+    <string name="yr_next_page">下一頁</string>
+    <string name="yr_hour_night">凌晨 %1$d 點</string>
+    <string name="yr_hour_morning">早上 %1$d 點</string>
+    <string name="yr_hour_noon">中午 %1$d 點</string>
+    <string name="yr_hour_afternoon">下午 %1$d 點</string>
+    <string name="yr_hour_evening">晚上 %1$d 點</string>
+    <string name="yr_slot_type_early_morning">清晨厭世型</string>
+    <string name="yr_slot_type_work_morning">上班崩潰型</string>
+    <string name="yr_slot_type_afternoon">午後放空型</string>
+    <string name="yr_slot_type_evening">下班後怨念型</string>
+    <string name="yr_slot_type_late_night">深夜崩潰型</string>
+    <string name="yr_title_lite_zero">職場和平使者</string>
+    <string name="yr_title_lite_few">佛系上班族</string>
+    <string name="yr_title_format">%1$s%2$s的%3$s</string>
+    <string name="yr_title_desc_zero">一整年都沒蓋章，你是職場裡難得的一股清流。</string>
+    <string name="yr_title_desc_few">離職的念頭偶爾路過，你總能淡定地讓它走。</string>
+    <string name="yr_title_desc_full">依你最崩潰的星期、時段與蓋章次數頒發</string>
+    <string name="yr_title_weekday_sun">週日</string>
+    <string name="yr_title_weekday_mon">週一</string>
+    <string name="yr_title_weekday_tue">週二</string>
+    <string name="yr_title_weekday_wed">週三</string>
+    <string name="yr_title_weekday_thu">週四</string>
+    <string name="yr_title_weekday_fri">週五</string>
+    <string name="yr_title_weekday_sat">週六</string>
+    <string name="yr_title_slot_dawn">清晨</string>
+    <string name="yr_title_slot_morning">早上</string>
+    <string name="yr_title_slot_afternoon">午後</string>
+    <string name="yr_title_slot_evening">下班後</string>
+    <string name="yr_title_slot_night">深夜</string>
+    <string name="yr_rank_apprentice">忍耐見習生</string>
+    <string name="yr_rank_warrior">忍耐戰士</string>
+    <string name="yr_rank_knight">崩潰騎士</string>
+    <string name="yr_rank_overlord">離職魔王</string>
+    <string name="yr_reasons_header">你最常因為這些想離職</string>
+    <string name="yr_reasons_rank">第 %1$d 名</string>
+    <string name="yr_reason_flavor_boss">老闆的話，今年你聽得太多了。</string>
+    <string name="yr_reason_flavor_meeting">會議很多，結論很少。</string>
+    <string name="yr_reason_flavor_requirements">需求改了又改，你的耐心也是。</string>
+    <string name="yr_reason_flavor_coworker">隊友有時候比魔王還難打。</string>
+    <string name="yr_reason_flavor_overtime">你的時間很值錢，只是公司不這麼想。</string>
+    <string name="yr_reason_flavor_mood">不需要理由，不想上班就是不想上班。</string>
+    <string name="yr_reason_flavor_custom">這個理由，只有你最懂。</string>
+    <string name="yr_time_header">你最想離職的時刻</string>
+    <string name="yr_time_peak_hour">你最常在%1$s想離職</string>
+    <string name="yr_time_flavor_early_morning">還沒進公司，就已經想走了。</string>
+    <string name="yr_time_flavor_work_morning">打卡的那一刻，靈魂就想下班。</string>
+    <string name="yr_time_flavor_afternoon">吃飽之後，離職的念頭最清醒。</string>
+    <string name="yr_time_flavor_evening">人下班了，怨念還在加班。</string>
+    <string name="yr_time_flavor_late_night">夜深人靜，最適合規劃離職。</string>
+    <string name="yr_weekday_header">最崩潰的日子</string>
+    <string name="yr_weekday_nemesis">%1$s是你的天敵</string>
+    <string name="yr_weekday_peak_month">%1$s是你最想離職的月份</string>
+    <string name="yr_weekday_flavor_monday">週一症候群，確診。</string>
+    <string name="yr_weekday_flavor_friday">都撐到週五了，還是想走。</string>
+    <string name="yr_weekday_flavor_weekend">放假也想到工作，辛苦你了。</string>
+    <string name="yr_weekday_flavor_midweek">週間的崩潰，從不缺席。</string>
+    <string name="yr_streak_header">最長連續蓋章</string>
+    <string name="yr_streak_unit">天連續想離職</string>
+    <string name="yr_date_range">%1$s – %2$s</string>
+    <string name="yr_streak_flavor_short">連續幾天都想走，人之常情。</string>
+    <string name="yr_streak_flavor_week">差一點就整整一週天天想離職。</string>
+    <string name="yr_streak_flavor_marathon">連續一週以上，這是離職馬拉松。</string>
+    <string name="yr_streak_flavor_habit">這已經不是情緒，是生活習慣了。</string>
+    <string name="yr_cards_completed">集滿卡片</string>
+    <string name="yr_cards_count">%1$d 張</string>
+    <string name="yr_cards_master">忍耐大師</string>
+    <string name="yr_cards_master_value">達成！</string>
+    <string name="yr_cards_jobs">換了工作</string>
+    <string name="yr_cards_header">今年的集章成果</string>
+    <string name="yr_cards_flavor_master">連集三張還沒走，你就是傳說中的忍耐大師。</string>
+    <string name="yr_cards_flavor_jobs">勇敢換了跑道，新的篇章已經開始。</string>
+    <string name="yr_cards_flavor_default">每集滿一張，都是一次勇氣的累積。</string>
+    <string name="yr_jobs_count">%1$d 份</string>
+    <string name="yr_savings_header">自由預備金</string>
+    <string name="yr_savings_subtitle">離職存款目前進度</string>
+    <string name="yr_savings_amounts">%1$s / %2$s</string>
+    <string name="yr_savings_flavor_done">目標達成！自由隨時可以出發。</string>
+    <string name="yr_savings_flavor_half">過半了，自由已經看得到。</string>
+    <string name="yr_savings_flavor_start">每一塊錢，都是離職的底氣。</string>
+    <string name="yr_treehole_loading">正在讀取樹洞紀錄…</string>
+    <string name="yr_treehole_header">今年在取暖樹洞</string>
+    <string name="yr_treehole_posts">發了心聲</string>
+    <string name="yr_treehole_questions">提了問題</string>
+    <string name="yr_treehole_comments">留了言</string>
+    <string name="yr_treehole_reactions">收到回應</string>
+    <string name="yr_treehole_flavor">在這裡說出口的，都有人接住。</string>
+    <string name="yr_treehole_exp">目前累積 %1$s EXP</string>
+    <string name="yr_coins_header">今年賺到的金幣</string>
+    <string name="yr_coins_themes">今年解鎖的主題</string>
+    <string name="yr_coins_flavor_none">存著不花，也是一種理財。</string>
+    <string name="yr_coins_flavor_spent">辛苦換來的金幣，就該花在讓自己開心的地方。</string>
+    <string name="yr_title_header">年度稱號</string>
+    <string name="yr_title_earned">獲得稱號！</string>
+    <string name="yr_summary_total">蓋章總數</string>
+    <string name="yr_summary_top_reason">最常的原因</string>
+    <string name="yr_summary_slot">離職時段</string>
+    <string name="yr_summary_streak">最長連續</string>
+    <string name="yr_summary_streak_value">連續 %1$d 天</string>
+    <string name="yr_summary_exp">樹洞 EXP（累積）</string>
+    <string name="yr_summary_greeting_named">冒險者 %1$s 的年度紀錄</string>
+    <string name="yr_summary_greeting_anonymous">無名冒險者的年度紀錄</string>
+    <string name="yr_summary_window">冒險總結</string>
+    <string name="yr_share_summary">分享我的年度總結</string>
+    <string name="yr_origin_header">一切的起點</string>
+    <string name="yr_origin_first">你的第一個章蓋在\n%1$s</string>
+    <string name="yr_origin_started">那一天，離職計畫正式啟動</string>
+    <string name="yr_origin_reason">原因是：</string>
+    <string name="yr_quoted">「%1$s」</string>
+    <string name="yr_origin_until_year_end">到今年底，你已經撐了</string>
+    <string name="yr_origin_until_today">到今天，你已經撐了</string>
+    <string name="yr_origin_year_end">年底</string>
+    <string name="yr_origin_today">今天</string>
+    <string name="yr_keywords_header">你最常提到的詞</string>
+    <string name="yr_keywords_flavor">這幾個詞，大概就是你今年的心聲。</string>
+    <string name="yr_summary_days">撐了幾天</string>
+    <string name="yr_summary_top_keyword">最常提到的詞</string>
+    <string name="yr_loading_title">離職紀錄載入中</string>
+    <string name="yr_loading_stage_1">正在調出你的心情…</string>
+    <string name="yr_loading_stage_2">濃縮一下…</string>
+    <string name="yr_loading_stage_3">就快好了…</string>
+    <string name="yr_invite_title">你的 %1$d 年度回顧準備好了</string>
+    <string name="yr_invite_subtitle">蓋過的章、撐過的日子，都幫你整理好了。</string>
+    <string name="yr_invite_watch">立即觀看</string>
+    <string name="yr_invite_later">稍後</string>
+    <string name="yr_invite_later_hint">之後也能在設定頁打開年度回顧</string>
+    <string name="yr_close">關閉</string>
+    <string name="yr_share">分享</string>
+    <string name="yr_share_preparing">正在準備分享圖…</string>
+    <string name="yr_times">%1$d 次</string>
+    <string name="yr_builtin_boss">老闆廢話太多</string>
+    <string name="yr_builtin_meeting">無效會議</string>
+    <string name="yr_builtin_requirements">需求一直改</string>
+    <string name="yr_builtin_coworker">同事雷</string>
+    <string name="yr_builtin_overtime">加班沒錢</string>
+    <string name="yr_builtin_mood">心情不好</string>
+    <string name="yr_app_name">離職集點卡</string>
+    <plurals name="yr_stamp_unit">
+        <item quantity="other">個章</item>
+    </plurals>
+    <plurals name="yr_days_unit">
+        <item quantity="other">天</item>
+    </plurals>
+    <plurals name="yr_summary_stamps_value">
+        <item quantity="other">%1$d 個章</item>
+    </plurals>
+    <plurals name="yr_summary_days_value">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="yr_helpful_count">
+        <item quantity="other">累積被標為有用解答 %1$d 次</item>
+    </plurals>
+    <!-- Debug-only test switches (spec §22.13: zh-Hant only) -->
+    <string name="yr_debug_testing" translatable="false">測試中</string>
+    <string name="yr_debug_header" translatable="false">DEBUG 測試（年度回顧）</string>
+    <string name="yr_debug_early_access" translatable="false">提前開放（設定頁入口，看今年）</string>
+    <string name="yr_debug_simulate_window" translatable="false">模擬 12/10 後（邀請卡）</string>
+    <string name="yr_debug_load_delay" translatable="false">模擬載入延遲 5 秒</string>
+    <string name="yr_debug_demo_nickname" translatable="false">示範牛馬</string>
+    <string name="yr_debug_demo_data" translatable="false">使用示範資料（不讀寫本機資料）</string>
+    <string name="yr_debug_reset_invite" translatable="false">重設邀請卡</string>
+    <string name="yr_debug_show_invite" translatable="false">立即顯示邀請卡</string>
+    <string name="yr_debug_all_off" translatable="false">全部關閉</string>
 </resources>

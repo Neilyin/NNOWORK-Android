@@ -30,6 +30,8 @@ fun FullScreenDialog(
     background: Brush,
     lightSystemBars: Boolean,
     dismissOnBackPress: Boolean = true,
+    /** false：內容自己處理狀態列與手勢列（例如年度回顧的背景要鋪到系統列底下）。 */
+    applySystemBarInsets: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Dialog(
@@ -65,8 +67,7 @@ fun FullScreenDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(background)
-                .statusBarsPadding()
-                .navigationBarsPadding(),
+                .then(if (applySystemBarInsets) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier),
             content = content,
         )
     }

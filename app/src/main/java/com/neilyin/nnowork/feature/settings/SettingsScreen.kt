@@ -125,6 +125,7 @@ import com.neilyin.nnowork.data.treehole.ANDROID_FEEDBACK_SOURCE
 import com.neilyin.nnowork.di.ServiceLocator
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.isUnlocked
+import com.neilyin.nnowork.ui.theme.appWideTheme
 import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.NnoworkTextField
 import com.neilyin.nnowork.ui.theme.pixelCard
@@ -611,6 +612,10 @@ private fun SettingsContent(
             .padding(NnoworkSpacing.page),
     ) {
         NnoworkPageTitle("設定", modifier = Modifier.settingsColumn(SettingsColumn.Header))
+        // 年度回顧（限時開放，置頂；雙欄時是左欄第一區）
+        com.neilyin.nnowork.feature.yearreview.YearReviewSettingsSection(
+            cardTheme = CardTheme.fromId(settings.cardStyle).appWideTheme(settings.unlockedStyles),
+        )
         ManualSection()
         AccountSection(
             state = authState,

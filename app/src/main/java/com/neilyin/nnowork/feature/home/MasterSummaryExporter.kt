@@ -46,11 +46,17 @@ object MasterSummaryExporter {
      * 存到系統相簿（Pictures/NNOWORK）。API 29+ 走 MediaStore，不需要權限；
      * API 26–28 需要 WRITE_EXTERNAL_STORAGE（呼叫端先確認已授權）。
      */
-    suspend fun saveToGallery(context: Context, text: MasterSummaryImageText) = withContext(Dispatchers.IO) {
-        val bitmap = render(text)
+    suspend fun saveToGallery(context: Context, text: MasterSummaryImageText) =
+        saveBitmapToGallery(context, "nnowork_master_${System.currentTimeMillis()}.png") { render(text) }
+
+    /**
+     * 把 [render] 畫出的 PNG 存到系統相簿（Pictures/NNOWORK），圖用完會回收。其他分享圖（年度回顧）共用。
+     * API 29+ 走 MediaStore，不需要權限；API 26–28 需要 WRITE_EXTERNAL_STORAGE（呼叫端先確認已授權）。
+     */
+    suspend fun saveBitmapToGallery(context: Context, name: String, render: () -> Bitmap) = withContext(Dispatchers.IO) {
+        val bitmap = render()
         try {
             val resolver = context.contentResolver
-            val name = "nnowork_master_${System.currentTimeMillis()}.png"
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, name)
                 put(MediaStore.Images.Media.MIME_TYPE, "image/png")
