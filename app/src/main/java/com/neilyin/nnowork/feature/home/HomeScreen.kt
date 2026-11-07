@@ -27,6 +27,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.ui.semantics.semantics
+import com.neilyin.nnowork.ui.theme.NnoworkCardBorderAlpha
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
@@ -386,14 +388,16 @@ private fun WideSideBySideHomeContent(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .padding(horizontal = NnoworkSpacing.xl)
+            .padding(horizontal = NnoworkSpacing.lg)
             .padding(top = NnoworkSpacing.md),
     ) {
         WideTitleRow(state, theme)
         Spacer(Modifier.height(NnoworkSpacing.md))
+        // 集點卡的格子大小由欄寬決定，左欄給 57% 讓卡片放大；有摺痕時仍對準摺痕。
         NnoworkTwoPane(
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            spacing = NnoworkSpacing.xxl,
+            ratio = 0.57f,
+            spacing = NnoworkSpacing.xl,
             showDivider = false,
             first = {
                 // 左欄集點卡在可用高度內垂直置中，太矮時可捲動。
@@ -412,12 +416,16 @@ private fun WideSideBySideHomeContent(
                 }
             },
             second = {
-                // 右欄靠上對齊、限寬 440 置中（iOS wideSecondaryColumn）。
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                ) {
+                // 右欄限寬 440 置中，和左欄一樣在可用高度內垂直置中（不留底部大片空白），太矮時可捲動。
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val viewportHeight = maxHeight
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .heightIn(min = viewportHeight),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
                     Column(
                         modifier = Modifier
                             .readableWidth(NnoworkAdaptive.homeSecondaryMaxWidth)
@@ -429,6 +437,7 @@ private fun WideSideBySideHomeContent(
                         HomeWideInfoPanel(state, showsRecentRecords = true)
                         Spacer(Modifier.height(NnoworkSpacing.xs))
                         BottomButton(state = state, theme = theme, onStamp = onStamp, onNext = onNext)
+                    }
                     }
                 }
             },
@@ -898,6 +907,10 @@ private fun BottomButton(
     onStamp: () -> Unit,
     onNext: () -> Unit,
 ) {
+    if (state.hasStampedToday && !state.isCurrentCardComplete && !state.isMasterLevel) {
+        StampedTodayStatus()
+        return
+    }
     val bg: Color
     val text: String
     val icon = when {
@@ -929,6 +942,34 @@ private fun BottomButton(
             Spacer(Modifier.width(NnoworkSpacing.sm))
             Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
         }
+    }
+}
+
+/**
+ * 「今天已蓋章」是狀態不是動作：不畫成半透明的停用按鈕（對比不足 4.5），
+ * 改成 accentSoft 底＋accentForeground 字的狀態列（與首頁日期標籤同組配色，已驗過 AA）。
+ */
+@Composable
+private fun StampedTodayStatus() {
+    val shape = RoundedCornerShape(NnoworkRadius.button)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = NnoworkSize.controlHeight)
+            .clip(shape)
+            .background(NnoworkTheme.colors.accentSoft, shape)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.accent.copy(alpha = NnoworkCardBorderAlpha), shape)
+            .semantics(mergeDescendants = true) {}
+            .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        val color = NnoworkTheme.colors.accentForeground
+        Icon(Icons.Filled.Check, contentDescription = null, tint = color, modifier = Modifier.size(NnoworkSize.icon))
+        Spacer(Modifier.width(NnoworkSpacing.sm))
+        Text("今天已蓋章", style = MaterialTheme.typography.titleLarge.copy(color = color))
+        Spacer(Modifier.width(NnoworkSpacing.sm))
+        Icon(Icons.Filled.Check, contentDescription = null, tint = color, modifier = Modifier.size(NnoworkSize.icon))
     }
 }
 

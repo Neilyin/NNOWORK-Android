@@ -30,20 +30,58 @@ data class FoldInfo(
 
 /**
  * 這期的摺痕來源：一律回傳「沒有摺痕」，雙欄走比例分配。
- *
- * 接上 FoldingFeature 只要改這個函式（加 androidx.window 依賴後）：
+ * 換算規則已在 [foldInfoFromFeature]（含單元測試）；加入 androidx.window 依賴後只要改這個函式：
  * ```
  * val activity = LocalContext.current.findActivity()
  * val layoutInfo by remember(activity) { WindowInfoTracker.getOrCreate(activity).windowLayoutInfo(activity) }
  *     .collectAsState(initial = null)
  * val feature = layoutInfo?.displayFeatures?.filterIsInstance<FoldingFeature>()
  *     ?.firstOrNull { it.orientation == FoldingFeature.Orientation.VERTICAL }
- * return feature?.let { FoldInfo(true, (it.bounds.left / density).dp, (it.bounds.width() / density).dp, it.isSeparating) } ?: FoldInfo.None
+ * return feature?.let {
+ *     foldInfoFromFeature(
+ *         orientation = FoldOrientation.Vertical, isSeparating = it.isSeparating,
+ *         occludes = it.occlusionType == FoldingFeature.OcclusionType.FULL,
+ *         featureLeftPx = it.bounds.left, featureWidthPx = it.bounds.width(), density = density,
+ *     )
+ * } ?: FoldInfo.None
  * ```
  * 各畫面透過 [LocalNnoworkWindowInfo].fold 與 [NnoworkTwoPane] 取用，不需修改。
  */
 @Composable
 fun rememberFoldInfo(): FoldInfo = FoldInfo.None
+
+/** FoldingFeature.orientation 的對應（不直接依賴 androidx.window，方便單元測試）。 */
+enum class FoldOrientation { Vertical, Horizontal }
+
+/**
+ * FoldingFeature → [FoldInfo] 的換算（純函式，單位 px，由呼叫端帶入 density 與視窗左緣）。
+ *
+ * - 只有直向（左右分欄用）的摺痕會被採用；水平摺痕（tabletop）一律不分欄。
+ * - 只在「會分隔內容」時才依 bounds 分欄：`isSeparating`（book posture 半摺、雙螢幕）
+ *   或 hinge 會遮擋畫面（`occlusionType == FULL`）。全開、不遮擋的摺痕回 [FoldInfo.None]，
+ *   雙欄退回比例分配。
+ *
+ * @param featureLeftPx FoldingFeature.bounds.left（相對於視窗）。
+ * @param featureWidthPx FoldingFeature.bounds.width()。
+ */
+fun foldInfoFromFeature(
+    orientation: FoldOrientation,
+    isSeparating: Boolean,
+    occludes: Boolean,
+    featureLeftPx: Int,
+    featureWidthPx: Int,
+    density: Float,
+): FoldInfo {
+    if (orientation != FoldOrientation.Vertical) return FoldInfo.None
+    if (!isSeparating && !occludes) return FoldInfo.None
+    if (density <= 0f) return FoldInfo.None
+    return FoldInfo(
+        hasVerticalFold = true,
+        start = (featureLeftPx / density).dp,
+        width = (featureWidthPx.coerceAtLeast(0) / density).dp,
+        isSeparating = true,
+    )
+}
 
 /** 雙欄的切分結果：左欄寬度與兩欄間距。 */
 @Immutable

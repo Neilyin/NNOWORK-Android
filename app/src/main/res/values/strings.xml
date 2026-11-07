@@ -348,7 +348,7 @@
     <string name="jobarchive_receipt_footer">離職集點卡 • %1$s</string>
     <string name="settings_job_change_title">換工作</string>
     <string name="settings_job_change_subtitle">把目前這份工作的集點卡封存到離職紀錄，開一張新卡</string>
-    <string name="settings_reset_title">🚨 確定要全部重來？</string>
+    <string name="settings_reset_title">確定要全部重來？</string>
     <string name="settings_reset_message">這將會清除目前的集點進度與離職計畫，並重新開始新手設定。\n已解鎖的主題、金幣、常用原因與過往工作紀錄會保留。\n\n此操作無法復原！</string>
     <string name="settings_reset_confirm">確定重置</string>
     <string name="settings_reset_action">全部重來</string>

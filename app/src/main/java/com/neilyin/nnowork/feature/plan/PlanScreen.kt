@@ -997,7 +997,7 @@ private fun HeaderCard() {
         modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.TravelExplore, null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(42.dp))
+        Icon(Icons.Filled.TravelExplore, null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(42.dp))
         Spacer(Modifier.size(NnoworkSpacing.cozy))
         Column {
             Text("自由需要準備", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText))

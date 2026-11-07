@@ -2756,7 +2756,10 @@ private fun TreeHoleMain(
 ) {
     val industryOptions = treeHoleIndustryOptions()
     val feedbackMessage = localizedTreeHoleFeedback(state)
-    val twoPane = LocalNnoworkWindowInfo.current.usesListDetail
+    val windowInfo = LocalNnoworkWindowInfo.current
+    // expanded：左動態／右貼文；medium（摺疊機直向）：左欄會太窄，改單欄動態＋全寬貼文詳情；compact：原本的對話框。
+    val twoPane = windowInfo.usesFeedDetailSplit
+    val fullWidthDetail = windowInfo.usesListDetail && !twoPane
     // 開著的 sheet／對話框、檢舉／封鎖對象、留言草稿都用 rememberSaveable，摺疊／展開、旋轉後不消失。
     // 選中的貼文本來就在 ViewModel（state.selectedPost），重建 Activity 不受影響。
     var editingProfile by rememberSaveable { mutableStateOf(false) }
@@ -3032,7 +3035,7 @@ private fun TreeHoleMain(
         )
         }
 
-    if (!twoPane) {
+    if (!twoPane && !fullWidthDetail) {
         state.selectedPost?.let { post -> postDetail(post, false) }
     }
 
@@ -3266,6 +3269,7 @@ private fun TreeHoleMain(
                         PostCard(
                             post = post,
                             mine = false,
+                            selected = twoPane && post.id == state.selectedPost?.id,
                             onOpen = { onOpenPost(post) },
                             onOpenAuthor = {
                                 onOpenAuthor(
@@ -3321,7 +3325,8 @@ private fun TreeHoleMain(
                         }
                     }
                 }
-                item { Spacer(Modifier.height(82.dp)) }
+                // 留出「我想問」浮動鈕（最小高 52＋上下 page 內距）再多一段，最後一張卡與載入更多不被蓋住。
+                item { Spacer(Modifier.height(TreeHoleAskButtonMinHeight + NnoworkSpacing.page * 2 + NnoworkSpacing.md)) }
             }
 
             PixelButton(
@@ -3330,7 +3335,7 @@ private fun TreeHoleMain(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(NnoworkSpacing.page)
-                    .heightIn(min = 52.dp),
+                    .heightIn(min = TreeHoleAskButtonMinHeight),
                 contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
             ) {
                 Text("?", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
@@ -3341,12 +3346,15 @@ private fun TreeHoleMain(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val openPost = state.selectedPost
         if (twoPane) {
             // 寬螢幕（iOS TreeHoleView wideBody）：左動態牆、右貼文細節與留言。
+            // 動態欄稍寬（55%），職業篩選列與卡片維持一行排得下。
             NnoworkTwoPane(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
+                ratio = 0.55f,
                 first = feed,
                 second = {
                     val post = state.selectedPost
@@ -3357,6 +3365,10 @@ private fun TreeHoleMain(
                     }
                 },
             )
+        } else if (fullWidthDetail && openPost != null) {
+            // medium：貼文詳情全寬顯示，返回鍵／關閉回到動態（捲動位置保留在 feedListState）。
+            BackHandler(onBack = onClosePost)
+            key(openPost.id) { postDetail(openPost, true) }
         } else {
             feed()
         }
@@ -3830,13 +3842,26 @@ private fun PostCard(
     onDelete: () -> Unit,
     onShare: (() -> Unit)?,
     onSafetyActions: (() -> Unit)?,
+    /** 雙欄時右欄正在看的那篇：accentSoft 底＋accent 框。 */
+    selected: Boolean = false,
 ) {
     val authorName = post.nickname?.ifBlank { "匿名社畜" } ?: "匿名社畜"
     val badgeStrings = localizedAnswerBadgeStrings()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard()
+            .then(
+                if (selected) {
+                    Modifier.pixelCard(
+                        backgroundColor = NnoworkTheme.colors.accentSoft,
+                        borderColor = NnoworkTheme.colors.accent,
+                        borderWidth = NnoworkLine.control,
+                        borderAlpha = 1f,
+                    )
+                } else {
+                    Modifier.pixelCard()
+                },
+            )
             .clickable(
                 role = Role.Button,
                 onClickLabel = "查看留言",
@@ -4407,6 +4432,9 @@ private fun TreeHoleDetailPlaceholder() {
         )
     }
 }
+
+/** 「我想問」浮動鈕的最小高度；動態底部留白依此計算。 */
+private val TreeHoleAskButtonMinHeight = 52.dp
 
 /** [TreeHoleSafetyTarget] 的 rememberSaveable saver（只存字串與 enum 名稱）。 */
 private val TreeHoleSafetyTargetSaver = listSaver<TreeHoleSafetyTarget?, String?>(

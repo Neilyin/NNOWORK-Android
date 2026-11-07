@@ -72,6 +72,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.Layout
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -510,6 +512,7 @@ fun SettingsScreen(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsContent(
     settings: AppSettings,
@@ -695,7 +698,8 @@ private fun SettingsContent(
         SettingsSection(icon = Icons.Filled.Timer, title = "小工具設定", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 0)) {
             Text("語錄刷新頻率", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
             Spacer(Modifier.height(NnoworkSpacing.xs))
-            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            // 雙欄時欄寬只有約 330dp：改成換行排列，不用橫捲才看得到後面的選項。手機維持原本的橫向捲動。
+            val intervalButtons: @Composable () -> Unit = {
                 listOf(5, 10, 30, 60, 180, 300, 480, 1440).forEach { minutes ->
                     PixelButton(
                         onClick = { onUpdateWidgetInterval(minutes) },
@@ -704,6 +708,16 @@ private fun SettingsContent(
                     ) {
                         Text(intervalLabel(minutes), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                     }
+                }
+            }
+            if (twoColumns) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                ) { intervalButtons() }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                    intervalButtons()
                 }
             }
             Spacer(Modifier.height(NnoworkSpacing.xs))

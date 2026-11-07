@@ -341,7 +341,7 @@
     <string name="jobarchive_receipt_footer">退職スタンプカード • %1$s</string>
     <string name="settings_job_change_title">転職</string>
     <string name="settings_job_change_subtitle">今の仕事のスタンプカードを退職への道のりに保管して、新しいカードを始めます</string>
-    <string name="settings_reset_title">🚨 すべてリセットしますか？</string>
+    <string name="settings_reset_title">すべてリセットしますか？</string>
     <string name="settings_reset_message">現在のスタンプの進捗と退職プランを消去し、初期設定からやり直します。\n解放済みのテーマ・コイン・よく使う理由・過去の仕事の記録は残ります。\n\nこの操作は元に戻せません！</string>
     <string name="settings_reset_confirm">リセットする</string>
     <string name="settings_reset_action">すべてリセット</string>

@@ -60,8 +60,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.takeOrElse
@@ -298,13 +296,13 @@ private fun FeedModePill(
 data class TreeHoleIndustryOptionUi(
     val key: String,
     val label: String = key,
-    /** Unspecified 表示使用主題的 success 色（資料類別不能直接讀 CompositionLocal）。 */
+    /** Unspecified 表示使用主題色 accentForeground（資料類別不能直接讀 CompositionLocal）。 */
     val color: Color = Color.Unspecified,
     val icon: ImageVector = Icons.Filled.Work,
 )
 
 @Composable
-private fun TreeHoleIndustryOptionUi.resolvedColor(): Color = color.takeOrElse { NnoworkTheme.colors.success }
+private fun TreeHoleIndustryOptionUi.resolvedColor(): Color = color.takeOrElse { NnoworkTheme.colors.accentForeground }
 
 @Immutable
 data class TreeHoleIndustryFilterStrings(

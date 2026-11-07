@@ -85,6 +85,12 @@ data class NnoworkWindowInfo(
     /** 紀錄、樹洞：左清單／右詳情（iOS NavigationSplitView，只在 regular width）。 */
     val usesListDetail: Boolean get() = usesListDetailFor(widthClass)
 
+    /**
+     * 樹洞：左動態／右貼文只在 expanded；medium（約 600–840dp）左欄會窄到篩選列換行，
+     * 改單欄動態＋全寬詳情。
+     */
+    val usesFeedDetailSplit: Boolean get() = usesFeedDetailSplitFor(widthClass)
+
     /** 設定：左右兩欄各自捲動（iOS SettingsView regular 分支）。 */
     val usesTwoColumnSettings: Boolean get() = usesTwoColumnSettingsFor(widthClass)
 
@@ -115,6 +121,8 @@ fun homeLayoutFor(
 }
 
 fun usesListDetailFor(widthClass: NnoworkWidthClass): Boolean = widthClass != NnoworkWidthClass.Compact
+
+fun usesFeedDetailSplitFor(widthClass: NnoworkWidthClass): Boolean = widthClass == NnoworkWidthClass.Expanded
 
 fun usesTwoColumnSettingsFor(widthClass: NnoworkWidthClass): Boolean = widthClass != NnoworkWidthClass.Compact
 

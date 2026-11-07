@@ -341,7 +341,7 @@
     <string name="jobarchive_receipt_footer">Quitting Card • %1$s</string>
     <string name="settings_job_change_title">Changing Jobs</string>
     <string name="settings_job_change_subtitle">Archive this job\'s stamp cards to History and start a new card</string>
-    <string name="settings_reset_title">🚨 Reset Everything?</string>
+    <string name="settings_reset_title">Reset Everything?</string>
     <string name="settings_reset_message">This clears your current stamp progress and Quit Plan, and restarts setup.\nUnlocked themes, coins, saved reasons and Past Jobs are kept.\n\nThis can\'t be undone!</string>
     <string name="settings_reset_confirm">Confirm Reset</string>
     <string name="settings_reset_action">Reset All</string>
