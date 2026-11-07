@@ -678,7 +678,11 @@
         <item quantity="other">Marked as a helpful answer %1$d times in total</item>
     </plurals>
     <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
-    <string name="tribute_77_title">🕊️ 77 has become an angel</string>
-    <string name="tribute_77_message">Thank you, 77, for laying the foundation of the Android version of QuitCard.\nMay you be happy in the other world, free from pain and illness.</string>
-    <string name="tribute_77_action">Send blessings 🙏</string>
+    <string name="tribute_77_title">Special Thanks to 77</string>
+    <string name="tribute_77_p1">Although 77 has logged out of this world,\nthe code he left behind is still running.</string>
+    <string name="tribute_77_p2">Thank you\nfor laying an important foundation for the Android version of QuitCard,\nhelping more people find the courage to face work through this app.</string>
+    <string name="tribute_77_p3">May you be free from pain and worry in the other world, with nothing but freedom and joy.</string>
+    <string name="tribute_77_p4">This time, it\'s your turn to rest well.</string>
+    <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
+    <string name="tribute_77_action">Send a blessing ❤️</string>
 </resources>

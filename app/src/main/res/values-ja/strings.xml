@@ -673,7 +673,11 @@
         <item quantity="other">「役に立つ回答」に選ばれた回数（累計）%1$d回</item>
     </plurals>
     <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
-    <string name="tribute_77_title">🕊️ 77は天使になりました</string>
-    <string name="tribute_77_message">退職スタンプカードのAndroid版の土台を築いてくれて、ありがとう。\n向こうの世界では、病気も痛みもなく、楽しく幸せに過ごせますように。</string>
-    <string name="tribute_77_action">祝福を送る 🙏</string>
+    <string name="tribute_77_title">Special Thanks to 77</string>
+    <string name="tribute_77_p1">77はこの世界からログアウトしてしまったけれど、\n彼が残したコードは、今も動き続けています。</string>
+    <string name="tribute_77_p2">ありがとう。\n『退職スタンプカード』Android版の大切な土台を築いてくれたおかげで、\nたくさんの人がこのアプリで、仕事に向き合う勇気を見つけられています。</string>
+    <string name="tribute_77_p3">向こうの世界では、病気も悩みもなく、自由と幸せだけがありますように。</string>
+    <string name="tribute_77_p4">今度は、あなたがゆっくり休む番です。</string>
+    <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
+    <string name="tribute_77_action">祝福を送る ❤️</string>
 </resources>

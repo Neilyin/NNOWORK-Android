@@ -57,6 +57,13 @@ fun FullScreenDialog(
                 @Suppress("DEPRECATION")
                 window.navigationBarColor = android.graphics.Color.TRANSPARENT
                 window.setDimAmount(0f)
+                // API 30+ 對話框視窗預設會讓開系統列（fitInsetsTypes），底部手勢列那條就蓋不到；全部拿掉。
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    window.attributes = window.attributes.apply { fitInsetsTypes = 0 }
+                }
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    window.isNavigationBarContrastEnforced = false
+                }
                 WindowCompat.getInsetsController(window, view).apply {
                     isAppearanceLightStatusBars = lightSystemBars
                     isAppearanceLightNavigationBars = lightSystemBars

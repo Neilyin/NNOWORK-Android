@@ -780,31 +780,7 @@ private fun SettingsContent(
                 .padding(top = NnoworkSpacing.xs, bottom = NnoworkSpacing.md),
         )
         if (showTribute) {
-            AlertDialog(
-                onDismissRequest = { showTribute = false },
-                containerColor = NnoworkDialogDefaults.containerColor,
-                shape = NnoworkDialogDefaults.shape,
-                title = {
-                    Text(
-                        stringResource(com.neilyin.nnowork.R.string.tribute_77_title),
-                        style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
-                    )
-                },
-                text = {
-                    Text(
-                        stringResource(com.neilyin.nnowork.R.string.tribute_77_message),
-                        style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
-                    )
-                },
-                confirmButton = {
-                    PixelButton(onClick = { showTribute = false }, variant = PixelButtonVariant.Primary) {
-                        Text(
-                            stringResource(com.neilyin.nnowork.R.string.tribute_77_action),
-                            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold),
-                        )
-                    }
-                },
-            )
+            Tribute77Dialog(onDismiss = { showTribute = false })
         }
     }
 }

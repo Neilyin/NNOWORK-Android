@@ -691,7 +691,11 @@
     <string name="yr_debug_show_invite" translatable="false">立即顯示邀請卡</string>
     <string name="yr_debug_all_off" translatable="false">全部關閉</string>
     <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
-    <string name="tribute_77_title">🕊️ 77 去當天使了</string>
-    <string name="tribute_77_message">謝謝他為離職集點卡的安卓版本打下基底。\n願他在另外一個世界可以過得開心快樂，沒有病痛。</string>
-    <string name="tribute_77_action">給予祝福 🙏</string>
+    <string name="tribute_77_title">Special Thanks to 77</string>
+    <string name="tribute_77_p1">雖然 77 已經從這個世界登出，\n但他留下的程式碼，仍在持續運行著。</string>
+    <string name="tribute_77_p2">謝謝祢，\n為《離職集點卡》的 Android 版本打下重要的基礎，\n讓更多人能透過這個 App，找到面對工作的勇氣。</string>
+    <string name="tribute_77_p3">願祢在另一個世界，沒有病痛、沒有煩惱，只有自由與快樂。</string>
+    <string name="tribute_77_p4">這次，換你好好休息了。</string>
+    <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
+    <string name="tribute_77_action">送上一份祝福❤️</string>
 </resources>

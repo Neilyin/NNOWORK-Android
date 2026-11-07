@@ -673,7 +673,11 @@
         <item quantity="other">累计被标为有用解答 %1$d 次</item>
     </plurals>
     <string name="settings_credit">Made By Neil 尼欧 &amp; 77</string>
-    <string name="tribute_77_title">🕊️ 77 去当天使了</string>
-    <string name="tribute_77_message">谢谢他为离职集点卡的安卓版本打下基础。\n愿他在另一个世界可以过得开心快乐，没有病痛。</string>
-    <string name="tribute_77_action">送上祝福 🙏</string>
+    <string name="tribute_77_title">Special Thanks to 77</string>
+    <string name="tribute_77_p1">虽然 77 已经从这个世界登出，\n但他留下的代码，仍在持续运行着。</string>
+    <string name="tribute_77_p2">谢谢祢，\n为《离职集点卡》的 Android 版本打下重要的基础，\n让更多人能通过这个 App，找到面对工作的勇气。</string>
+    <string name="tribute_77_p3">愿祢在另一个世界，没有病痛、没有烦恼，只有自由与快乐。</string>
+    <string name="tribute_77_p4">这次，换你好好休息了。</string>
+    <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
+    <string name="tribute_77_action">送上一份祝福❤️</string>
 </resources>
