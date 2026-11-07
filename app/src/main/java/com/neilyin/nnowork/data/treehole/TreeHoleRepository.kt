@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.neilyin.nnowork.data.JsonProvider
+import com.neilyin.nnowork.data.auth.JwtClaims
 import com.neilyin.nnowork.data.coin.CoinLedgerRepository
 import com.neilyin.nnowork.data.datastore.appDataStore
 import com.neilyin.nnowork.data.identity.DeviceIdentityRepository
@@ -609,9 +610,11 @@ class TreeHoleRepository(
     suspend fun synchronizeRewards(): RewardSyncSummary {
         ensureCurrentTermsAccepted()
         val deviceHash = deviceIdentityRepository.deviceHash()
-        val identity = RewardIdentity.of(currentUserId(), deviceHash)
+        // 一次同步只用一份身分＋token 快照：中途切帳號也不會把事件記到另一個身分、或用另一個 token 去 ACK。
+        val caller = tokenCaller.pinned(JwtClaims::subject)
+        val identity = rewardIdentityFor(caller.currentToken(), deviceHash, currentUserId)
         val credited = rewardDelivery.synchronize(
-            remote = TreeHoleRewardRemote(deviceHash),
+            remote = TreeHoleRewardRemote(deviceHash, caller),
             identity = identity,
             credit = { event -> coinLedgerRepository.creditRewardEventIfAbsent(event) },
         )
@@ -637,7 +640,26 @@ class TreeHoleRepository(
         return pendingFeedbackRewardCount.getAndSet(0)
     }
 
-    private inner class TreeHoleRewardRemote(private val deviceHash: String) : RewardDeliveryRemote {
+    private inner class TreeHoleRewardRemote(
+        private val deviceHash: String,
+        private val caller: UserTokenCaller,
+    ) : RewardDeliveryRemote {
+        private val router = TreeHoleV2Router(caller)
+
+        private suspend fun <T> withV2Fallback(
+            v2: suspend (authorization: String) -> T,
+            v1: suspend (authorization: String?) -> T,
+            mode: V2FallbackMode,
+        ): T = router.userScoped(mode, v2, v1)
+
+        /** 只有 404 + PGRST202 會轉成 [RewardRpcMissingException]；其他錯誤原樣拋出（這次先不領）。 */
+        private suspend fun <T> rewardRpc(name: String, block: suspend (authorization: String?) -> T): T = try {
+            caller.call(block)
+        } catch (error: HttpException) {
+            if (isMissingRpc(error.code(), error.postgrestError())) throw RewardRpcMissingException(name)
+            throw error
+        }
+
         override suspend fun supportsRewardEvents(): Boolean = try {
             val response = rewardRpc("reward_delivery_capabilities") { authorization ->
                 api.rewardDeliveryCapabilities(authorization)
@@ -680,13 +702,6 @@ class TreeHoleRepository(
         }
     }
 
-    /** 只有 404 + PGRST202 會轉成 [RewardRpcMissingException]；其他錯誤原樣拋出（這次先不領）。 */
-    private suspend fun <T> rewardRpc(name: String, block: suspend (authorization: String?) -> T): T = try {
-        tokenCaller.call(block)
-    } catch (error: HttpException) {
-        if (isMissingRpc(error.code(), error.postgrestError())) throw RewardRpcMissingException(name)
-        throw error
-    }
 
     /** 分享使用心得（樹洞回饋）。審核通過後後端會 +金幣。 */
     suspend fun submitFeedback(content: String) {
@@ -831,6 +846,15 @@ internal object PushTokenRegistrationPolicy {
         !termsAccepted -> Action.DEFER_UNTIL_TERMS
         else -> Action.UPLOAD
     }
+}
+
+/**
+ * 獎勵身分取自**同一份** token 快照：有 token → `account:<JWT sub>`（解不出 sub 才退回目前 user id）；
+ * 沒 token → `device:<device_hash>`。不另外讀 live session，避免 token 與身分來自不同帳號。
+ */
+internal fun rewardIdentityFor(token: String?, deviceHash: String, fallbackUserId: () -> String?): String {
+    val accountId = token?.let { JwtClaims.subject(it) ?: fallbackUserId() }
+    return RewardIdentity.of(accountId, deviceHash)
 }
 
 internal fun RewardEventResponse.toRewardEvent(): RewardEvent = RewardEvent(

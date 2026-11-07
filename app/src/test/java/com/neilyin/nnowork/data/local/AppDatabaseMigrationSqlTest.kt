@@ -1,6 +1,7 @@
 package com.neilyin.nnowork.data.local
 
 import com.neilyin.nnowork.data.JsonProvider
+import com.neilyin.nnowork.data.jobarchive.JobArchiveDao
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -37,6 +38,61 @@ class AppDatabaseMigrationSqlTest {
                 }
             }
             (v4["setupQueries"] as List<*>).forEach { statement.execute(it as String) }
+        }
+    }
+
+    /** 以字面值帶入 Room 的具名參數（僅測試用）。 */
+    private fun bind(sql: String, id: String, owner: String) =
+        sql.replace(":owner", "'$owner'").replace(":id", "'$id'")
+
+    @Test
+    fun `claiming an unowned backup copy of an already owned archive no longer violates the primary key`() {
+        DriverManager.getConnection("jdbc:sqlite::memory:").use { connection ->
+            val v5 = entities(schema(5)).single { it["tableName"] == "job_archives" }
+            connection.createStatement().use { statement ->
+                statement.execute(sqlFor(v5))
+                // 帳號 A 已拉回 X；匯入舊 iOS 備份帶進無主的 ("", X) 與 ("", Y)。
+                listOf("x" to "user-a", "x" to "", "y" to "").forEach { (id, owner) ->
+                    statement.execute(
+                        "INSERT INTO job_archives (id, ownerUserId, remoteId, syncedAt, jobIndex, companyName, " +
+                            "endDate, createdAt, payloadJson) VALUES ('$id', '$owner', NULL, NULL, 1, '', 1, 1, '{}')",
+                    )
+                }
+
+                // 修正前的單純 UPDATE 會撞複合主鍵（重現 bug）。
+                val legacyFailure = runCatching {
+                    statement.execute(bind(JobArchiveDao.CLAIM_UNOWNED_SQL, "x", "user-a"))
+                }.exceptionOrNull()
+                assertTrue(legacyFailure?.message.orEmpty(), legacyFailure?.message.orEmpty().contains("UNIQUE"))
+
+                // 修正後：同一個 transaction 內先刪重複、再認領（JobArchiveDao.claimUnowned）。
+                connection.autoCommit = false
+                listOf("x", "y").forEach { id ->
+                    statement.execute(bind(JobArchiveDao.DELETE_UNOWNED_DUPLICATE_SQL, id, "user-a"))
+                    statement.execute(bind(JobArchiveDao.CLAIM_UNOWNED_SQL, id, "user-a"))
+                }
+                connection.commit()
+                connection.autoCommit = true
+
+                val rows = mutableListOf<Pair<String, String>>()
+                statement.executeQuery("SELECT ownerUserId, id FROM job_archives ORDER BY id").use { result ->
+                    while (result.next()) rows += result.getString(1) to result.getString(2)
+                }
+                assertEquals(listOf("user-a" to "x", "user-a" to "y"), rows)
+
+                // 再認領一次是 no-op。
+                statement.execute(bind(JobArchiveDao.DELETE_UNOWNED_DUPLICATE_SQL, "x", "user-a"))
+                assertEquals(0, statement.executeUpdate(bind(JobArchiveDao.CLAIM_UNOWNED_SQL, "x", "user-a")))
+                // 其他帳號的同 id 封存不會被刪。
+                statement.execute(
+                    "INSERT INTO job_archives VALUES ('x', 'user-b', NULL, NULL, 1, '', 1, 1, '{}')",
+                )
+                statement.execute(bind(JobArchiveDao.DELETE_UNOWNED_DUPLICATE_SQL, "x", "user-a"))
+                statement.executeQuery("SELECT COUNT(*) FROM job_archives WHERE id = 'x'").use { result ->
+                    result.next()
+                    assertEquals(2, result.getInt(1))
+                }
+            }
         }
     }
 

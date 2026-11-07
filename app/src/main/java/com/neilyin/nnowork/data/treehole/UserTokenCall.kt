@@ -15,6 +15,24 @@ internal class UserTokenCaller(
 
     val isSignedIn: Boolean get() = currentToken() != null
 
+    /**
+     * 固定在「此刻」的 token 與身分。之後若 live session 換成另一個帳號（登出／切帳號），
+     * 這個 caller 仍用原本的 token；401 refresh 後若新 token 已屬於別的帳號，視為 refresh 失敗，
+     * 讓這次操作照實報錯，而不是用別人的身分繼續。未登入時固定為 anon。
+     */
+    fun pinned(subjectOf: (String) -> String?): UserTokenCaller {
+        val initial = currentToken()
+        val initialSubject = initial?.let(subjectOf)
+        val token = java.util.concurrent.atomic.AtomicReference(initial)
+        return UserTokenCaller(accessToken = { token.get() }) { stale ->
+            if (!refreshAccessToken(stale)) return@UserTokenCaller false
+            val live = currentToken() ?: return@UserTokenCaller false
+            if (subjectOf(live) != initialSubject) return@UserTokenCaller false
+            token.set(live)
+            true
+        }
+    }
+
     /** 已登入帶 user token、未登入帶 null（anon）。 */
     suspend fun <T> call(block: suspend (authorization: String?) -> T): T {
         val token = currentToken() ?: return block(null)

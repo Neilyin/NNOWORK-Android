@@ -47,13 +47,13 @@ class JobTransitionCoordinatorTest {
             if (crashAfterRoomPhase) throw ProcessDeath()
         }
         override suspend fun resetCurrentJobAndClearPending(
-            pendingKey: String?,
+            pendingKeys: Collection<String>,
             transform: (AppSettings, ResignationPlan) -> Pair<AppSettings, ResignationPlan>,
         ) {
             val (newSettings, newPlan) = transform(settings, plan)
             settings = newSettings
             plan = newPlan
-            if (pendingKey != null) pendingRef.entries = pendingRef.entries - pendingKey
+            pendingRef.entries = pendingRef.entries - pendingKeys.toSet()
             dataStoreCommits++
         }
         override suspend fun insertArchivesIfAbsent(archives: List<JobArchiveEntity>): Int {
@@ -66,10 +66,18 @@ class JobTransitionCoordinatorTest {
             }
             return inserted
         }
+        /** 與 JobArchiveDao.claimUnowned 相同語意：先刪同 id 已屬於 owner 的無主重複，再認領；並守複合主鍵。 */
         override suspend fun claimUnowned(ids: Set<String>, owner: String): Int {
+            archives.removeAll { unowned ->
+                unowned.ownerUserId.isEmpty() && unowned.id in ids &&
+                    archives.any { it.ownerUserId == owner && it.id == unowned.id }
+            }
             var claimed = 0
             archives.replaceAll { archive ->
                 if (archive.ownerUserId.isEmpty() && archive.id in ids) { claimed++; archive.copy(ownerUserId = owner) } else archive
+            }
+            check(archives.groupBy { it.ownerUserId to it.id }.all { it.value.size == 1 }) {
+                "UNIQUE constraint failed: job_archives.ownerUserId, job_archives.id"
             }
             return claimed
         }
@@ -162,6 +170,78 @@ class JobTransitionCoordinatorTest {
         assertTrue(pending.entries.isEmpty())
         assertEquals("archive keeps every stamp", 3, local.archives.single().payload!!.stamps.size)
         assertEquals("no second upload during recovery", 1, remote.uploads.size)
+    }
+
+    @Test
+    fun `discard killed between stamp delete and settings reset is completed on recovery`() = runBlocking {
+        val local = fixture().apply { crashAfterRoomPhase = true }
+        val pending = MemoryPending()
+        val remote = FakeRemote()
+        try {
+            coordinator(local, remote, pending, mutableListOf("dddddddd-0000-4000-8000-00000000000d"))
+                .startNewJobWithoutArchive(null, "新公司", maxStamps = 30)
+            fail("Expected the simulated crash")
+        } catch (_: ProcessDeath) {
+        }
+        // 半套：章已刪、設定仍是舊工作，但「不保存」的意圖已落地。
+        assertTrue(local.stamps.isEmpty())
+        assertEquals("舊公司", local.settings.companyName)
+        assertEquals(JobArchivePendingEntry.KIND_DISCARD, pending.entries.values.single().kind)
+
+        // 復原前蓋的新章（不在當時的清單裡）不能被刪。
+        local.crashAfterRoomPhase = false
+        local.stamps += stamp("00000000-0000-4000-8000-0000000000aa", "2026-10-06T01:00:00Z", "新章", 1)
+        val c = coordinator(local, remote, pending, mutableListOf())
+        assertTrue("discard recovery has no archive result", c.recoverPendingTransitions().isEmpty())
+        assertEquals("新公司", local.settings.companyName)
+        assertEquals(30, local.settings.maxStamps)
+        assertEquals(2, local.settings.currentJobIndex)
+        assertEquals(2, local.settings.currentRunNumber)
+        assertEquals(0.0, local.plan.currentSaved, 0.0)
+        assertTrue(pending.entries.isEmpty())
+        assertEquals(listOf("00000000-0000-4000-8000-0000000000aa"), local.stamps.map { it.id })
+        assertTrue(local.archives.isEmpty())
+
+        // 再跑一次：no-op。
+        val snapshot = Triple(local.settings, local.plan, local.stamps.toList())
+        assertTrue(c.recoverPendingTransitions().isEmpty())
+        assertEquals(snapshot, Triple(local.settings, local.plan, local.stamps.toList()))
+    }
+
+    @Test
+    fun `discard success clears its own pending and the archive pending of the same job`() = runBlocking {
+        val local = fixture()
+        val pending = MemoryPending()
+        pending.entries = mapOf(
+            JobArchivePendingKeys.key(owner, 1) to JobArchivePendingEntry(id = "p-1", jobIndex = 1, ownerUserId = owner),
+        )
+        val cleared = coordinator(local, FakeRemote(), pending, mutableListOf("dddddddd-0000-4000-8000-00000000000d"))
+            .startNewJobWithoutArchive(owner, "新公司")
+        assertEquals(listOf("t1"), cleared)
+        assertTrue(pending.entries.isEmpty())
+        assertTrue(local.stamps.isEmpty())
+        assertEquals(2, local.settings.currentJobIndex)
+    }
+
+    @Test
+    fun `pull still works when an unowned backup copy of an owned archive exists`() = runBlocking {
+        val local = fixture()
+        // 帳號 A 已拉回 X；之後匯入舊 iOS 備份，X 沒有 ownerUserID → 多一筆 ("", X)。
+        local.archives += JobArchivePayloadTestData.payload(1).toEntity("x", owner, "x", 0L)
+        local.archives += JobArchivePayloadTestData.payload(1).toEntity("x", "", "x", null)
+        local.archives += JobArchivePayloadTestData.payload(2).toEntity("y", "", "y", null)
+        val remote = FakeRemote().apply {
+            rows = listOf(
+                JobArchiveRemoteRow("x", JobArchivePayloadTestData.payload(1)),
+                JobArchiveRemoteRow("y", JobArchivePayloadTestData.payload(2)),
+                JobArchiveRemoteRow("z", JobArchivePayloadTestData.payload(3)),
+            )
+        }
+        val inserted = coordinator(local, remote, MemoryPending(), mutableListOf()).pullFromServer(owner) { owner }
+        assertEquals(1, inserted)
+        assertEquals(setOf(owner to "x", owner to "y", owner to "z"), local.archives.map { it.ownerUserId to it.id }.toSet())
+        // 之後每次拉回都不再失敗。
+        assertEquals(0, coordinator(local, remote, MemoryPending(), mutableListOf()).pullFromServer(owner) { owner })
     }
 
     @Test

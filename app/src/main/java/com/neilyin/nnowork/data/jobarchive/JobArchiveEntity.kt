@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -53,8 +54,30 @@ interface JobArchiveDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIfAbsent(entity: JobArchiveEntity): Long
 
-    @Query("UPDATE job_archives SET ownerUserId = :owner WHERE ownerUserId = '' AND id = :id")
-    suspend fun claimUnowned(id: String, owner: String): Int
+    /** 目標帳號已有同 id 的封存時，無主那筆是重複資料（例如匯入舊 iOS 備份），刪掉才能認領。 */
+    @Query(DELETE_UNOWNED_DUPLICATE_SQL)
+    suspend fun deleteUnownedDuplicate(id: String, owner: String): Int
+
+    @Query(CLAIM_UNOWNED_SQL)
+    suspend fun claimUnownedRow(id: String, owner: String): Int
+
+    /**
+     * 把無主的 (""、id) 歸給 owner。直接 UPDATE 在 (owner、id) 已存在時會撞複合主鍵
+     * （UNIQUE constraint failed），所以同一個 transaction 內先刪重複、再認領。
+     */
+    @Transaction
+    suspend fun claimUnowned(id: String, owner: String): Int {
+        deleteUnownedDuplicate(id, owner)
+        return claimUnownedRow(id, owner)
+    }
+
+    companion object {
+        const val DELETE_UNOWNED_DUPLICATE_SQL =
+            "DELETE FROM job_archives WHERE ownerUserId = '' AND id = :id " +
+                "AND EXISTS (SELECT 1 FROM job_archives WHERE ownerUserId = :owner AND id = :id)"
+        const val CLAIM_UNOWNED_SQL =
+            "UPDATE job_archives SET ownerUserId = :owner WHERE ownerUserId = '' AND id = :id"
+    }
 
     @Query("DELETE FROM job_archives WHERE ownerUserId = :owner")
     suspend fun deleteForOwner(owner: String): Int

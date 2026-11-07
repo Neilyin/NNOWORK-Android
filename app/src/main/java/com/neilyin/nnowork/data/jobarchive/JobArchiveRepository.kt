@@ -71,7 +71,7 @@ class JobArchiveRepository internal constructor(
         }
 
         override suspend fun resetCurrentJobAndClearPending(
-            pendingKey: String?,
+            pendingKeys: Collection<String>,
             transform: (AppSettings, ResignationPlan) -> Pair<AppSettings, ResignationPlan>,
         ) {
             // settings、plan、pending 都在同一個 DataStore 檔案：單次 edit 是原子的。
@@ -83,8 +83,8 @@ class JobArchiveRepository internal constructor(
                 val (newSettings, newPlan) = transform(settings, plan)
                 prefs[SETTINGS_KEY] = settingsAdapter.toJson(newSettings)
                 prefs[PLAN_KEY] = planAdapter.toJson(newPlan)
-                if (pendingKey != null) {
-                    val remaining = JobArchivePendingKeys.decode(prefs[PENDING_KEY]) - pendingKey
+                if (pendingKeys.isNotEmpty()) {
+                    val remaining = JobArchivePendingKeys.decode(prefs[PENDING_KEY]) - pendingKeys.toSet()
                     if (remaining.isEmpty()) prefs.remove(PENDING_KEY)
                     else prefs[PENDING_KEY] = JobArchivePendingKeys.encode(remaining)
                 }

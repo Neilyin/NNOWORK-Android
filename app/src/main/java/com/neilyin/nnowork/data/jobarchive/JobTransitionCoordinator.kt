@@ -53,11 +53,10 @@ interface JobTransitionLocalStore {
     suspend fun commitRoomPhase(archive: JobArchiveEntity?, stampIds: Set<String>)
 
     /**
-     * 單一 DataStore edit：對「當下」的 settings 與 plan 套用 [transform]，並刪除 [pendingKey]
-     * （null 則不動 pending）。
+     * 單一 DataStore edit：對「當下」的 settings 與 plan 套用 [transform]，並刪除 [pendingKeys]。
      */
     suspend fun resetCurrentJobAndClearPending(
-        pendingKey: String?,
+        pendingKeys: Collection<String>,
         transform: (AppSettings, ResignationPlan) -> Pair<AppSettings, ResignationPlan>,
     )
 
@@ -84,9 +83,18 @@ data class JobArchivePendingEntry(
     val newCompanyName: String? = null,
     val maxStamps: Int? = null,
     val newRunNumber: Int? = null,
-    /** 被收進這筆封存的章；Room 階段只刪這些，之後才蓋的章不會被刪。 */
+    /** 新工作的 currentJobIndex；null 時用 archiveJobIndex + 1。 */
+    val newJobIndex: Int? = null,
+    /** [KIND_ARCHIVE]（換工作並封存）或 [KIND_DISCARD]（使用者明確選「不保存，直接開始」）。 */
+    val kind: String = KIND_ARCHIVE,
+    /** 被收進這筆封存（或被放棄）的章；Room 階段只刪這些，之後才蓋的章不會被刪。 */
     val archivedStampIds: List<String>? = null,
-)
+) {
+    companion object {
+        const val KIND_ARCHIVE = "archive"
+        const val KIND_DISCARD = "discard"
+    }
+}
 
 interface JobArchivePendingStore {
     suspend fun load(): Map<String, JobArchivePendingEntry>
@@ -95,6 +103,9 @@ interface JobArchivePendingStore {
 
 object JobArchivePendingKeys {
     fun key(owner: String, jobIndex: Int): String = "${owner.lowercase(Locale.ROOT)}|$jobIndex"
+
+    /** 「不保存，直接開始」的待完成紀錄；不分帳號（未登入也會用）。 */
+    fun discardKey(jobIndex: Int): String = "discard|$jobIndex"
 
     private val mapAdapter = JsonProvider.moshi.adapter<Map<String, JobArchivePendingEntry>>(
         Types.newParameterizedType(Map::class.java, String::class.java, JobArchivePendingEntry::class.java),
@@ -176,6 +187,15 @@ class JobTransitionCoordinator(
     suspend fun recoverPendingTransitions(): List<JobTransitionResult> {
         val results = mutableListOf<JobTransitionResult>()
         for ((key, entry) in pendingStore.load()) {
+            if (entry.kind == JobArchivePendingEntry.KIND_DISCARD) {
+                // 使用者已明確選擇放棄：完成那次「不保存」（只刪當時記下的章；冪等）。
+                local.commitRoomPhase(archive = null, stampIds = entry.archivedStampIds.orEmpty().toSet())
+                local.resetCurrentJobAndClearPending(listOf(key)) { settings, plan ->
+                    if (settings.currentJobIndex > entry.jobIndex) settings to plan
+                    else resetFor(entry, entry.jobIndex, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
+                }
+                continue
+            }
             val owner = entry.ownerUserId.lowercase(Locale.ROOT)
             val archive = local.archivesForOwner(owner)
                 .firstOrNull { it.id.lowercase(Locale.ROOT) == entry.id.lowercase(Locale.ROOT) }
@@ -183,7 +203,7 @@ class JobTransitionCoordinator(
             // 不在這裡刪章：Room 階段已在同一個 transaction 刪掉被封存的章；
             // 之後若還有章，那是封存裡沒有的資料，寧可保留。
             var clearedTodoIds: List<String> = emptyList()
-            local.resetCurrentJobAndClearPending(key) { settings, plan ->
+            local.resetCurrentJobAndClearPending(listOf(key)) { settings, plan ->
                 if (settings.currentJobIndex > entry.jobIndex) {
                     settings to plan // 已經是下一份工作：只清 pending。
                 } else {
@@ -275,7 +295,7 @@ class JobTransitionCoordinator(
 
         // 4. DataStore 階段：重設＋清 pending 一次完成。失敗時 Room 已提交，復原會前滾。
         try {
-            local.resetCurrentJobAndClearPending(pendingKey) { settings, plan ->
+            local.resetCurrentJobAndClearPending(listOf(pendingKey)) { settings, plan ->
                 resetFor(pending, archiveNumber, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
             }
         } catch (error: Exception) {
@@ -303,12 +323,29 @@ class JobTransitionCoordinator(
             owned?.map { it.jobIndex },
         ) + 1
         val newRunNumber = JobTransitionPolicy.runNumber(current.settings, owned?.map { it.dedupeKey }) + 1
-        local.commitRoomPhase(archive = null, stampIds = current.stamps.map { it.id }.toSet())
-        local.resetCurrentJobAndClearPending(
-            pendingKey = owner?.let { JobArchivePendingKeys.key(it, current.settings.currentJobIndex) },
-        ) { settings, plan ->
-            JobTransitionPolicy.resetSettingsForNewJob(settings, newCompanyName, maxStamps, newJobIndex, newRunNumber) to
-                JobTransitionPolicy.resetPlanForNewJob(plan)
+        val jobIndex = current.settings.currentJobIndex
+        val discardKey = JobArchivePendingKeys.discardKey(jobIndex)
+        val entry = JobArchivePendingEntry(
+            id = newUuid().lowercase(Locale.ROOT),
+            jobIndex = jobIndex,
+            ownerUserId = owner.orEmpty(),
+            createdAt = BackupDateCodec.format(nowMillis()),
+            newCompanyName = newCompanyName,
+            maxStamps = maxStamps,
+            newRunNumber = newRunNumber,
+            newJobIndex = newJobIndex,
+            kind = JobArchivePendingEntry.KIND_DISCARD,
+            archivedStampIds = current.stamps.map { it.id },
+        )
+        // 1. 先落地意圖：之後任一步被殺，啟動時的復原都會把這次「不保存」完成，不會停在
+        //    「章已刪、設定還是舊工作」的半套狀態。
+        upsertPending(discardKey, entry)
+        // 2. Room：只刪當時記下的章。
+        local.commitRoomPhase(archive = null, stampIds = entry.archivedStampIds.orEmpty().toSet())
+        // 3. DataStore：重設＋清掉這次與這份工作的封存 pending，一次完成。
+        val keys = listOfNotNull(discardKey, owner?.let { JobArchivePendingKeys.key(it, jobIndex) })
+        local.resetCurrentJobAndClearPending(keys) { settings, plan ->
+            resetFor(entry, jobIndex, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
         }
         return JobTransitionPolicy.scheduledTodoIds(current.plan)
     }
@@ -340,7 +377,7 @@ class JobTransitionCoordinator(
             settings = settings,
             newCompanyName = entry.newCompanyName.orEmpty(),
             maxStamps = entry.maxStamps ?: JobTransitionPolicy.DEFAULT_MAX_STAMPS,
-            newJobIndex = archiveNumber + 1,
+            newJobIndex = entry.newJobIndex ?: (archiveNumber + 1),
             newRunNumber = entry.newRunNumber ?: (JobTransitionPolicy.runNumber(settings, null) + 1),
         )
 
