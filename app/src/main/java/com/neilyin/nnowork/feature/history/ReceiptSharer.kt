@@ -30,7 +30,14 @@ data class ReceiptShareContent(
 )
 
 object ReceiptSharer {
-    suspend fun share(context: Context, content: ReceiptShareContent) {
+    suspend fun share(context: Context, content: ReceiptShareContent) =
+        shareImage(context, clipLabel = "離職收據", chooserTitle = "分享離職收據") { render(content) }
+
+    /**
+     * 把 [render] 畫出的圖存成 cache 暫存 PNG，經 FileProvider 交給系統分享。
+     * 其他分享圖（例如忍耐大師階段總結）共用這條路徑；[render] 在 IO thread 執行，圖用完會回收。
+     */
+    suspend fun shareImage(context: Context, clipLabel: String, chooserTitle: String, render: () -> Bitmap) {
         val uri = withContext(Dispatchers.IO) {
             val directory = File(context.cacheDir, DIRECTORY).apply {
                 check(isDirectory || (!exists() && mkdirs())) { "無法建立收據暫存目錄" }
@@ -38,7 +45,7 @@ object ReceiptSharer {
             directory.listFiles()?.filter { System.currentTimeMillis() - it.lastModified() > MAX_AGE_MS }
                 ?.forEach(File::delete)
             val output = File(directory, "receipt-${UUID.randomUUID()}.png")
-            val bitmap = render(content)
+            val bitmap = render()
             try {
                 FileOutputStream(output).use { stream ->
                     check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) { "無法寫入收據圖片" }
@@ -53,10 +60,10 @@ object ReceiptSharer {
             val send = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                clipData = ClipData.newUri(context.contentResolver, "離職收據", uri)
+                clipData = ClipData.newUri(context.contentResolver, clipLabel, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(Intent.createChooser(send, "分享離職收據"))
+            context.startActivity(Intent.createChooser(send, chooserTitle))
         }
     }
 

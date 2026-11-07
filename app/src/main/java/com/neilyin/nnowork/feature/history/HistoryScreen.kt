@@ -259,9 +259,7 @@ private fun HistoryContent(
 
     if (showFreedom) {
         FreedomScreen(
-            companyName = state.settings.companyName,
-            completedCards = state.grouped.size,
-            totalStamps = state.records.size,
+            stats = computeFreedomStats(state.settings, state.records),
             onViewHistory = { showFreedom = false },
             onStartNewCompany = { showJobTransition = true },
         )
