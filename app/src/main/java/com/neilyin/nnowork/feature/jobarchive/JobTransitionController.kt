@@ -57,6 +57,11 @@ class JobTransitionController(
         _state.update { it.copy(hasUnfinishedArchive = unfinished) }
     }
 
+    /** 畫面關閉時清回初始狀態（ViewModel 以固定 key 重用，下次打開不能帶著上次的輸入或 completed）。 */
+    fun reset() {
+        _state.value = JobTransitionUiState()
+    }
+
     fun updateCompanyName(name: String) = _state.update { it.copy(companyName = name) }
 
     fun selectMaxStamps(count: Int) {

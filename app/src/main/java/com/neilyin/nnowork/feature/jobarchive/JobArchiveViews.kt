@@ -58,7 +58,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.neilyin.nnowork.R
 import com.neilyin.nnowork.data.backup.BackupDateCodec
 import com.neilyin.nnowork.data.jobarchive.JobArchiveEntity
@@ -258,6 +257,8 @@ fun JobArchiveDetailScreen(archive: JobArchiveEntity, onBack: () -> Unit) {
                             modifier = Modifier.fillMaxWidth(),
                             color = NnoworkTheme.colors.success,
                             trackColor = NnoworkTheme.colors.disabledBG,
+                            // 不畫 M3 尾端的停止點（iOS ProgressView 沒有）。
+                            drawStopIndicator = {},
                         )
                     }
                 }
@@ -424,7 +425,7 @@ private fun Timeline(stamps: List<JobArchivedStamp>) {
                     Spacer(Modifier.height(NnoworkSpacing.xxs))
                     Box(Modifier.size(NnoworkSpacing.sm).background(roundColor(stamp.roundNumber), CircleShape))
                     if (index < ordered.lastIndex) {
-                        Box(Modifier.width(2.dp).weight(1f).background(NnoworkTheme.colors.divider))
+                        Box(Modifier.width(NnoworkSize.timelineConnector).weight(1f).background(NnoworkTheme.colors.divider))
                     }
                 }
                 Spacer(Modifier.size(NnoworkSpacing.sm))

@@ -15,6 +15,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.ScrollState
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -120,6 +125,12 @@ object NnoworkSize {
     val controlHeight = 48.dp
     val icon = 24.dp
     val compactIcon = 18.dp
+    /** 多行輸入框（例如留言）的最大高度，超過在框內捲動。約 6 行內文。 */
+    val multilineFieldMaxHeight = 160.dp
+    val scrollbarWidth = 3.dp
+    val scrollbarMinThumb = 16.dp
+    /** 時間軸連接線等細分隔線的寬度。 */
+    val timelineConnector = 2.dp
 }
 
 object NnoworkMotion {
@@ -191,8 +202,11 @@ fun NnoworkField(
     singleLine: Boolean = true,
     enabled: Boolean = true,
     minHeight: Dp = NnoworkSize.controlHeight,
-    /** 多行時最多同時顯示幾行；超過就在框內捲動（例如不限字數的留言）。 */
-    maxLines: Int = Int.MAX_VALUE,
+    /**
+     * 多行時框的最大高度；內容超過就在框內捲動，右側顯示捲軸（例如不限字數的留言）。
+     * 未指定時框會跟著內容一直長高。
+     */
+    maxHeight: Dp = Dp.Unspecified,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     /** true 時外框改成 danger（例如字數超過）。 */
@@ -202,18 +216,20 @@ fun NnoworkField(
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val shape = RoundedCornerShape(NnoworkRadius.field)
+    val scrollable = !singleLine && maxHeight != Dp.Unspecified
+    val scrollState = rememberScrollState()
+    val scrollbarColor = colors.secondaryText.copy(alpha = 0.6f)
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         enabled = enabled,
         singleLine = singleLine,
-        maxLines = if (singleLine) 1 else maxLines,
         textStyle = textStyle.merge(TextStyle(color = colors.inputText)),
         cursorBrush = SolidColor(colors.accentForeground),
         keyboardOptions = keyboardOptions,
         interactionSource = interaction,
         modifier = modifier
-            .heightIn(min = minHeight)
+            .heightIn(min = minHeight, max = if (scrollable) maxHeight else Dp.Infinity)
             .alpha(if (enabled) 1f else 0.6f)
             .clip(shape)
             .background(colors.inputBG, shape)
@@ -226,15 +242,37 @@ fun NnoworkField(
                 },
                 shape,
             )
+            .then(if (scrollable) Modifier.fieldScrollbar(scrollState, scrollbarColor) else Modifier)
             .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.sm),
         decorationBox = { inner ->
-            Box(contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {
+            Box(
+                modifier = if (scrollable) Modifier.verticalScroll(scrollState) else Modifier,
+                contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
+            ) {
                 if (value.isEmpty() && placeholder != null) {
                     Text(placeholder, style = textStyle.merge(TextStyle(color = colors.secondaryText)))
                 }
                 inner()
             }
         },
+    )
+}
+
+/** 多行輸入框的捲軸：內容超出可見高度時，在右緣畫一條細捲軸，讓使用者看得出框內可以捲。 */
+private fun Modifier.fieldScrollbar(state: ScrollState, color: Color): Modifier = drawWithContent {
+    drawContent()
+    if (state.maxValue <= 0) return@drawWithContent
+    val viewport = size.height
+    val total = viewport + state.maxValue
+    val thumbHeight = (viewport * viewport / total).coerceAtLeast(NnoworkSize.scrollbarMinThumb.toPx())
+    val inset = NnoworkSpacing.xxs.toPx()
+    val top = inset + (viewport - thumbHeight - inset * 2) * state.value / state.maxValue
+    val width = NnoworkSize.scrollbarWidth.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(size.width - width - inset, top),
+        size = Size(width, thumbHeight),
+        cornerRadius = CornerRadius(width / 2, width / 2),
     )
 }
 

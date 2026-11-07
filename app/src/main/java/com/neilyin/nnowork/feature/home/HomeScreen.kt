@@ -1,5 +1,10 @@
 package com.neilyin.nnowork.feature.home
 
+import com.neilyin.nnowork.data.treehole.TreeHoleIndustryCatalog
+import com.neilyin.nnowork.feature.treehole.TreeHoleProgressRow
+import com.neilyin.nnowork.feature.treehole.TreeHoleProgressStyle
+import com.neilyin.nnowork.feature.treehole.treeHoleProgressText
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
@@ -221,8 +226,14 @@ fun HomeScreen(
     }
 
     pendingTreeHoleShare?.let { stamp ->
+        // iOS TreeHoleShareSheet：行業名稱後接「· （周目 ·）第 N 張卡 · 第 M 個印章」，用蓋章當下的快照。
+        val industry = state.treeHoleProfile?.industry?.takeIf(String::isNotBlank)?.let { value ->
+            TreeHoleIndustryCatalog.stringResFor(value)?.let { stringResource(it) } ?: value
+        }
+        val progress = treeHoleProgressText(stamp.roundNumber, stamp.stampCount, stamp.runNumber, TreeHoleProgressStyle.SHEET)
         TreeHoleShareDialog(
             content = stamp.shareContent,
+            progressLabel = progress?.let { listOfNotNull(industry, it).joinToString(" ") },
             hasProfile = state.treeHoleProfile?.isComplete == true,
             isSharing = isTreeHoleSharing,
             message = treeHoleShareMessage,
@@ -333,6 +344,7 @@ private fun CoinHud(
 @Composable
 private fun TreeHoleShareDialog(
     content: String,
+    progressLabel: String?,
     hasProfile: Boolean,
     isSharing: Boolean,
     message: String?,
@@ -352,6 +364,7 @@ private fun TreeHoleShareDialog(
                     Text("審核通過後會公開，並獲得離職金幣。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
                 }
                 Text(content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                progressLabel?.let { TreeHoleProgressRow(it) }
                 if (!hasProfile) {
                     Text("你還沒建立樹洞身份，先到「樹洞」分頁設定暱稱、產業與職稱。", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.highlight))
                 }

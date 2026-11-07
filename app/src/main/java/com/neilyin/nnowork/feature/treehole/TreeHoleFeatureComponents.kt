@@ -856,7 +856,8 @@ fun TreeHoleQuestionSheet(
                     enabled = !busy,
                     placeholder = strings.editorPlaceholder,
                     singleLine = false,
-                    maxLines = 8,
+                    // 約 8 行 bodyMedium，超過就框內捲動（取代合併前的 maxLines = 8）
+                    maxHeight = 200.dp,
                     minHeight = 128.dp,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     isError = (trimmed.isNotEmpty() && !validLength) || errorMessage != null,

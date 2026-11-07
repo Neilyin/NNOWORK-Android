@@ -153,9 +153,6 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 
-/** 留言輸入框最多同時顯示幾行；超過在框內捲動（不限字數）。 */
-private const val TREE_HOLE_COMMENT_VISIBLE_LINES = 6
-
 enum class TreeHoleFeatureOperation {
     ACCEPT_TERMS,
     SAVE_PROFILE,
@@ -3677,6 +3674,13 @@ private fun VoiceCardBody(
                 style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Medium, NnoworkTheme.colors.primaryText),
                 modifier = Modifier.weight(1f),
             )
+            // iOS TreeHoleCardStackView：卡片進度（含周目）放在內文下方。
+            TreeHolePostProgressLabel(
+                post,
+                style = TreeHoleProgressStyle.CARD,
+                fontSize = NnoworkTheme.type.small,
+                modifier = Modifier.padding(bottom = NnoworkSpacing.tight),
+            )
             if (post.isQuestion) {
                 Text(
                     if (post.commentCount > 0) {
@@ -4218,7 +4222,7 @@ internal fun CommentsDialog(
                         }
                     }
                 }
-                // 不限字數、不顯示剩餘字數（§5.9）；多行輸入，超過可見行數時在框內捲動。
+                // 不限字數、不顯示剩餘字數（§5.9）；多行輸入，超過最大高度時在框內捲動並顯示捲軸。
                 NnoworkField(
                     value = draft,
                     onValueChange = { draft = it },
@@ -4226,7 +4230,7 @@ internal fun CommentsDialog(
                     placeholder = stringResource(R.string.treehole_comment_placeholder),
                     singleLine = false,
                     minHeight = 82.dp,
-                    maxLines = TREE_HOLE_COMMENT_VISIBLE_LINES,
+                    maxHeight = NnoworkSize.multilineFieldMaxHeight,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth(),
                 )

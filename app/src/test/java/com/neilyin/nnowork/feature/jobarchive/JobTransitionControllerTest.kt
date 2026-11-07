@@ -136,6 +136,16 @@ class JobTransitionControllerTest {
     }
 
     @Test
+    fun `reset after closing gives the next open a fresh screen`() = runBlocking {
+        controller.updateCompanyName("新公司")
+        controller.selectMaxStamps(20)
+        controller.archive()
+        assertTrue(controller.state.value.completed)
+        controller.reset()
+        assertEquals(JobTransitionUiState(), controller.state.value)
+    }
+
+    @Test
     fun `load surfaces the unfinished archive hint`() = runBlocking {
         actions.unfinished = true
         controller.load()

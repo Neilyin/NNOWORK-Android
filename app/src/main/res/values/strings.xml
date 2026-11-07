@@ -364,4 +364,12 @@
     <string name="treehole_reward_post_approved">🎉 貼文通過審核！獲得 %1$d 枚離職金幣</string>
     <string name="treehole_reward_feedback">🎉 感謝你的意見回饋！獲得 %1$d 枚離職金幣</string>
     <string name="treehole_progress_compact">第 %1$d 張 · 第 %2$d 個印章</string>
+
+    <!-- Phase 1b follow-ups -->
+    <string name="treehole_progress_card">第 %1$d 張卡 · 第 %2$d 個印章</string>
+    <string name="treehole_progress_sheet">· 第 %1$d 張卡 · 第 %2$d 個印章</string>
+    <string name="settings_save_failed_title">存檔失敗</string>
+    <string name="settings_save_failed_message">資料儲存失敗，請再試一次</string>
+    <string name="jobarchive_verify_email_title">請先完成 Email 驗證</string>
+    <string name="jobarchive_verify_email_message">請到信箱點開驗證信，回到這裡登入後，再按一次「綁定帳號並保存這段紀錄」。目前的集點卡都還在。</string>
 </resources>
