@@ -20,7 +20,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.core.view.WindowCompat
 
-private val PixelTypography = Typography(
+/**
+ * M3 Typography。方向 B：內文／說明／表單用系統 Sans（中文走 Noto Sans CJK）；
+ * display／headline／title／label 是標題、數字、徽章，保留等寬加粗延續品牌。
+ * 字級與 NnoworkTypeScale 同一組 8 級：32/28/24/20/16/14/13/11。
+ */
+private val NnoworkM3Typography = Typography(
     displayLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 40.sp),
     displayMedium = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 36.sp),
     displaySmall = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 32.sp),
@@ -29,26 +34,26 @@ private val PixelTypography = Typography(
     headlineSmall = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 28.sp),
     titleLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 28.sp),
     titleMedium = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 24.sp),
-    titleSmall = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 20.sp),
-    bodyLarge = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 25.sp),
-    bodyMedium = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp),
-    bodySmall = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 18.sp),
-    labelLarge = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 20.sp),
-    labelMedium = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 18.sp),
-    labelSmall = TextStyle(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp),
+    titleSmall = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
+    bodyLarge = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
+    bodyMedium = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 21.sp),
+    bodySmall = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 19.sp),
+    labelLarge = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
+    labelMedium = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 18.sp),
+    labelSmall = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp),
 )
 
 private val NnoworkShapes = Shapes(
-    extraSmall = RoundedCornerShape(NnoworkRadius.compact),
-    small = RoundedCornerShape(NnoworkRadius.control),
+    extraSmall = RoundedCornerShape(NnoworkRadius.small),
+    small = RoundedCornerShape(NnoworkRadius.field),
     medium = RoundedCornerShape(NnoworkRadius.card),
     large = RoundedCornerShape(NnoworkRadius.hero),
-    extraLarge = RoundedCornerShape(NnoworkRadius.hero),
+    extraLarge = RoundedCornerShape(NnoworkRadius.sheet),
 )
 
 /**
- * 全 App 語意色。內容卡固定維持淺底，讓既有像素風黑字與功能色按鈕保有對比；
- * chrome 則是主題化深色，供底部導覽、對話框與 Widget 使用。
+ * 主題的品牌色票（集點卡主視覺、Widget、印章動作鈕用）。
+ * 全 App 介面色請用 [NnoworkColors]（NnoworkTheme.colors），不要再從這裡取。
  */
 @Immutable
 data class NnoworkPalette(
@@ -194,59 +199,87 @@ val CardTheme.palette: NnoworkPalette
             accent = PixelColors.slothAccent,
             onAccent = colorHex("#2C2417"),
         )
+        CardTheme.NIGHT -> NnoworkPalette(
+            page = PixelColors.nightSkyTop,
+            onPage = PixelColors.nightStarWhite,
+            chrome = PixelColors.nightSurface,
+            onChrome = PixelColors.nightStarWhite,
+            content = PixelColors.nightSurface,
+            contentAlt = PixelColors.nightBanner,
+            onContent = PixelColors.nightStarWhite,
+            border = PixelColors.nightCardBorder,
+            primary = PixelColors.nightGold,
+            onPrimary = PixelColors.nightSkyTop,
+            accent = PixelColors.nightGold,
+            onAccent = PixelColors.nightSkyTop,
+        )
     }
+
+/**
+ * 由 NnoworkColors 產生 M3 colorScheme。方向 B 的角色映射：
+ * - surface／surfaceContainer*／surfaceVariant 對應 surface／elevatedSurface（淺色主題 = 白），
+ *   所以 AlertDialog、ModalBottomSheet 預設就是淺底，不會再出現「淺頁＋深對話框」。
+ * - 深色導覽色只給 NavigationBar（tabBarBG），不再塞進 surface。
+ * - secondaryContainer = accentSoft：M3 NavigationBar 的 indicator 預設取這個角色。
+ */
+internal fun NnoworkColors.toColorScheme(light: Boolean) = if (light) {
+    lightColorScheme(
+        primary = primary, onPrimary = onPrimary,
+        primaryContainer = accentSoft, onPrimaryContainer = accentForeground,
+        secondary = accent, onSecondary = onAccent,
+        secondaryContainer = accentSoft, onSecondaryContainer = accentForeground,
+        tertiary = accentSoft, onTertiary = primaryText,
+        tertiaryContainer = accentSoft, onTertiaryContainer = primaryText,
+        background = appBG, onBackground = primaryText,
+        surface = surface, onSurface = primaryText,
+        surfaceVariant = surface, onSurfaceVariant = primaryText,
+        surfaceTint = Color.Transparent,
+        surfaceDim = appBG, surfaceBright = elevatedSurface,
+        surfaceContainerLowest = elevatedSurface, surfaceContainerLow = elevatedSurface,
+        surfaceContainer = elevatedSurface, surfaceContainerHigh = elevatedSurface,
+        surfaceContainerHighest = elevatedSurface,
+        outline = cardBorder, outlineVariant = divider,
+        error = danger, onError = onStrong,
+        scrim = scrim,
+    )
+} else {
+    darkColorScheme(
+        primary = primary, onPrimary = onPrimary,
+        primaryContainer = accentSoft, onPrimaryContainer = accentForeground,
+        secondary = accent, onSecondary = onAccent,
+        secondaryContainer = accentSoft, onSecondaryContainer = accentForeground,
+        tertiary = accentSoft, onTertiary = primaryText,
+        tertiaryContainer = accentSoft, onTertiaryContainer = primaryText,
+        background = appBG, onBackground = primaryText,
+        surface = surface, onSurface = primaryText,
+        surfaceVariant = surface, onSurfaceVariant = primaryText,
+        surfaceTint = Color.Transparent,
+        surfaceDim = appBG, surfaceBright = elevatedSurface,
+        surfaceContainerLowest = surface, surfaceContainerLow = surface,
+        surfaceContainer = elevatedSurface, surfaceContainerHigh = elevatedSurface,
+        surfaceContainerHighest = elevatedSurface,
+        outline = cardBorder, outlineVariant = divider,
+        error = danger, onError = readableOn(danger, PixelColors.black, onStrong),
+        scrim = scrim,
+    )
+}
 
 @Composable
 fun NnoworkTheme(
     cardTheme: CardTheme = CardTheme.RPG,
+    /** 預覽其他主題（主題商店 sheet）時傳 false，避免改到系統列圖示深淺。 */
+    applySystemBars: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val palette = cardTheme.palette
     val tokens = cardTheme.nnoworkColors
     val view = LocalView.current
-    val colors = if (cardTheme.isLightTheme) {
-        lightColorScheme(
-            primary = tokens.primary,
-            onPrimary = tokens.onPrimary,
-            secondary = tokens.accent,
-            onSecondary = tokens.onAccent,
-            tertiary = tokens.accentSoft,
-            onTertiary = tokens.onSurface,
-            background = tokens.appBG,
-            onBackground = tokens.onAppBG,
-            surface = tokens.dialogBG,
-            onSurface = tokens.navBarText,
-            surfaceVariant = tokens.surface,
-            onSurfaceVariant = tokens.onSurface,
-            outline = tokens.cardBorder,
-            error = tokens.danger,
-            onError = tokens.textOnDark,
-        )
-    } else {
-        darkColorScheme(
-            primary = tokens.primary,
-            onPrimary = tokens.onPrimary,
-            secondary = tokens.accent,
-            onSecondary = tokens.onAccent,
-            tertiary = tokens.accentSoft,
-            onTertiary = tokens.onSurface,
-            background = tokens.appBG,
-            onBackground = tokens.onAppBG,
-            surface = tokens.dialogBG,
-            onSurface = tokens.navBarText,
-            surfaceVariant = tokens.surface,
-            onSurfaceVariant = tokens.onSurface,
-            outline = tokens.cardBorder,
-            error = tokens.danger,
-            onError = tokens.textOnDark,
-        )
-    }
-    if (!view.isInEditMode) {
+    val colors = tokens.toColorScheme(light = cardTheme.usesAppWideLightPalette)
+    if (applySystemBars && !view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
             WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = palette.page.luminance() > 0.5f
-                isAppearanceLightNavigationBars = palette.chrome.luminance() > 0.5f
+                isAppearanceLightStatusBars = tokens.appBG.luminance() > 0.5f
+                isAppearanceLightNavigationBars = tokens.tabBarBG.luminance() > 0.5f
             }
         }
     }
@@ -256,7 +289,7 @@ fun NnoworkTheme(
     ) {
         MaterialTheme(
             colorScheme = colors,
-            typography = PixelTypography,
+            typography = NnoworkM3Typography,
             shapes = NnoworkShapes,
             content = content,
         )

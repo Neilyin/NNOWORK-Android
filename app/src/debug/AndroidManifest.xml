@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 只存在 debug 建置：供 adb 截圖驗證切換主題用，release 不含此 receiver。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="com.neilyin.nnowork.debug.DebugSheetActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+        <receiver
+            android:name="com.neilyin.nnowork.debug.DebugThemeReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver"
+            xmlns:tools="http://schemas.android.com/tools">
+            <intent-filter>
+                <action android:name="com.neilyin.nnowork.DEBUG_THEME" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

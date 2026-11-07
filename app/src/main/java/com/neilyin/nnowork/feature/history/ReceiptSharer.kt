@@ -5,10 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.core.content.FileProvider
+import com.neilyin.nnowork.ui.theme.ShareCardPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -63,12 +63,12 @@ object ReceiptSharer {
     private fun render(content: ReceiptShareContent): Bitmap {
         val bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val accent = if (content.master) Color.rgb(111, 45, 145) else Color.rgb(27, 105, 171)
-        canvas.drawColor(if (content.master) Color.rgb(35, 24, 43) else Color.rgb(22, 33, 44))
+        val accent = if (content.master) ShareCardPalette.receiptMasterAccent else ShareCardPalette.receiptAccent
+        canvas.drawColor(if (content.master) ShareCardPalette.receiptMasterBackdrop else ShareCardPalette.receiptBackdrop)
 
-        val paper = Paint().apply { color = Color.rgb(253, 254, 254) }
+        val paper = Paint().apply { color = ShareCardPalette.paper }
         canvas.drawRect(80f, 80f, WIDTH - 80f, HEIGHT - 80f, paper)
-        val border = Paint().apply { color = Color.BLACK; style = Paint.Style.STROKE; strokeWidth = 10f }
+        val border = Paint().apply { color = ShareCardPalette.paperBorder; style = Paint.Style.STROKE; strokeWidth = 10f }
         canvas.drawRect(80f, 80f, WIDTH - 80f, HEIGHT - 80f, border)
 
         val title = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -78,11 +78,11 @@ object ReceiptSharer {
             textAlign = Paint.Align.CENTER
         }
         val body = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(35, 35, 35)
+            color = ShareCardPalette.ink
             textSize = 38f
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         }
-        val muted = Paint(body).apply { color = Color.rgb(95, 105, 112); textSize = 30f }
+        val muted = Paint(body).apply { color = ShareCardPalette.mutedInk; textSize = 30f }
         val center = WIDTH / 2f
         canvas.drawText(if (content.master) "模範員工忍耐證明" else "離職收據", center, 190f, title)
         canvas.drawText(content.companyName.take(22), center, 250f, Paint(muted).apply { textAlign = Paint.Align.CENTER })
@@ -98,7 +98,7 @@ object ReceiptSharer {
         )
         rows.forEachIndexed { index, (label, value) ->
             canvas.drawText(label, 145f, y, muted)
-            canvas.drawText(value, WIDTH - 145f, y, Paint(body).apply { textAlign = Paint.Align.RIGHT; color = if (index == rows.lastIndex) Color.rgb(28, 145, 80) else Color.rgb(35, 35, 35) })
+            canvas.drawText(value, WIDTH - 145f, y, Paint(body).apply { textAlign = Paint.Align.RIGHT; color = if (index == rows.lastIndex) ShareCardPalette.money else ShareCardPalette.ink })
             y += 115f
         }
         divider(canvas, y - 45f)
@@ -110,7 +110,7 @@ object ReceiptSharer {
     }
 
     private fun divider(canvas: Canvas, y: Float) {
-        val paint = Paint().apply { color = Color.rgb(145, 151, 156); strokeWidth = 4f }
+        val paint = Paint().apply { color = ShareCardPalette.dashedDivider; strokeWidth = 4f }
         var x = 140f
         while (x < WIDTH - 140f) {
             canvas.drawLine(x, y, (x + 28f).coerceAtMost(WIDTH - 140f), y, paint)

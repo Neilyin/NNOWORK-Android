@@ -1,5 +1,11 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.theme.contentColorFor
+import com.neilyin.nnowork.ui.theme.NnoworkSheetDefaults
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import androidx.compose.foundation.background
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -197,8 +203,10 @@ fun TreeHoleMyContentSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkSheetDefaults.containerColor,
+        scrimColor = NnoworkSheetDefaults.scrimColor,
+        dragHandle = { NnoworkSheetDefaults.DragHandle() },
     ) {
         LazyColumn(
             modifier = Modifier
@@ -581,8 +589,8 @@ private fun TreeHoleMyTab(
     Box(
         modifier = modifier
             .heightIn(min = MY_MIN_TOUCH_TARGET)
-            .background(if (selected) NnoworkTheme.colors.success else MaterialTheme.colorScheme.surfaceVariant)
-            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.surface)
+            .border(if (selected) NnoworkLine.control else NnoworkLine.hairline, if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .selectable(
                 selected = selected,
                 role = Role.Tab,
@@ -599,7 +607,7 @@ private fun TreeHoleMyTab(
             style = pixelTextStyle(
                 NnoworkTheme.type.small,
                 FontWeight.Bold,
-                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             ),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -661,8 +669,8 @@ private fun TreeHoleStatusFilterChip(
     Box(
         modifier = Modifier
             .sizeIn(minWidth = MY_MIN_TOUCH_TARGET, minHeight = MY_MIN_TOUCH_TARGET)
-            .background(if (selected) selectedColor else MaterialTheme.colorScheme.surfaceVariant)
-            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.surface)
+            .border(if (selected) NnoworkLine.control else NnoworkLine.hairline, if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .selectable(
                 selected = selected,
                 role = Role.Tab,
@@ -679,7 +687,7 @@ private fun TreeHoleStatusFilterChip(
             style = pixelTextStyle(
                 NnoworkTheme.type.small,
                 FontWeight.Bold,
-                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             ),
         )
     }
@@ -710,8 +718,8 @@ private fun TreeHoleMyPostCard(
             TreeHoleMyIconAction(
                 icon = Icons.Filled.Delete,
                 contentDescription = strings.deletePost,
-                backgroundColor = NnoworkTheme.colors.danger,
-                iconColor = NnoworkTheme.colors.textOnDark,
+                backgroundColor = NnoworkTheme.colors.disabledBG,
+                iconColor = NnoworkTheme.colors.danger,
                 onClick = onDelete,
             )
         }
@@ -754,8 +762,8 @@ private fun TreeHoleMyCommentCard(
             TreeHoleMyIconAction(
                 icon = Icons.Filled.Delete,
                 contentDescription = strings.deleteComment,
-                backgroundColor = NnoworkTheme.colors.danger,
-                iconColor = NnoworkTheme.colors.textOnDark,
+                backgroundColor = NnoworkTheme.colors.disabledBG,
+                iconColor = NnoworkTheme.colors.danger,
                 onClick = onDelete,
             )
         }
@@ -820,8 +828,7 @@ private fun TreeHoleCreatedAt(
 private fun TreeHoleMyQuestionTag(label: String) {
     Row(
         modifier = Modifier
-            .background(NnoworkTheme.colors.treeHole.questionAccent)
-            .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.small)).background(NnoworkTheme.colors.treeHole.questionSoft)
             .semantics(mergeDescendants = true) { contentDescription = label }
             .padding(horizontal = 7.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
@@ -830,10 +837,10 @@ private fun TreeHoleMyQuestionTag(label: String) {
         Icon(
             imageVector = Icons.Filled.QuestionAnswer,
             contentDescription = null,
-            tint = NnoworkTheme.colors.primaryText,
+            tint = NnoworkTheme.colors.treeHole.questionAccentDark,
             modifier = Modifier.size(13.dp),
         )
-        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.treeHole.questionTitle))
     }
 }
 
@@ -849,12 +856,11 @@ private fun TreeHoleMyStatusBadge(
     }
     Box(
         modifier = Modifier
-            .background(color)
-            .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.small)).background(color)
             .semantics(mergeDescendants = true) { contentDescription = label }
             .padding(horizontal = 7.dp, vertical = 3.dp),
     ) {
-        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, contentColorFor(color)))
     }
 }
 
@@ -912,8 +918,7 @@ private fun TreeHoleMyIconAction(
     Box(
         modifier = Modifier
             .sizeIn(minWidth = MY_MIN_TOUCH_TARGET, minHeight = MY_MIN_TOUCH_TARGET)
-            .background(backgroundColor)
-            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.button)).background(backgroundColor)
             .clickable(
                 role = Role.Button,
                 onClickLabel = contentDescription,
@@ -940,8 +945,8 @@ private fun TreeHoleDeleteConfirmationDialog(
     val isPost = target is TreeHoleDeleteTarget.Post
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
         title = {
             Text(
                 text = if (isPost) strings.deletePostTitle else strings.deleteCommentTitle,
@@ -967,7 +972,7 @@ private fun TreeHoleDeleteConfirmationDialog(
             ) {
                 Text(
                     strings.confirmDelete,
-                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.onElevated),
                 )
             }
         },

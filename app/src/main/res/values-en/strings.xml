@@ -196,6 +196,7 @@
     <string name="theme_summer_title">Summer</string>
     <string name="theme_panda_title">Panda</string>
     <string name="theme_sloth_title">Sloth</string>
+    <string name="theme_night_title">Night &amp; Gold</string>
     <string name="theme_rpg_description">Treat work like an RPG adventure,\nSlash your corporate fate with a pixel sword!</string>
     <string name="theme_cyberpunk_description">Awakened Hacker,\nBreak the matrix called Company.</string>
     <string name="theme_vacation_description">My heart has retired to an island,\nOnly my body remains here.</string>
@@ -205,6 +206,7 @@
     <string name="theme_summer_description">Pretend the office AC\nis a breeze off the sea.</string>
     <string name="theme_panda_description">The dark circles came standard.\nThe overtime didn’t help.</string>
     <string name="theme_sloth_description">Rushing changes nothing.\nSo does dawdling.\nMight as well take it slow.</string>
+    <string name="theme_night_description">The night sky is quietest after work.\nThe stars count with you,\nhow many steps to freedom.</string>
     <string name="theme_state_using">In use</string>
     <string name="theme_state_available">Available</string>
     <string name="theme_state_locked">Locked, %1$d coins</string>

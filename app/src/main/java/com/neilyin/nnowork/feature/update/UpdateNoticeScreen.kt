@@ -1,5 +1,9 @@
 package com.neilyin.nnowork.feature.update
 
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.contentColorFor
 import androidx.activity.compose.BackHandler
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkColors
@@ -194,14 +198,14 @@ fun UpdateNoticeScreen(onFinished: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(96.dp)
-                    .background(page.accent(NnoworkTheme.colors))
-                    .border(4.dp, NnoworkTheme.colors.border),
+                    .clip(RoundedCornerShape(NnoworkRadius.hero))
+                    .background(page.accent(NnoworkTheme.colors)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = page.icon,
                     contentDescription = null,
-                    tint = NnoworkTheme.colors.primaryText,
+                    tint = contentColorFor(page.accent(NnoworkTheme.colors)),
                     modifier = Modifier.size(52.dp),
                 )
             }

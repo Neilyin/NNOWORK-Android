@@ -1,5 +1,9 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.NnoworkSheetDefaults
 import androidx.compose.foundation.background
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -105,9 +109,10 @@ fun TreeHoleAuthorPostsSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onBackground) },
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkSheetDefaults.containerColor,
+        scrimColor = NnoworkSheetDefaults.scrimColor,
+        dragHandle = { NnoworkSheetDefaults.DragHandle() },
     ) {
         LazyColumn(
             modifier = Modifier
@@ -188,8 +193,8 @@ fun TreeHoleAuthorPostsSheet(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(NnoworkTheme.colors.treeHole.errorSoft)
-                            .border(NnoworkLine.control, NnoworkTheme.colors.treeHole.errorBorder, RectangleShape)
+                            .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.treeHole.errorSoft)
+                            .border(NnoworkLine.hairline, NnoworkTheme.colors.treeHole.errorBorder, RoundedCornerShape(NnoworkRadius.field))
                             .padding(NnoworkSpacing.md),
                         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
                     ) {
@@ -275,8 +280,8 @@ private fun AuthorPostCard(
             if (post.isQuestion) {
                 Box(
                     modifier = Modifier
-                        .background(NnoworkTheme.colors.treeHole.questionAccent)
-                        .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape)
+                        .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.treeHole.questionAccent)
+                        .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
                         .padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp),
                 ) {
                     Text(strings.questionTag, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))

@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.onboarding
 
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import android.net.Uri
 import com.neilyin.nnowork.ui.theme.NnoworkSize
 import com.neilyin.nnowork.ui.theme.NnoworkTheme
@@ -88,12 +89,13 @@ fun ReturningUserScreen(
     pendingUri?.let { uri ->
         AlertDialog(
             onDismissRequest = { if (!processing) pendingUri = null },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("匯入這份備份？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
-            text = { Text("會用備份內容還原集點紀錄、離職計畫、金幣與薪水設定。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark)) },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text("匯入這份備份？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = { Text("會用備份內容還原集點紀錄、離職計畫、金幣與薪水設定。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated)) },
             confirmButton = {
                 PixelButton(onClick = { onImport(uri); pendingUri = null }, enabled = !processing, backgroundColor = NnoworkTheme.colors.buttonBG) {
-                    Text("確認匯入", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text("確認匯入", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
             dismissButton = {
@@ -116,9 +118,9 @@ fun ReturningUserScreen(
         )
         Spacer(Modifier.height(NnoworkSpacing.xl))
         PixelButton(onClick = { launcher.launch(arrayOf("application/json", "text/plain")) }, enabled = !processing, backgroundColor = NnoworkTheme.colors.buttonBG, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.FileUpload, null, tint = NnoworkTheme.colors.textOnDark)
+            Icon(Icons.Filled.FileUpload, null, tint = NnoworkTheme.colors.onElevated)
             Spacer(Modifier.size(NnoworkSpacing.xs))
-            Text(if (processing) "匯入中..." else "選擇備份檔", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+            Text(if (processing) "匯入中..." else "選擇備份檔", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.onElevated))
         }
         message?.let {
             Spacer(Modifier.height(NnoworkSpacing.cozy))

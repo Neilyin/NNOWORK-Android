@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.history
 
+import com.neilyin.nnowork.ui.theme.PixelButtonVariant
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import androidx.activity.compose.BackHandler
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -57,12 +59,13 @@ fun FreedomScreen(
     if (confirmRestart) {
         AlertDialog(
             onDismissRequest = { confirmRestart = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("重新開始？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
-            text = { Text("會清除集點紀錄與離職計畫，金幣和已解鎖主題會保留。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark)) },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text("重新開始？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = { Text("會清除集點紀錄與離職計畫，金幣和已解鎖主題會保留。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated)) },
             confirmButton = {
                 PixelButton(onClick = onStartNewCompany, backgroundColor = NnoworkTheme.colors.danger) {
-                    Text("確認重新開始", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text("確認重新開始", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
             dismissButton = {
@@ -76,23 +79,22 @@ fun FreedomScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary)
+            .background(NnoworkTheme.colors.accent)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = NnoworkSpacing.lg, vertical = NnoworkSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.lg),
     ) {
-        Icon(Icons.Filled.Celebration, "完成離職集點", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(82.dp))
-        Text("恭喜你！", style = pixelTextStyle(NnoworkTheme.type.display, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
-        Text("祝你奔向自由！", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
+        Icon(Icons.Filled.Celebration, "完成離職集點", tint = NnoworkTheme.colors.onAccent, modifier = Modifier.size(82.dp))
+        Text("恭喜你！", style = pixelTextStyle(NnoworkTheme.type.display, FontWeight.Bold, NnoworkTheme.colors.onAccent))
+        Text("祝你奔向自由！", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.onAccent))
 
         Text(
             "再見了，${companyName.ifBlank { "公司" }}！",
             style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .border(NnoworkLine.emphasis, MaterialTheme.colorScheme.outline, RectangleShape)
+                .pixelCard()
                 .padding(horizontal = NnoworkSpacing.roomy, vertical = NnoworkSpacing.sm),
         )
 
@@ -102,17 +104,18 @@ fun FreedomScreen(
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
-            Text("願你找到更好的歸屬", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
-            Text("人生苦短，不要委屈自己", style = pixelTextStyle(NnoworkTheme.type.body, color = MaterialTheme.colorScheme.onPrimary))
+            Text("願你找到更好的歸屬", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.onAccent))
+            Text("人生苦短，不要委屈自己", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onAccent))
         }
 
         Spacer(Modifier.height(NnoworkSpacing.xxs))
-        PixelButton(onClick = onViewHistory, backgroundColor = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+        PixelButton(onClick = onViewHistory, variant = PixelButtonVariant.Outlined, backgroundColor = NnoworkTheme.colors.surface, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = NnoworkTheme.colors.primaryText)
             Spacer(Modifier.size(NnoworkSpacing.xs))
             Text("查看離職紀錄", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         }
-        PixelButton(onClick = { confirmRestart = true }, backgroundColor = NnoworkTheme.colors.success, modifier = Modifier.fillMaxWidth()) {
+        // 頁底已是 accent，這顆改用反白底，避免同色融在一起。
+        PixelButton(onClick = { confirmRestart = true }, variant = PixelButtonVariant.Custom, backgroundColor = NnoworkTheme.colors.onAccent, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.RestartAlt, null, tint = NnoworkTheme.colors.primaryText)
             Spacer(Modifier.size(NnoworkSpacing.xs))
             Text("重新集點（新公司）", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))

@@ -1,5 +1,10 @@
 package com.neilyin.nnowork.feature.history
 
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.PixelBadge
+import com.neilyin.nnowork.ui.theme.contentColorFor
+import com.neilyin.nnowork.ui.theme.NnoworkPageTitle
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import android.widget.Toast
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkSize
@@ -223,11 +228,7 @@ private fun HistoryContent(
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
     ) {
         item {
-            Text(
-                "離職紀錄",
-                style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
-                modifier = Modifier.padding(top = NnoworkSpacing.md),
-            )
+            NnoworkPageTitle("離職紀錄", modifier = Modifier.padding(top = NnoworkSpacing.md))
         }
         if (state.records.isEmpty()) {
             item { EmptyHistory() }
@@ -248,6 +249,9 @@ private fun HistoryContent(
 @Composable
 private fun ReceiptSummaryCard(state: HistoryUiState, onOpen: () -> Unit) {
     val title = if (state.hasMasterReceipt) "🔥 是個狠人 🔥" else "離職收據"
+    // 大師收據卡是紫色實心，字色依底色挑；一般收據卡用主題文字色。
+    val cardText = if (state.hasMasterReceipt) contentColorFor(NnoworkTheme.colors.special) else NnoworkTheme.colors.primaryText
+    val cardSubText = if (state.hasMasterReceipt) cardText.copy(alpha = 0.8f) else NnoworkTheme.colors.secondaryText
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -261,13 +265,13 @@ private fun ReceiptSummaryCard(state: HistoryUiState, onOpen: () -> Unit) {
         Icon(
             if (state.hasMasterReceipt) Icons.Filled.WorkspacePremium else Icons.AutoMirrored.Filled.ReceiptLong,
             null,
-            tint = if (state.hasMasterReceipt) NnoworkTheme.colors.highlight else NnoworkTheme.colors.info,
+            tint = if (state.hasMasterReceipt) cardText else NnoworkTheme.colors.accentForeground,
             modifier = Modifier.size(34.dp),
         )
         Spacer(Modifier.size(NnoworkSpacing.sm))
         Column(Modifier.weight(1f)) {
-            Text(title, style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, if (state.hasMasterReceipt) NnoworkTheme.colors.textOnDark else NnoworkTheme.colors.primaryText))
-            Text("把這段想離職的日子印成一張收據", style = pixelTextStyle(NnoworkTheme.type.small, color = if (state.hasMasterReceipt) NnoworkTheme.colors.textOnDark.copy(alpha = 0.75f) else NnoworkTheme.colors.secondaryText))
+            Text(title, style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, cardText))
+            Text("把這段想離職的日子印成一張收據", style = pixelTextStyle(NnoworkTheme.type.small, color = cardSubText))
         }
         PixelButton(onClick = onOpen, backgroundColor = NnoworkTheme.colors.highlight, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.sm, vertical = 9.dp)) {
             Text("查看", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
@@ -293,10 +297,11 @@ private fun ReceiptDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (master) "🔥 是個狠人 🔥" else "離職收據", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, if (master) NnoworkTheme.colors.highlight else NnoworkTheme.colors.textOnDark), modifier = Modifier.weight(1f))
+                Text(if (master) "🔥 是個狠人 🔥" else "離職收據", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, if (master) NnoworkTheme.colors.highlight else NnoworkTheme.colors.onElevated), modifier = Modifier.weight(1f))
                 PixelButton(onClick = onDismiss, backgroundColor = NnoworkTheme.colors.disabledBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(7.dp)) {
                     Icon(Icons.Filled.Close, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
                 }
@@ -343,13 +348,13 @@ private fun ReceiptDialog(
                     Text("分享", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
                 PixelButton(onClick = onFreedom, backgroundColor = if (master) NnoworkTheme.colors.special else NnoworkTheme.colors.buttonBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.sm, vertical = 11.dp)) {
-                    Text("奔向自由", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text("奔向自由", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             }
         },
         dismissButton = {
             androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text("收起", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Text("收起", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Medium, NnoworkTheme.colors.accentForeground))
             }
         },
     )
@@ -410,8 +415,8 @@ private fun EmptyHistory() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
     ) {
-        Icon(Icons.Filled.Book, null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(72.dp))
-        Text("還沒有離職紀錄", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+        Icon(Icons.Filled.Book, null, tint = NnoworkTheme.colors.secondaryText, modifier = Modifier.size(72.dp))
+        Text("還沒有離職紀錄", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         Text("開始蓋章，記錄你的離職心路歷程", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText))
     }
 }
@@ -427,15 +432,16 @@ private fun Stats(state: HistoryUiState) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .pixelCard(backgroundColor = NnoworkTheme.colors.danger)
+                    // 方向 B：重點卡改用低彩度 accentSoft，不再用整塊飽和紅。
+                    .pixelCard(backgroundColor = NnoworkTheme.colors.accentSoft, borderColor = NnoworkTheme.colors.accent)
                     .padding(NnoworkSpacing.md),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.LocalFireDepartment, null, tint = NnoworkTheme.colors.textOnDark)
+                Icon(Icons.Filled.LocalFireDepartment, null, tint = NnoworkTheme.colors.danger)
                 Spacer(Modifier.size(NnoworkSpacing.snug))
                 Column {
-                    Text("最常見的原因", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark.copy(alpha = 0.75f)))
-                    Text(reason, style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.textOnDark), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text("最常見的原因", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Medium, NnoworkTheme.colors.secondaryText))
+                    Text(reason, style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -462,18 +468,20 @@ private fun RoundHeader(round: Int, count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard(backgroundColor = MaterialTheme.colorScheme.surface, borderColor = roundColor(round))
+            .pixelCard(backgroundColor = NnoworkTheme.colors.surface, borderColor = roundColor(round))
             .padding(NnoworkSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             "第 $round 張卡",
-            style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onSurface),
+            style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
         )
         Spacer(Modifier.weight(1f))
         Text(roundSubtitle(round), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, roundColor(round)))
         Spacer(Modifier.size(NnoworkSpacing.sm))
-        Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.background(roundColor(round)).padding(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xxs))
+        PixelBadge(backgroundColor = roundColor(round)) {
+            Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        }
     }
 }
 
@@ -493,8 +501,8 @@ private fun RecordRow(record: StampRecordEntity, onEdit: () -> Unit) {
         Spacer(
             Modifier
                 .height(NnoworkSize.minTouchTarget)
-                .size(width = 2.dp, height = NnoworkSize.minTouchTarget)
-                .background(NnoworkTheme.colors.primaryText),
+                .size(width = NnoworkLine.hairline, height = NnoworkSize.minTouchTarget)
+                .background(NnoworkTheme.colors.divider),
         )
         Spacer(Modifier.size(NnoworkSpacing.sm))
         Text(record.reason, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f), maxLines = 3)
@@ -515,8 +523,9 @@ private fun EditRecordDialog(
     var reason by remember(record.id) { mutableStateOf(record.reason) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("編輯記錄", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
+        title = { Text("編輯記錄", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 Text("${dateFormat.format(Date(record.date))} ${timeFormat.format(Date(record.date))}", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
@@ -543,7 +552,7 @@ private fun EditRecordDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                 if (canDelete) {
                     PixelButton(onClick = onDelete, backgroundColor = NnoworkTheme.colors.danger) {
-                        Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark)
+                        Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.onElevated)
                     }
                 }
                 PixelButton(onClick = onDismiss, backgroundColor = NnoworkTheme.colors.disabledBG) {

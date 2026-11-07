@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.text.font.FontWeight
+import com.neilyin.nnowork.ui.theme.NnoworkLine
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Book
@@ -26,7 +29,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.neilyin.nnowork.feature.history.HistoryScreen
@@ -57,15 +59,12 @@ fun MainScaffold(
         containerColor = MaterialTheme.colorScheme.background,
         // 各主分頁自行處理頂部 system bar；Scaffold 只提供底部導覽的高度。
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
+        bottomBar = { Column {
+            // 方向 B：底欄不加方框，上緣一條 divider；淺色主題白底、深色主題 darkGray（iOS tabBarBG）。
+            HorizontalDivider(thickness = NnoworkLine.hairline, color = NnoworkTheme.colors.divider)
             NavigationBar(
-                containerColor = NnoworkTheme.colors.navBarBG,
+                containerColor = NnoworkTheme.colors.tabBarBG,
                 tonalElevation = 0.dp,
-                modifier = Modifier.border(
-                    width = 2.dp,
-                    color = NnoworkTheme.colors.cardBorder,
-                    shape = RectangleShape,
-                ),
             ) {
                 tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
@@ -81,18 +80,25 @@ fun MainScaffold(
                                 modifier = Modifier.size(24.dp),
                             )
                         },
-                        label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+                        label = {
+                            Text(
+                                tab.label,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (selected == index) FontWeight.SemiBold else FontWeight.Medium,
+                                ),
+                            )
+                        },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = NnoworkTheme.colors.tabSelected,
                             unselectedIconColor = NnoworkTheme.colors.tabUnselected,
-                            selectedTextColor = NnoworkTheme.colors.navBarText,
+                            selectedTextColor = NnoworkTheme.colors.tabSelected,
                             unselectedTextColor = NnoworkTheme.colors.tabUnselected,
                             indicatorColor = NnoworkTheme.colors.tabIndicator,
                         ),
                     )
                 }
             }
-        },
+        } },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (selected) {

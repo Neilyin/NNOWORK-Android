@@ -196,6 +196,7 @@
     <string name="theme_summer_title">夏の海風</string>
     <string name="theme_panda_title">やさぐれパンダ</string>
     <string name="theme_sloth_title">ナマケモノモード</string>
+    <string name="theme_night_title">夜空ゴールド</string>
     <string name="theme_rpg_description">仕事をRPGの冒険に変えて、\nドット絵の剣で社畜の運命を断ち切ろう！</string>
     <string name="theme_cyberpunk_description">覚醒したハッカーよ、\n「会社」という名のマトリックスを破れ。</string>
     <string name="theme_vacation_description">心はもう南の島でバカンス中。\nここにいるのは体だけ。</string>
@@ -205,6 +206,7 @@
     <string name="theme_summer_description">オフィスの冷房を、\n海辺の風だと思いこむ。</string>
     <string name="theme_panda_description">この隈は生まれつき。\n残業のせいじゃない。</string>
     <string name="theme_sloth_description">急いでも同じ。\nのんびりでも同じ。\nなら、ゆっくりいこう。</string>
+    <string name="theme_night_description">仕事帰りの夜空はいちばん静か。\n星があなたと一緒に数えてる、\n自由まであと何歩か。</string>
     <string name="theme_state_using">使用中</string>
     <string name="theme_state_available">使用可能</string>
     <string name="theme_state_locked">未購入、%1$d コイン</string>

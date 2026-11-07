@@ -1,5 +1,13 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.theme.NnoworkField
+import com.neilyin.nnowork.ui.theme.PixelButtonVariant
+import com.neilyin.nnowork.ui.theme.contentColorFor
+import com.neilyin.nnowork.ui.theme.NnoworkPageTitle
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import android.widget.Toast
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -31,7 +39,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -2260,10 +2267,10 @@ private fun TreeHoleTermsGate(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("樹洞條款已更新", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+                NnoworkPageTitle("樹洞條款已更新")
                 Text(
                     "新增「不當內容零容忍」條文",
-                    style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.highlight),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Medium, NnoworkTheme.colors.accentForeground),
                 )
             }
             PixelButton(
@@ -2417,10 +2424,9 @@ private fun TreeHoleTermsProgress(step: TreeHoleTermsStep) {
                         .weight(1f)
                         .height(8.dp)
                         .background(
-                            color = if (index <= step.index) NnoworkTheme.colors.success else NnoworkTheme.colors.secondaryText,
-                            shape = RectangleShape,
-                        )
-                        .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RectangleShape),
+                            color = if (index <= step.index) NnoworkTheme.colors.accent else NnoworkTheme.colors.divider,
+                            shape = RoundedCornerShape(50),
+                        ),
                 )
             }
         }
@@ -2505,7 +2511,7 @@ private fun TreeHoleProfileSetup(
             .padding(NnoworkSpacing.page),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
-        Text(stringResource(R.string.treehole_title), style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+        NnoworkPageTitle(stringResource(R.string.treehole_title))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2604,8 +2610,9 @@ private fun ProfileEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text(stringResource(R.string.treehole_profile_edit_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
+        title = { Text(stringResource(R.string.treehole_profile_edit_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 PixelTextField(
@@ -2640,7 +2647,7 @@ private fun ProfileEditDialog(
                         onCheckedChange = { showCompany = it },
                         colors = CheckboxDefaults.colors(checkedColor = NnoworkTheme.colors.success),
                     )
-                    Text(stringResource(R.string.treehole_profile_show_company), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text(stringResource(R.string.treehole_profile_show_company), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             }
         },
@@ -2988,8 +2995,9 @@ private fun TreeHoleMain(
     if (confirmDeleteAccount) {
         AlertDialog(
             onDismissRequest = { confirmDeleteAccount = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("刪除樹洞帳號？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text("刪除樹洞帳號？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
             text = {
                 Text(
                     "這會刪除你的樹洞身份、貼文與留言；本機集點紀錄與金幣不會被刪除。",
@@ -3004,7 +3012,7 @@ private fun TreeHoleMain(
                     },
                     backgroundColor = NnoworkTheme.colors.danger,
                 ) {
-                    Text("確定刪除", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text("確定刪除", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
             dismissButton = {
@@ -3045,15 +3053,15 @@ private fun TreeHoleMain(
                     modifier = Modifier.padding(top = NnoworkSpacing.md),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
+                    NnoworkPageTitle(
                         stringResource(R.string.treehole_title),
-                        style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.weight(1f),
                     )
+                    // 標題列的工具鈕一律 tonal，避免一排四顆實心色塊搶走主視覺。
                     PixelButton(
                         onClick = onSyncCoins,
                         enabled = !state.syncingCoins,
-                        backgroundColor = NnoworkTheme.colors.highlight,
+                        backgroundColor = NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
                         contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
                     ) {
@@ -3071,7 +3079,7 @@ private fun TreeHoleMain(
                     Spacer(Modifier.size(NnoworkSpacing.xs))
                     PixelButton(
                         onClick = { showMyTreeHole = true },
-                        backgroundColor = NnoworkTheme.colors.success,
+                        backgroundColor = NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
                         contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.snug),
                     ) {
@@ -3080,21 +3088,21 @@ private fun TreeHoleMain(
                     Spacer(Modifier.size(NnoworkSpacing.xs))
                     PixelButton(
                         onClick = { confirmDeleteAccount = true },
-                        backgroundColor = NnoworkTheme.colors.danger,
+                        backgroundColor = NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.size(NnoworkSize.minTouchTarget),
                         contentPadding = PaddingValues(NnoworkSpacing.snug),
                     ) {
-                        Icon(Icons.Filled.Delete, "刪除樹洞帳號", tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Delete, "刪除樹洞帳號", tint = NnoworkTheme.colors.danger, modifier = Modifier.size(18.dp))
                     }
                     Spacer(Modifier.size(NnoworkSpacing.xs))
                     PixelButton(
                         onClick = onRefresh,
                         enabled = !state.refreshing,
-                        backgroundColor = NnoworkTheme.colors.buttonBG,
+                        backgroundColor = NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.size(NnoworkSize.minTouchTarget),
                         contentPadding = PaddingValues(NnoworkSpacing.snug),
                     ) {
-                        Icon(Icons.Filled.Refresh, stringResource(R.string.treehole_action_refresh), tint = NnoworkTheme.colors.textOnDark)
+                        Icon(Icons.Filled.Refresh, stringResource(R.string.treehole_action_refresh), tint = NnoworkTheme.colors.onElevated)
                     }
                 }
             }
@@ -3137,7 +3145,8 @@ private fun TreeHoleMain(
                         style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, feedback.second),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(NnoworkTheme.colors.primaryText.copy(alpha = 0.25f))
+                            .clip(RoundedCornerShape(NnoworkRadius.field))
+                            .background(NnoworkTheme.colors.accentSoft)
                             .clickable { onClearTransientFeedback() }
                             .padding(NnoworkSpacing.snug),
                     )
@@ -3223,7 +3232,7 @@ private fun TreeHoleMain(
                             Text(
                                 if (state.feedLoadingMore) stringResource(R.string.treehole_common_loading)
                                 else stringResource(R.string.treehole_feed_load_more),
-                                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
+                                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated),
                             )
                         }
                     } else {
@@ -3285,7 +3294,7 @@ private fun TodaysVoiceEntry(unseenCount: Int, onOpen: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard(backgroundColor = NnoworkTheme.colors.highlight)
+            .pixelCard(backgroundColor = NnoworkTheme.colors.accentSoft, borderColor = NnoworkTheme.colors.accent)
             .clickable(enabled = unseenCount > 0, onClick = onOpen)
             .padding(NnoworkSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -3321,8 +3330,8 @@ private fun NewAnswersBanner(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .background(NnoworkTheme.colors.treeHole.questionSoft)
-            .border(NnoworkLine.emphasis, NnoworkTheme.colors.treeHole.questionAccentDark, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.treeHole.questionSoft)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.treeHole.questionAccentDark, RoundedCornerShape(NnoworkRadius.field))
             .clickable(
                 role = Role.Button,
                 onClickLabel = openLabel,
@@ -3369,7 +3378,8 @@ private fun TodaysVoiceOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NnoworkTheme.colors.primaryText.copy(alpha = 0.82f)),
+            // 今日心聲是全螢幕深色遮罩：上面的字固定用淺色（onStrong），不跟主題文字色。
+            .background(NnoworkTheme.colors.scrim.copy(alpha = 0.88f)),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -3380,7 +3390,7 @@ private fun TodaysVoiceOverlay(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("今日心聲", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.textOnDark), modifier = Modifier.weight(1f))
+                Text("今日心聲", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.onStrong), modifier = Modifier.weight(1f))
                 PixelButton(
                     onClick = onClose,
                     backgroundColor = NnoworkTheme.colors.disabledBG,
@@ -3393,7 +3403,7 @@ private fun TodaysVoiceOverlay(
             Spacer(Modifier.height(NnoworkSpacing.snug))
             Text(
                 "右滑按讚 · 左滑加油 · 上滑難過 · 下滑跳過",
-                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.highlight),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.celebrateYellow),
             )
             Spacer(Modifier.weight(1f))
             val current = posts.firstOrNull()
@@ -3401,7 +3411,7 @@ private fun TodaysVoiceOverlay(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("🎉", style = pixelTextStyle(NnoworkTheme.type.hero))
                     Spacer(Modifier.height(NnoworkSpacing.sm))
-                    Text("今天的心聲都看完了！", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                    Text("今天的心聲都看完了！", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onStrong))
                     Spacer(Modifier.height(NnoworkSpacing.md))
                     PixelButton(onClick = onClose, backgroundColor = NnoworkTheme.colors.highlight) {
                         Text("關閉", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
@@ -3469,17 +3479,17 @@ private fun VoiceActionRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
         ) {
-            VoiceActionButton(Icons.Filled.ThumbUp, "按讚", NnoworkTheme.colors.success, reactionsEnabled) { onReaction("like") }
-            VoiceActionButton(Icons.Filled.Campaign, "加油", NnoworkTheme.colors.info, reactionsEnabled) { onReaction("cheer") }
-            VoiceActionButton(Icons.Filled.SentimentDissatisfied, "難過", NnoworkTheme.colors.warning, reactionsEnabled) { onReaction("cry") }
+            VoiceActionButton(Icons.Filled.ThumbUp, "按讚", NnoworkTheme.colors.celebrateGreen, reactionsEnabled) { onReaction("like") }
+            VoiceActionButton(Icons.Filled.Campaign, "加油", NnoworkTheme.colors.celebrateBlue, reactionsEnabled) { onReaction("cheer") }
+            VoiceActionButton(Icons.Filled.SentimentDissatisfied, "難過", NnoworkTheme.colors.celebrateOrange, reactionsEnabled) { onReaction("cry") }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
         ) {
-            VoiceActionButton(Icons.Filled.Share, "分享", NnoworkTheme.colors.highlight, true, onShare)
-            VoiceActionButton(Icons.Filled.ChatBubble, "留言", NnoworkTheme.colors.secondaryText, true, onComment)
-            VoiceActionButton(Icons.Filled.ArrowDownward, "跳過", NnoworkTheme.colors.textOnDark, true, onSkip)
+            VoiceActionButton(Icons.Filled.Share, "分享", NnoworkTheme.colors.celebrateYellow, true, onShare)
+            VoiceActionButton(Icons.Filled.ChatBubble, "留言", NnoworkTheme.colors.disabledBG, true, onComment)
+            VoiceActionButton(Icons.Filled.ArrowDownward, "跳過", NnoworkTheme.colors.elevatedSurface, true, onSkip)
         }
     }
 }
@@ -3492,10 +3502,12 @@ private fun androidx.compose.foundation.layout.RowScope.VoiceActionButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
+    // 今日心聲是遊戲化的慶祝場景，保留 8-bit 原色（celebrate*）；字色由 PixelButton 依底色決定。
     PixelButton(
         onClick = onClick,
         enabled = enabled,
         backgroundColor = color,
+        variant = PixelButtonVariant.Custom,
         modifier = Modifier
             .weight(1f)
             .height(54.dp),
@@ -3576,11 +3588,11 @@ private fun SwipeableVoiceCard(
                     .align(Alignment.TopCenter)
                     .padding(top = NnoworkSpacing.page)
                     .alpha(hintAlpha)
-                    .background(color)
-                    .border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape)
+                    .clip(RoundedCornerShape(NnoworkRadius.field)).background(color)
+                    .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
                     .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.tight),
             ) {
-                Text(label, style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Text(label, style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, contentColorFor(color)))
             }
         }
     }
@@ -3778,7 +3790,7 @@ private fun PostCard(
                     modifier = Modifier.size(NnoworkSize.minTouchTarget),
                     contentPadding = PaddingValues(7.dp),
                 ) {
-                    Icon(Icons.Filled.Delete, "刪除貼文", tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(17.dp))
+                    Icon(Icons.Filled.Delete, "刪除貼文", tint = NnoworkTheme.colors.onElevated, modifier = Modifier.size(17.dp))
                 }
             }
             onSafetyActions?.let {
@@ -3848,7 +3860,7 @@ private fun MyCommentCard(comment: MyTreeHoleComment, onDelete: () -> Unit) {
                 modifier = Modifier.size(NnoworkSize.minTouchTarget),
                 contentPadding = PaddingValues(7.dp),
             ) {
-                Icon(Icons.Filled.Delete, "刪除留言", tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(17.dp))
+                Icon(Icons.Filled.Delete, "刪除留言", tint = NnoworkTheme.colors.onElevated, modifier = Modifier.size(17.dp))
             }
         }
         Text(comment.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
@@ -3875,14 +3887,15 @@ private fun IndustrySyncPromptDialog(
     val industry = localizedIndustryLabel(status.currentIndustry)
     AlertDialog(
         onDismissRequest = { if (!loading) onDecline() },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
         title = {
             Text(
                 stringResource(
                     if (updateUnsetOnly) R.string.treehole_industry_sync_unset_title
                     else R.string.treehole_industry_sync_mismatch_title,
                 ),
-                style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
+                style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onElevated),
             )
         },
         text = {
@@ -3934,13 +3947,13 @@ private fun IndustrySyncPromptDialog(
 private fun QuestionTag() {
     Box(
         modifier = Modifier
-            .background(NnoworkTheme.colors.treeHole.questionAccent)
-            .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.treeHole.questionAccent)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp),
     ) {
         Text(
             stringResource(R.string.treehole_question_tag),
-            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.onAccent),
         )
     }
 }
@@ -3954,11 +3967,11 @@ private fun StatusBadge(status: String) {
     }
     Box(
         modifier = Modifier
-            .background(color)
-            .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(color)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .padding(horizontal = NnoworkSpacing.xs, vertical = 3.dp),
     ) {
-        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, contentColorFor(color)))
     }
 }
 
@@ -4029,12 +4042,13 @@ private fun CommentsDialog(
 
     AlertDialog(
         onDismissRequest = { if (!submitting) onDismiss() },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(R.string.treehole_comments_title),
-                    style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
+                    style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
                     modifier = Modifier.weight(1f),
                 )
                 onShare?.let {
@@ -4060,7 +4074,7 @@ private fun CommentsDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
             ) {
-                Text(post.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Text(post.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 if (loading) {
                     Text(stringResource(R.string.treehole_common_loading), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
                 } else if (comments.isEmpty()) {
@@ -4079,8 +4093,8 @@ private fun CommentsDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(NnoworkTheme.colors.elevatedSurface)
-                                .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+                                .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.elevatedSurface)
+                                .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
                                 .padding(NnoworkSpacing.snug),
                             horizontalArrangement = Arrangement.spacedBy(9.dp),
                             verticalAlignment = Alignment.Top,
@@ -4173,27 +4187,15 @@ private fun CommentsDialog(
                         }
                     }
                 }
-                BasicTextField(
+                NnoworkField(
                     value = draft,
                     onValueChange = { draft = it.take(TREE_HOLE_COMMENT_MAX_LENGTH) },
                     enabled = !submitting,
-                    textStyle = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText),
-                    cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(82.dp)
-                        .background(NnoworkTheme.colors.elevatedSurface)
-                        .border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape)
-                        .padding(NnoworkSpacing.snug),
-                    decorationBox = { inner ->
-                        if (draft.isEmpty()) {
-                            Text(
-                                stringResource(R.string.treehole_comment_placeholder),
-                                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
-                            )
-                        }
-                        inner()
-                    },
+                    placeholder = stringResource(R.string.treehole_comment_placeholder),
+                    singleLine = false,
+                    minHeight = 82.dp,
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
                     stringResource(R.string.treehole_comment_count, draft.length),
@@ -4235,8 +4237,8 @@ private fun CommentsDialog(
 private fun HelpfulAnswerTag() {
     Row(
         modifier = Modifier
-            .background(NnoworkTheme.colors.treeHole.noticeSoft)
-            .border(NnoworkLine.hairline, NnoworkTheme.colors.treeHole.noticeStroke, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(NnoworkTheme.colors.treeHole.noticeSoft)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.treeHole.noticeStroke, RoundedCornerShape(NnoworkRadius.field))
             .padding(horizontal = NnoworkSpacing.tight, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
@@ -4263,21 +4265,11 @@ private fun PixelTextField(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
-        BasicTextField(
+        NnoworkField(
             value = value,
             onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Medium, NnoworkTheme.colors.primaryText),
-            cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(NnoworkTheme.colors.elevatedSurface)
-                .border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape)
-                .padding(NnoworkSpacing.sm),
-            decorationBox = { inner ->
-                if (value.isEmpty()) Text(placeholder, style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText))
-                inner()
-            },
+            placeholder = placeholder,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

@@ -1,6 +1,25 @@
 package com.neilyin.nnowork.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -35,8 +54,7 @@ object NnoworkSpacing {
     val xl = 32.dp
     val xxl = 40.dp
 
-    // 以下是 feature 內重複最多、但不在 4/8/12… 等差級距上的值（Phase A 保留以維持外觀）。
-    // Phase 3 要改：評估收斂成 4/8/12/16/24/32 六級，並統一頁面水平內距（目前 24/20/16 並存）。
+    // 以下是 feature 內重複最多、但不在 4/8/12… 等差級距上的值（保留以維持各畫面節奏）。
     /** 6dp */
     val tight = 6.dp
     /** 10dp */
@@ -45,38 +63,51 @@ object NnoworkSpacing {
     val cozy = 14.dp
     /** 18dp，目前多數分頁的區塊間距。 */
     val roomy = 18.dp
-    /** 20dp，目前計畫／紀錄／設定的頁面水平內距。 */
+    /** 20dp：全 App 分頁的水平內距。 */
     val page = 20.dp
 }
 
-/**
- * 圓角。對齊 iOS PixelRadius 的角色名（card/button/field/small/hero）。
- * Phase 3 要改：iOS 是 card 12／button 10／field 8／small 6／hero 20；
- * Android 目前 button=8、small=4（compact）。
- */
+/** 圓角，數值對齊 iOS PixelRadius（reui）。 */
 object NnoworkRadius {
-    val compact = 4.dp
-    val control = 8.dp
+    /** 小標籤、徽章、集點格。 */
+    val small = 6.dp
+    /** 輸入框。 */
+    val field = 8.dp
+    /** 按鈕。 */
+    val button = 10.dp
+    /** 卡片、區塊。 */
     val card = 12.dp
+    /** 首頁集點卡等主視覺、對話框。 */
     val hero = 20.dp
 
-    val small = compact
-    val button = control
-    val field = control
-
-    // Phase A 保留的版面專屬圓角（ThemeShop 預覽、蓋章輸入、首頁完成對話框）。
-    val chip = 10.dp
-    val tile = 14.dp
-    val sheet = 16.dp
+    // 舊名稱：保留給既有呼叫點，值已收斂到上面五級。
+    val compact = small
+    val control = field
+    val chip = button
+    val tile = card
+    /** Bottom sheet 上緣。 */
+    val sheet = hero
 }
 
-/** 線寬。Phase 3 要改：iOS 是 hairline 1／control 1.5／emphasis 3，且實心按鈕不加框。 */
+/** 線寬，對齊 iOS PixelLine：卡片 hairline、控制項 1.5、粗框只給集點卡主視覺。 */
 object NnoworkLine {
     val hairline = 1.dp
-    val control = 2.dp
+    val control = 1.5.dp
     val emphasis = 3.dp
 }
 
+/** 卡片 hairline 外框的透明度（iOS PixelCardModifier 0.45）。 */
+const val NnoworkCardBorderAlpha = 0.45f
+
+/** 柔和投影參數（iOS：radius 10、y 3；淺卡 6% 黑、深卡 28% 黑）。 */
+object NnoworkShadow {
+    val radius = 10.dp
+    val offsetY = 3.dp
+    const val lightAlpha = 0.06f
+    const val darkAlpha = 0.28f
+}
+
+/** 舊的 Material 陰影高度；> 0 代表「要柔和投影」，實際陰影見 [NnoworkShadow]。 */
 object NnoworkElevation {
     val control = 3.dp
     val card = 4.dp
@@ -98,7 +129,7 @@ object NnoworkMotion {
 }
 
 /**
- * 淺色內容面的標準輸入框。標籤永遠可見，避免只靠 placeholder 傳達欄位用途。
+ * 標準輸入框（有浮動標籤）。底色／文字／框線走 input* token，圓角 field 8。
  */
 @Composable
 fun NnoworkTextField(
@@ -124,25 +155,141 @@ fun NnoworkTextField(
         singleLine = singleLine,
         textStyle = MaterialTheme.typography.bodyLarge,
         visualTransformation = visualTransformation,
-        shape = RoundedCornerShape(NnoworkRadius.control),
+        shape = RoundedCornerShape(NnoworkRadius.field),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = colors.surface,
-            unfocusedContainerColor = colors.surface,
-            disabledContainerColor = colors.surface.copy(alpha = 0.72f),
-            focusedTextColor = colors.onSurface,
-            unfocusedTextColor = colors.onSurface,
-            disabledTextColor = colors.onSurface.copy(alpha = 0.55f),
-            cursorColor = colors.primary,
-            focusedBorderColor = colors.cardBorder,
-            unfocusedBorderColor = colors.cardBorder.copy(alpha = 0.72f),
-            focusedLabelColor = colors.onSurface,
-            unfocusedLabelColor = colors.onSurface.copy(alpha = 0.78f),
-            focusedPlaceholderColor = colors.onSurface.copy(alpha = 0.55f),
-            unfocusedPlaceholderColor = colors.onSurface.copy(alpha = 0.55f),
+            focusedContainerColor = colors.inputBG,
+            unfocusedContainerColor = colors.inputBG,
+            disabledContainerColor = colors.inputBG.copy(alpha = 0.72f),
+            focusedTextColor = colors.inputText,
+            unfocusedTextColor = colors.inputText,
+            disabledTextColor = colors.inputText.copy(alpha = 0.55f),
+            cursorColor = colors.accentForeground,
+            focusedBorderColor = colors.accentForeground,
+            unfocusedBorderColor = colors.inputBorder,
+            focusedLabelColor = colors.accentForeground,
+            unfocusedLabelColor = colors.secondaryText,
+            focusedPlaceholderColor = colors.secondaryText,
+            unfocusedPlaceholderColor = colors.secondaryText,
             errorBorderColor = colors.danger,
             errorLabelColor = colors.danger,
             errorCursorColor = colors.danger,
         ),
+    )
+}
+
+/**
+ * 無浮動標籤的精簡輸入框（取代原本 6 個寫死白底＋3dp 黑框的 BasicTextField）。
+ * 外觀與 [NnoworkTextField] 同一套：input* token、field 圓角、1.5dp 框、聚焦時框轉 accentForeground。
+ * [minHeight] 給多行備註用；單行時維持 controlHeight。
+ */
+@Composable
+fun NnoworkField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    singleLine: Boolean = true,
+    enabled: Boolean = true,
+    minHeight: Dp = NnoworkSize.controlHeight,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+) {
+    val colors = NnoworkTheme.colors
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(NnoworkRadius.field)
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        enabled = enabled,
+        singleLine = singleLine,
+        textStyle = textStyle.merge(TextStyle(color = colors.inputText)),
+        cursorBrush = SolidColor(colors.accentForeground),
+        keyboardOptions = keyboardOptions,
+        interactionSource = interaction,
+        modifier = modifier
+            .heightIn(min = minHeight)
+            .alpha(if (enabled) 1f else 0.6f)
+            .clip(shape)
+            .background(colors.inputBG, shape)
+            .border(NnoworkLine.control, if (focused) colors.accentForeground else colors.inputBorder, shape)
+            .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.sm),
+        decorationBox = { inner ->
+            Box(contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {
+                if (value.isEmpty() && placeholder != null) {
+                    Text(placeholder, style = textStyle.merge(TextStyle(color = colors.secondaryText)))
+                }
+                inner()
+            }
+        },
+    )
+}
+
+/** 可點的「假輸入框」（時間選擇、下拉）共用的外觀，和 [NnoworkField] 一致。 */
+@Composable
+fun Modifier.fieldSurface(): Modifier {
+    val colors = NnoworkTheme.colors
+    val shape = RoundedCornerShape(NnoworkRadius.field)
+    return this
+        .clip(shape)
+        .background(colors.inputBG, shape)
+        .border(NnoworkLine.control, colors.inputBorder, shape)
+}
+
+/** Switch 統一配色：開啟時 accent 軌道＋onAccent 圓鈕。 */
+@Composable
+fun nnoworkSwitchColors() = SwitchDefaults.colors(
+    checkedThumbColor = NnoworkTheme.colors.onAccent,
+    checkedTrackColor = NnoworkTheme.colors.accent,
+    checkedBorderColor = NnoworkTheme.colors.accent,
+    uncheckedThumbColor = NnoworkTheme.colors.secondaryText,
+    uncheckedTrackColor = NnoworkTheme.colors.disabledBG,
+    uncheckedBorderColor = NnoworkTheme.colors.border,
+)
+
+/** Checkbox 統一配色。 */
+@Composable
+fun nnoworkCheckboxColors() = CheckboxDefaults.colors(
+    checkedColor = NnoworkTheme.colors.accent,
+    checkmarkColor = NnoworkTheme.colors.onAccent,
+    uncheckedColor = NnoworkTheme.colors.border,
+)
+
+/** 對話框統一外觀：elevatedSurface 底、hero 圓角、主要文字色。 */
+object NnoworkDialogDefaults {
+    val shape: Shape = RoundedCornerShape(NnoworkRadius.hero)
+    val containerColor: Color
+        @Composable @ReadOnlyComposable get() = NnoworkTheme.colors.dialogBG
+    val contentColor: Color
+        @Composable @ReadOnlyComposable get() = NnoworkTheme.colors.onElevated
+}
+
+/** Bottom sheet 統一外觀：elevatedSurface 底、上緣 sheet 圓角、柔和把手。 */
+object NnoworkSheetDefaults {
+    val shape: Shape = RoundedCornerShape(topStart = NnoworkRadius.sheet, topEnd = NnoworkRadius.sheet)
+    val containerColor: Color
+        @Composable @ReadOnlyComposable get() = NnoworkTheme.colors.elevatedSurface
+    val scrimColor: Color
+        @Composable @ReadOnlyComposable get() = NnoworkTheme.colors.scrim
+
+    @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+    @Composable
+    fun DragHandle() {
+        BottomSheetDefaults.DragHandle(color = NnoworkTheme.colors.secondaryText.copy(alpha = 0.5f))
+    }
+}
+
+/** 分頁大標題：全 App 同一個字級（pageTitle 28）與字型（等寬粗體）。 */
+@Composable
+fun NnoworkPageTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = NnoworkTheme.colors.primaryText,
+) {
+    Text(
+        text,
+        modifier = modifier,
+        style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, color),
     )
 }
 

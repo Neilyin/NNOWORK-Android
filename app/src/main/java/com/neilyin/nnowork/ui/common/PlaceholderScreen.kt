@@ -30,7 +30,7 @@ fun PlaceholderScreen(title: String, subtitle: String = "施工中…即將完�
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("🚧", style = pixelTextStyle(NnoworkTheme.type.hero))
             Spacer(Modifier.height(NnoworkSpacing.sm))
-            Text(title, style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.textOnDark), textAlign = TextAlign.Center)
+            Text(title, style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.onElevated), textAlign = TextAlign.Center)
             Spacer(Modifier.height(NnoworkSpacing.xs))
             Text(subtitle, style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText), textAlign = TextAlign.Center)
         }

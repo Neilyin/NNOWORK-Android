@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
@@ -19,6 +18,7 @@ import com.neilyin.nnowork.analytics.Analytics
 import com.neilyin.nnowork.data.treehole.TreeHoleShareCardContent
 import com.neilyin.nnowork.data.treehole.TreeHoleShareSource
 import com.neilyin.nnowork.data.treehole.shareCardFooterText
+import com.neilyin.nnowork.ui.theme.ShareCardPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -89,8 +89,8 @@ object TreeHoleShareCardSharer {
         val accentCard = RectF(88f, 88f, 1_024f, 1_294f)
         canvas.drawRoundRect(accentCard, 38f, 38f, fillPaint(ACCENT_COLOR))
         val card = RectF(56f, 56f, 992f, 1_262f)
-        canvas.drawRoundRect(card, 38f, 38f, fillPaint(Color.WHITE))
-        canvas.drawRoundRect(card, 38f, 38f, strokePaint(Color.BLACK, 8f))
+        canvas.drawRoundRect(card, 38f, 38f, fillPaint(ShareCardPalette.treeHoleCard))
+        canvas.drawRoundRect(card, 38f, 38f, strokePaint(ShareCardPalette.treeHoleInk, 8f))
 
         val textLeft = 120f
         val textWidth = 808
@@ -122,7 +122,7 @@ object TreeHoleShareCardSharer {
         val maxContentLines = (availableContentHeight / (contentSize * 1.3f)).toInt().coerceAtLeast(1)
         val contentLayout = textLayout(
             text = content.content,
-            paint = textPaint(size = contentSize, color = Color.BLACK, bold = true),
+            paint = textPaint(size = contentSize, color = ShareCardPalette.treeHoleInk, bold = true),
             width = textWidth,
             maxLines = maxContentLines,
             lineSpacing = 14f,
@@ -134,7 +134,7 @@ object TreeHoleShareCardSharer {
             canvas.drawLine(120f, footerTop, 928f, footerTop, strokePaint(ACCENT_COLOR, 8f))
             val footerLayout = textLayout(
                 text = footer,
-                paint = textPaint(size = 40f, color = Color.BLACK, bold = true),
+                paint = textPaint(size = 40f, color = ShareCardPalette.treeHoleInk, bold = true),
                 width = textWidth,
                 maxLines = 2,
                 lineSpacing = 8f,
@@ -197,7 +197,7 @@ object TreeHoleShareCardSharer {
     private const val CARD_WIDTH = 1_080
     private const val CARD_HEIGHT = 1_350
     private const val CACHE_TTL_MILLIS = 24 * 60 * 60 * 1_000L
-    private const val BACKGROUND_COLOR = 0xFF242329.toInt()
-    private const val ACCENT_COLOR = 0xFFFFC83D.toInt()
-    private const val MUTED_TEXT_COLOR = 0xFF5B5A63.toInt()
+    private val BACKGROUND_COLOR = ShareCardPalette.treeHoleBackdrop
+    private val ACCENT_COLOR = ShareCardPalette.treeHoleAccent
+    private val MUTED_TEXT_COLOR = ShareCardPalette.treeHoleMutedInk
 }

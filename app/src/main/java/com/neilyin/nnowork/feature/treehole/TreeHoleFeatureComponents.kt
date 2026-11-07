@@ -1,5 +1,9 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.neilyin.nnowork.ui.theme.NnoworkSheetDefaults
 import androidx.compose.foundation.background
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -171,15 +175,16 @@ fun TreeHoleFeedFilterBar(
             modifier = Modifier
                 .heightIn(min = MIN_TOUCH_TARGET)
                 .widthIn(min = MIN_TOUCH_TARGET)
+                .clip(RoundedCornerShape(NnoworkRadius.button))
                 .background(
-                    if (industryFilterActive) MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
-                    else MaterialTheme.colorScheme.surfaceVariant,
+                    if (industryFilterActive) NnoworkTheme.colors.accentSoft
+                    else NnoworkTheme.colors.surface,
                 )
                 .border(
-                    2.dp,
-                    if (industryFilterActive) MaterialTheme.colorScheme.secondary
-                    else MaterialTheme.colorScheme.outline,
-                    RectangleShape,
+                    if (industryFilterActive) NnoworkLine.control else NnoworkLine.hairline,
+                    if (industryFilterActive) NnoworkTheme.colors.accentForeground
+                    else NnoworkTheme.colors.border,
+                    RoundedCornerShape(NnoworkRadius.button),
                 )
                 .clickable(
                     role = Role.Button,
@@ -236,11 +241,12 @@ private fun FeedModePill(
         modifier = Modifier
             .heightIn(min = MIN_TOUCH_TARGET)
             .widthIn(min = MIN_TOUCH_TARGET)
-            .background(if (selected) selectedColor else MaterialTheme.colorScheme.surfaceVariant)
+            .clip(RoundedCornerShape(NnoworkRadius.button))
+            .background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.surface)
             .border(
-                2.dp,
-                if (selected) selectedColor else MaterialTheme.colorScheme.outline,
-                RectangleShape,
+                if (selected) NnoworkLine.control else NnoworkLine.hairline,
+                if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.border,
+                RoundedCornerShape(NnoworkRadius.button),
             )
             .selectable(
                 selected = selected,
@@ -257,7 +263,7 @@ private fun FeedModePill(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             modifier = Modifier.size(17.dp),
         )
         Text(
@@ -265,7 +271,7 @@ private fun FeedModePill(
             style = pixelTextStyle(
                 NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             ),
         )
     }
@@ -328,9 +334,10 @@ fun TreeHoleIndustryFilterSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onBackground) },
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkSheetDefaults.containerColor,
+        scrimColor = NnoworkSheetDefaults.scrimColor,
+        dragHandle = { NnoworkSheetDefaults.DragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -476,9 +483,10 @@ fun TreeHoleIndustryPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onBackground) },
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkSheetDefaults.containerColor,
+        scrimColor = NnoworkSheetDefaults.scrimColor,
+        dragHandle = { NnoworkSheetDefaults.DragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -561,8 +569,8 @@ private fun IndustryRadioChip(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = MIN_TOUCH_TARGET)
-            .background(if (selected) option.resolvedColor() else MaterialTheme.colorScheme.surfaceVariant)
-            .border(NnoworkLine.control, if (selected) option.resolvedColor() else MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.surface)
+            .border(if (selected) NnoworkLine.control else NnoworkLine.hairline, if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
@@ -578,7 +586,7 @@ private fun IndustryRadioChip(
         Icon(
             imageVector = option.icon,
             contentDescription = null,
-            tint = if (selected) NnoworkTheme.colors.primaryText else option.resolvedColor(),
+            tint = if (selected) NnoworkTheme.colors.accentForeground else option.resolvedColor(),
             modifier = Modifier.size(18.dp),
         )
         Text(
@@ -586,7 +594,7 @@ private fun IndustryRadioChip(
             style = pixelTextStyle(
                 NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -640,8 +648,8 @@ private fun IndustryToggleChip(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = MIN_TOUCH_TARGET)
-            .background(if (selected) option.resolvedColor() else MaterialTheme.colorScheme.surfaceVariant)
-            .border(NnoworkLine.control, if (selected) option.resolvedColor() else MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.surface)
+            .border(if (selected) NnoworkLine.control else NnoworkLine.hairline, if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.border, RoundedCornerShape(NnoworkRadius.field))
             .toggleable(
                 value = selected,
                 role = Role.Checkbox,
@@ -657,7 +665,7 @@ private fun IndustryToggleChip(
         Icon(
             imageVector = option.icon,
             contentDescription = null,
-            tint = if (selected) NnoworkTheme.colors.primaryText else option.resolvedColor(),
+            tint = if (selected) NnoworkTheme.colors.accentForeground else option.resolvedColor(),
             modifier = Modifier.size(18.dp),
         )
         Text(
@@ -665,7 +673,7 @@ private fun IndustryToggleChip(
             style = pixelTextStyle(
                 NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.secondaryText,
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -770,9 +778,10 @@ fun TreeHoleQuestionSheet(
     ModalBottomSheet(
         onDismissRequest = { if (!busy) onDismiss() },
         modifier = modifier,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onBackground) },
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkSheetDefaults.containerColor,
+        scrimColor = NnoworkSheetDefaults.scrimColor,
+        dragHandle = { NnoworkSheetDefaults.DragHandle() },
     ) {
         Column(
             modifier = Modifier
@@ -857,7 +866,7 @@ fun TreeHoleQuestionSheet(
                 isError = (trimmed.isNotEmpty() && !validLength) || errorMessage != null,
                 minLines = 5,
                 maxLines = 8,
-                shape = RectangleShape,
+                shape = RoundedCornerShape(NnoworkRadius.field),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -994,10 +1003,11 @@ private fun QuestionIdentityCard(
                 identity.role.takeIf { it.isNotBlank() }?.let { role ->
                     Text(
                         role,
-                        style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                        // 職稱徽章對齊 iOS TreeHoleRoleBadge：膠囊、identityBadge* 色、1dp 框。
+                        style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.SemiBold, NnoworkTheme.colors.identityBadgeText),
                         modifier = Modifier
-                            .background(NnoworkTheme.colors.highlight)
-                            .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape)
+                            .clip(RoundedCornerShape(50)).background(NnoworkTheme.colors.identityBadgeBG)
+                            .border(NnoworkLine.hairline, NnoworkTheme.colors.identityBadgeBorder, RoundedCornerShape(50))
                             .padding(horizontal = 5.dp, vertical = 2.dp)
                             .semantics { contentDescription = "職稱：$role" },
                         maxLines = 1,
@@ -1060,8 +1070,8 @@ fun TreeHoleAnswerBadgeMark(
     Row(
         modifier = modifier
             .wrapContentWidth()
-            .background(color.copy(alpha = 0.13f))
-            .border(NnoworkLine.hairline, color, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(color.copy(alpha = 0.13f))
+            .border(NnoworkLine.hairline, color, RoundedCornerShape(NnoworkRadius.field))
             .semantics(mergeDescendants = true) {
                 contentDescription = "$name，$safeExp EXP"
             }
@@ -1210,8 +1220,8 @@ private fun PixelIconAction(
     Box(
         modifier = modifier
             .sizeIn(minWidth = MIN_TOUCH_TARGET, minHeight = MIN_TOUCH_TARGET)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field)).background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RoundedCornerShape(NnoworkRadius.field))
             .clickable(
                 enabled = enabled,
                 role = Role.Button,

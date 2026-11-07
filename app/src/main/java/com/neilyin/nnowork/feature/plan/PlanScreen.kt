@@ -1,5 +1,16 @@
 package com.neilyin.nnowork.feature.plan
 
+import com.neilyin.nnowork.ui.theme.fieldSurface
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import com.neilyin.nnowork.ui.theme.nnoworkSwitchColors
+import com.neilyin.nnowork.ui.theme.NnoworkField
+import com.neilyin.nnowork.ui.theme.contentColorFor
+import com.neilyin.nnowork.ui.theme.NnoworkPageTitle
+import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
 import android.app.DatePickerDialog
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -63,7 +74,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -279,11 +289,7 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
         item {
-            Text(
-                "離職計畫",
-                style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
-                modifier = Modifier.padding(top = NnoworkSpacing.md),
-            )
+            NnoworkPageTitle("離職計畫", modifier = Modifier.padding(top = NnoworkSpacing.md))
         }
         item { HeaderCard() }
         item { SalaryTimerCard(plan = plan, viewModel = viewModel) }
@@ -294,7 +300,7 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
             TodoRow(item, false, { viewModel.completeTodo(item) }, {}, { viewModel.deleteTodo(item) })
         }
         if (plan.completedTodoItems.isNotEmpty()) {
-            item { Text("已完成", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground)) }
+            item { Text("已完成", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.secondaryText)) }
             items(plan.completedTodoItems, key = { it.id }) { item ->
                 TodoRow(item, true, {}, { viewModel.restoreTodo(item) }, { viewModel.deleteTodo(item) })
             }
@@ -336,8 +342,8 @@ private fun SalaryTimerCard(plan: ResignationPlan, viewModel: PlanViewModel) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SectionTitle(Icons.Filled.AttachMoney, "薪水計時器", NnoworkTheme.colors.highlight)
             Spacer(Modifier.width(NnoworkSpacing.tight))
-            Box(Modifier.background(NnoworkTheme.colors.warning).padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp)) {
-                Text("BETA", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            Box(Modifier.clip(RoundedCornerShape(NnoworkRadius.small)).background(NnoworkTheme.colors.accentSoft).padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp)) {
+                Text("BETA", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.accentForeground))
             }
             Spacer(Modifier.weight(1f))
             PixelButton(
@@ -438,7 +444,7 @@ private fun ManualHourlyTimerBoard(
             PixelButton(
                 onClick = onPause,
                 enabled = plan.manualTimerStatus == ManualSalaryTimer.RUNNING,
-                backgroundColor = NnoworkTheme.colors.highlight,
+                backgroundColor = NnoworkTheme.colors.disabledBG,
                 modifier = Modifier.weight(1f),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
@@ -454,9 +460,9 @@ private fun ManualHourlyTimerBoard(
                 modifier = Modifier.weight(1f),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
-                Icon(Icons.Filled.Stop, contentDescription = null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Stop, contentDescription = null, tint = NnoworkTheme.colors.onElevated, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(NnoworkSpacing.xxs))
-                Text("停止", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.textOnDark), maxLines = 1)
+                Text("停止", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.onElevated), maxLines = 1)
             }
         }
         Text(
@@ -475,9 +481,11 @@ private fun SalaryBoard(snapshot: SalaryCalculator.Snapshot, plan: ResignationPl
         }
         LinearProgressIndicator(
             progress = { snapshot.progress },
-            modifier = Modifier.fillMaxWidth().height(20.dp).border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape),
-            color = NnoworkTheme.colors.highlight,
-            trackColor = NnoworkTheme.colors.elevatedSurface,
+            modifier = Modifier.fillMaxWidth().height(20.dp).clip(RoundedCornerShape(NnoworkRadius.small)),
+            color = NnoworkTheme.colors.accent,
+            trackColor = NnoworkTheme.colors.accentSoft,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Schedule, null, tint = NnoworkTheme.colors.warning, modifier = Modifier.size(20.dp))
@@ -494,8 +502,8 @@ private fun SalaryBoard(snapshot: SalaryCalculator.Snapshot, plan: ResignationPl
 private fun SalaryStat(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.tertiary)
-            .border(NnoworkLine.emphasis, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field))
+            .background(NnoworkTheme.colors.accentSoft)
             .padding(NnoworkSpacing.sm),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
     ) {
@@ -595,7 +603,7 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
                 Text("午休不計薪", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 Text("開啟後會從每日工時扣除午休", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             }
-            Switch(plan.lunchUnpaid, viewModel::setLunchUnpaid, colors = SwitchDefaults.colors(checkedThumbColor = NnoworkTheme.colors.success))
+            Switch(plan.lunchUnpaid, viewModel::setLunchUnpaid, colors = nnoworkSwitchColors())
         }
         if (plan.lunchUnpaid) {
             ChipRow("午休分鐘（15 為單位）", listOf(15, 30, 45, 60, 90, 120), plan.lunchMinutes) { viewModel.setLunchMinutes(it) }
@@ -632,7 +640,7 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
                         onClick = { viewModel.setShiftUseTemplates(use) },
                         backgroundColor = if (plan.shiftUseTemplates == use) NnoworkTheme.colors.buttonBG else NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.weight(1f),
-                    ) { Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) }
+                    ) { Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.onElevated)) }
                 }
             }
             if (plan.shiftUseTemplates) {
@@ -670,13 +678,13 @@ private fun ShiftTemplateSection(shifts: List<Shift>, onAdd: () -> Unit, onEdit:
         shifts.forEach { shift ->
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.tertiary)
-                    .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+                    .clip(RoundedCornerShape(NnoworkRadius.field))
+                    .background(NnoworkTheme.colors.accentSoft)
                     .clickable { onEdit(shift) }.padding(NnoworkSpacing.snug),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(26.dp).background(parseColor(shift.colorHex)).border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape), contentAlignment = Alignment.Center) {
-                    Icon(shiftIcon(shift.icon), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(16.dp))
+                Box(Modifier.size(26.dp).clip(RoundedCornerShape(NnoworkRadius.small)).background(parseColor(shift.colorHex)), contentAlignment = Alignment.Center) {
+                    Icon(shiftIcon(shift.icon), null, tint = contentColorFor(parseColor(shift.colorHex)), modifier = Modifier.size(16.dp))
                 }
                 Spacer(Modifier.size(NnoworkSpacing.snug))
                 Text(shift.name.ifBlank { "未命名班別" }, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
@@ -728,8 +736,9 @@ private fun MonthGrid(monthStart: Long, plan: ResignationPlan, multiShift: Boole
 
     Column(
         modifier = Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.tertiary)
-            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.field))
+            .background(NnoworkTheme.colors.surface)
+            .border(NnoworkLine.hairline, NnoworkTheme.colors.divider, RoundedCornerShape(NnoworkRadius.field))
             .padding(NnoworkSpacing.xs),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
     ) {
@@ -774,17 +783,18 @@ private fun androidx.compose.foundation.layout.RowScope.DayCell(
 
     val bg = when {
         shift != null -> parseColor(shift.colorHex)
-        rest -> NnoworkTheme.colors.highlight
-        else -> NnoworkTheme.colors.textOnDark
+        rest -> NnoworkTheme.colors.accentSoft
+        else -> NnoworkTheme.colors.elevatedSurface
     }
     Box(
         modifier = Modifier.weight(1f).aspectRatio(1f)
-            .background(bg).border(NnoworkLine.hairline, NnoworkTheme.colors.disabledBG, RectangleShape)
+            .clip(RoundedCornerShape(NnoworkRadius.small))
+            .background(bg).border(NnoworkLine.hairline, NnoworkTheme.colors.divider, RoundedCornerShape(NnoworkRadius.small))
             .clickable { onTapDay(key) },
         contentAlignment = Alignment.Center,
     ) {
         if (shift != null) {
-            Icon(shiftIcon(shift.icon), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(13.dp))
+            Icon(shiftIcon(shift.icon), null, tint = contentColorFor(bg), modifier = Modifier.size(13.dp))
         } else {
             Text(
                 dayNum.toString(),
@@ -805,8 +815,9 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("編輯班別", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
+        title = { Text("編輯班別", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 NnoworkTextField(
@@ -825,18 +836,19 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
                 Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                     shiftIconKeys.forEach { k ->
                         Box(
-                            Modifier.size(38.dp).background(if (icon == k) NnoworkTheme.colors.info else NnoworkTheme.colors.disabledBG)
-                                .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape).clickable { icon = k },
+                            Modifier.size(38.dp).clip(RoundedCornerShape(NnoworkRadius.small))
+                                .background(if (icon == k) NnoworkTheme.colors.accent else NnoworkTheme.colors.disabledBG)
+                                .clickable { icon = k },
                             contentAlignment = Alignment.Center,
-                        ) { Icon(shiftIcon(k), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(20.dp)) }
+                        ) { Icon(shiftIcon(k), null, tint = if (icon == k) NnoworkTheme.colors.onAccent else NnoworkTheme.colors.primaryText, modifier = Modifier.size(20.dp)) }
                     }
                 }
                 Text("底色", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
                 Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                     shiftColors.forEach { hex ->
                         Box(
-                            Modifier.size(34.dp).background(parseColor(hex))
-                                .border(if (color == hex) 3.dp else 2.dp, NnoworkTheme.colors.border, RectangleShape).clickable { color = hex },
+                            Modifier.size(34.dp).clip(RoundedCornerShape(NnoworkRadius.small)).background(parseColor(hex))
+                                .border(if (color == hex) NnoworkLine.emphasis else NnoworkLine.hairline, if (color == hex) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.divider, RoundedCornerShape(NnoworkRadius.small)).clickable { color = hex },
                         )
                     }
                 }
@@ -849,7 +861,7 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
         },
         dismissButton = {
             PixelButton(onClick = { onDelete(shift) }, backgroundColor = NnoworkTheme.colors.danger) {
-                Text("刪除", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Text("刪除", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         },
     )
@@ -861,26 +873,24 @@ private fun MoneyField(label: String, value: Double, currency: String, onCurrenc
     Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pixelCard(backgroundColor = NnoworkTheme.colors.elevatedSurface)
-                .padding(start = NnoworkSpacing.cozy, top = NnoworkSpacing.xs, bottom = NnoworkSpacing.xs, end = NnoworkSpacing.xs),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PixelButton(onClick = onCurrency, backgroundColor = NnoworkTheme.colors.highlight, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.tight)) {
+            PixelButton(onClick = onCurrency, backgroundColor = NnoworkTheme.colors.disabledBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.tight)) {
                 Text(currency, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
             Spacer(Modifier.size(NnoworkSpacing.xs))
-            BasicTextField(
+            NnoworkField(
                 value = text,
                 onValueChange = { v -> text = v.filter { it.isDigit() } },
                 singleLine = true,
-                textStyle = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
-                cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
+                textStyle = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f),
             )
+            Spacer(Modifier.size(NnoworkSpacing.xs))
             PixelButton(onClick = { onSave(text.toDoubleOrNull() ?: 0.0) }, backgroundColor = NnoworkTheme.colors.buttonBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs)) {
-                Text("儲存", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Text("儲存", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         }
     }
@@ -892,7 +902,7 @@ private fun TimeField(label: String, minutes: Int, onPick: (Int) -> Unit, modifi
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         Box(
-            Modifier.fillMaxWidth().pixelCard(backgroundColor = NnoworkTheme.colors.elevatedSurface)
+            Modifier.fillMaxWidth().fieldSurface()
                 .clickable {
                     TimePickerDialog(context, { _, h, m -> onPick(h * 60 + m) }, minutes / 60, minutes % 60, true).show()
                 }.padding(NnoworkSpacing.sm),
@@ -939,10 +949,11 @@ private fun DayGrid(selected: Set<Int>, onToggle: (Int) -> Unit) {
                     if (d <= 30) {
                         Box(
                             Modifier.weight(1f).aspectRatio(1f)
-                                .background(if (selected.contains(d)) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG)
-                                .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape).clickable { onToggle(d) },
+                                .clip(RoundedCornerShape(NnoworkRadius.small))
+                                .background(if (selected.contains(d)) NnoworkTheme.colors.accent else NnoworkTheme.colors.disabledBG)
+                                .clickable { onToggle(d) },
                             contentAlignment = Alignment.Center,
-                        ) { Text(d.toString(), style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
+                        ) { Text(d.toString(), style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, if (selected.contains(d)) NnoworkTheme.colors.onAccent else NnoworkTheme.colors.primaryText)) }
                     } else Box(Modifier.weight(1f))
                 }
             }
@@ -981,9 +992,11 @@ private fun FundCard(plan: ResignationPlan, progress: Float, onTarget: (Double) 
         }
         LinearProgressIndicator(
             progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(22.dp).border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape),
-            color = NnoworkTheme.colors.success,
-            trackColor = NnoworkTheme.colors.elevatedSurface,
+            modifier = Modifier.fillMaxWidth().height(22.dp).clip(RoundedCornerShape(NnoworkRadius.small)),
+            color = NnoworkTheme.colors.accent,
+            trackColor = NnoworkTheme.colors.accentSoft,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
         )
         MoneyField("目標金額", plan.targetAmount, plan.currencySymbol, {}, onTarget)
         MoneyField("目前已存", plan.currentSaved, plan.currencySymbol, {}, onSaved)
@@ -995,7 +1008,7 @@ private fun FundCard(plan: ResignationPlan, progress: Float, onTarget: (Double) 
         }
         Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
             listOf(5_000.0, 10_000.0).forEach { amount ->
-                PixelButton(onClick = { onQuickAdd(amount) }, backgroundColor = NnoworkTheme.colors.success.copy(alpha = 0.25f), modifier = Modifier.weight(1f)) {
+                PixelButton(onClick = { onQuickAdd(amount) }, backgroundColor = NnoworkTheme.colors.disabledBG, modifier = Modifier.weight(1f)) {
                     Text("+ ${SalaryCalculator.formatMoney(plan, amount)}", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
@@ -1068,7 +1081,7 @@ private fun TodoComposer(onAdd: (String, Long?) -> Unit) {
             if (reminderAt != null) {
                 Spacer(Modifier.size(NnoworkSpacing.xs))
                 PixelButton(onClick = { reminderAt = null }, backgroundColor = NnoworkTheme.colors.danger, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
-                    Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.onElevated, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -1103,7 +1116,7 @@ private fun TodoRow(item: TodoItem, completed: Boolean, onComplete: () -> Unit, 
             }
         }
         PixelButton(onClick = onDelete, backgroundColor = NnoworkTheme.colors.danger, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
-            Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark)
+            Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.onElevated)
         }
     }
 }

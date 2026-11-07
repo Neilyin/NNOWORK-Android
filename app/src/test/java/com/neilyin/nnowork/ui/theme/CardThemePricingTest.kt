@@ -5,7 +5,7 @@ import org.junit.Test
 
 class CardThemePricingTest {
     @Test
-    fun `exactly six premium themes cost fifteen coins`() {
+    fun `exactly seven premium themes cost fifteen coins`() {
         val premiumThemes = CardTheme.entries.filter(CardTheme::requiresCoins)
 
         assertEquals(
@@ -16,6 +16,8 @@ class CardThemePricingTest {
                 CardTheme.SUMMER,
                 CardTheme.PANDA,
                 CardTheme.SLOTH,
+                // 第 10 個主題：比照既有付費主題的最高定價（15 金幣），同一套購買流程。
+                CardTheme.NIGHT,
             ),
             premiumThemes,
         )
@@ -36,6 +38,8 @@ class CardThemePricingTest {
         assertEquals(CardTheme.NOTION, CardTheme.NOTION.appWideTheme(owned))
         assertEquals(CardTheme.RPG, CardTheme.LAZY_CAT.appWideTheme(owned))
         assertEquals(CardTheme.RPG, CardTheme.SUMMER.appWideTheme(owned))
+        assertEquals(CardTheme.RPG, CardTheme.NIGHT.appWideTheme(owned))
+        assertEquals(CardTheme.NIGHT, CardTheme.NIGHT.appWideTheme(owned + CardTheme.NIGHT.id))
     }
 
     @Test
@@ -51,6 +55,7 @@ class CardThemePricingTest {
                 "theme.summer",
                 "theme.panda",
                 "theme.sloth",
+                "theme.night",
             ),
             CardTheme.entries.map(CardTheme::shopProductId),
         )

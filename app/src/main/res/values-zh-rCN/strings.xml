@@ -196,6 +196,7 @@
     <string name="theme_summer_title">夏日海风</string>
     <string name="theme_panda_title">厌世熊猫</string>
     <string name="theme_sloth_title">树懒模式</string>
+    <string name="theme_night_title">夜空金</string>
     <string name="theme_rpg_description">把职场当作一场冒险游戏，\n用像素剑斩断社畜命运！</string>
     <string name="theme_cyberpunk_description">觉醒的黑客，\n打破这个名为公司的矩阵。</string>
     <string name="theme_vacation_description">心已经飞去海岛退休了，\n只差肉体还在这里。</string>
@@ -205,6 +206,7 @@
     <string name="theme_summer_description">把办公室的冷气，\n想象成海边的风。</string>
     <string name="theme_panda_description">黑眼圈是与生俱来的，\n不是加班加出来的。</string>
     <string name="theme_sloth_description">再快也是这样，\n再慢也是这样。\n那就慢慢来吧。</string>
+    <string name="theme_night_description">下班后的夜空最安静，\n星星替你数着，\n离自由还有几步。</string>
     <string name="theme_state_using">使用中</string>
     <string name="theme_state_available">可应用</string>
     <string name="theme_state_locked">尚未解锁，%1$d 金币</string>

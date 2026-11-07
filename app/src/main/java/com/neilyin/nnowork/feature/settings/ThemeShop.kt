@@ -1,5 +1,9 @@
 package com.neilyin.nnowork.feature.settings
 
+import androidx.compose.material3.HorizontalDivider
+import com.neilyin.nnowork.ui.theme.pixelCard
+import com.neilyin.nnowork.ui.theme.PixelButtonVariant
+import com.neilyin.nnowork.ui.theme.NnoworkSheetDefaults
 import androidx.compose.foundation.background
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
 import com.neilyin.nnowork.ui.theme.NnoworkLine
@@ -94,24 +98,24 @@ internal fun ThemeShopGrid(
         ) {
             Text(
                 stringResource(R.string.theme_shop_count, CardTheme.entries.size),
-                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 modifier = Modifier.weight(1f),
             )
             Text(
                 stringResource(if (expanded) R.string.theme_shop_collapse else R.string.theme_shop_expand),
-                style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.primaryText),
             )
             Icon(
                 if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = NnoworkTheme.colors.primaryText,
             )
         }
 
         if (expanded) {
             Text(
                 stringResource(R.string.theme_shop_hint),
-                style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
             CardTheme.entries.chunked(THEME_COLUMNS).forEach { rowThemes ->
                 Row(
@@ -149,15 +153,15 @@ private fun ThemeShopTile(
         unlocked -> stringResource(R.string.theme_state_available)
         else -> stringResource(R.string.theme_state_locked, theme.coinCost)
     }
-    val shape = RoundedCornerShape(if (theme.cellCornerRadius > 0.dp) 12.dp else 2.dp)
-    val border = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+    val shape = RoundedCornerShape(NnoworkRadius.field)
+    val border = if (selected) NnoworkTheme.colors.accentForeground else NnoworkTheme.colors.divider
 
     Column(
         modifier = modifier
             .defaultMinSize(minHeight = 132.dp)
             .clip(RoundedCornerShape(NnoworkRadius.card))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(if (selected) 3.dp else 2.dp, border, RoundedCornerShape(NnoworkRadius.card))
+            .background(if (selected) NnoworkTheme.colors.accentSoft else NnoworkTheme.colors.appBG)
+            .border(if (selected) NnoworkLine.control else NnoworkLine.hairline, border, RoundedCornerShape(NnoworkRadius.card))
             .semantics(mergeDescendants = true) {
                 contentDescription = "$title, $state"
                 role = Role.Button
@@ -174,7 +178,7 @@ private fun ThemeShopTile(
                 .height(62.dp)
                 .clip(shape)
                 .background(theme.backgroundColor)
-                .border(NnoworkLine.control, theme.borderColor, shape),
+                .border(NnoworkLine.hairline, theme.borderColor, shape),
             contentAlignment = Alignment.Center,
         ) {
             ThemeStampMark(
@@ -187,14 +191,14 @@ private fun ThemeShopTile(
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.56f)),
+                        .background(NnoworkTheme.colors.scrim),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Lock, contentDescription = null, tint = NnoworkTheme.colors.onStrong, modifier = Modifier.size(18.dp))
                         Text(
                             theme.coinCost.toString(),
-                            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, Color.White),
+                            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.onStrong),
                         )
                     }
                 }
@@ -213,7 +217,7 @@ private fun ThemeShopTile(
         }
         Text(
             title,
-            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -221,7 +225,7 @@ private fun ThemeShopTile(
         )
         Text(
             state,
-            style = pixelTextStyle(NnoworkTheme.type.caption, color = MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -245,12 +249,16 @@ internal fun ThemePreviewSheet(
     val isFull = stampedCount >= totalCells
     val canAfford = coinBalance >= theme.coinCost
 
+    val scrim = NnoworkTheme.colors.scrim
+    // 預覽 sheet 直接套用被預覽主題的整套語意色，使用者看到的就是購買後的實際外觀。
+    NnoworkTheme(cardTheme = theme, applySystemBars = false) {
     ModalBottomSheet(
         onDismissRequest = { onDismiss(false, didStamp) },
         sheetState = sheetState,
-        containerColor = theme.backgroundColor,
-        contentColor = theme.titleColor,
-        scrimColor = Color.Black.copy(alpha = 0.58f),
+        shape = NnoworkSheetDefaults.shape,
+        containerColor = NnoworkTheme.colors.appBG,
+        contentColor = NnoworkTheme.colors.primaryText,
+        scrimColor = scrim,
         dragHandle = null,
     ) {
         Column(
@@ -289,7 +297,7 @@ internal fun ThemePreviewSheet(
                 item {
                     Text(
                         stringResource(theme.descriptionRes),
-                        style = pixelTextStyle(NnoworkTheme.type.small, color = theme.titleColor),
+                        style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
                         textAlign = TextAlign.Center,
                         lineHeight = NnoworkTheme.type.body * 1.5f,
                         modifier = Modifier.fillMaxWidth(),
@@ -297,10 +305,11 @@ internal fun ThemePreviewSheet(
                 }
             }
 
+            HorizontalDivider(thickness = NnoworkLine.hairline, color = NnoworkTheme.colors.divider)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(theme.cardSurfaceColor)
+                    .background(NnoworkTheme.colors.surface)
                     .padding(horizontal = NnoworkSpacing.roomy, vertical = NnoworkSpacing.sm),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
@@ -311,13 +320,12 @@ internal fun ThemePreviewSheet(
                         onDismiss(true, didStamp)
                     },
                     enabled = canAfford,
-                    backgroundColor = theme.accentColor,
-                    borderColor = theme.primaryColor,
+                    variant = PixelButtonVariant.Primary,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
                         stringResource(R.string.theme_preview_buy, theme.coinCost),
-                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.palette.onAccent),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.buttonText),
                     )
                 }
                 Text(
@@ -325,7 +333,7 @@ internal fun ThemePreviewSheet(
                         if (canAfford) R.string.theme_preview_balance else R.string.theme_preview_insufficient,
                         coinBalance,
                     ),
-                    style = pixelTextStyle(NnoworkTheme.type.caption, color = theme.titleColor),
+                    style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
                 )
                 TextButton(
                     onClick = { onDismiss(false, didStamp) },
@@ -333,11 +341,12 @@ internal fun ThemePreviewSheet(
                 ) {
                     Text(
                         stringResource(R.string.theme_preview_close),
-                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.titleColor),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.accentForeground),
                     )
                 }
             }
         }
+    }
     }
 }
 
@@ -347,16 +356,16 @@ private fun ThemePreviewHeader(theme: CardTheme, onClose: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(theme.titleRes),
-                style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, theme.titleColor),
+                style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 stringResource(R.string.theme_preview_badge),
-                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, theme.titleColor),
+                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.accentForeground),
                 modifier = Modifier
-                    .background(theme.accentColor.copy(alpha = 0.2f), RoundedCornerShape(50))
+                    .background(NnoworkTheme.colors.accentSoft, RoundedCornerShape(50))
                     .padding(horizontal = 9.dp, vertical = 5.dp),
             )
             Spacer(Modifier.width(NnoworkSpacing.xxs))
@@ -367,13 +376,13 @@ private fun ThemePreviewHeader(theme: CardTheme, onClose: () -> Unit) {
                 Icon(
                     Icons.Filled.Close,
                     contentDescription = stringResource(R.string.theme_preview_close),
-                    tint = theme.titleColor,
+                    tint = NnoworkTheme.colors.primaryText,
                 )
             }
         }
         Text(
             stringResource(R.string.theme_preview_hint),
-            style = pixelTextStyle(NnoworkTheme.type.small, color = theme.titleColor),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             lineHeight = NnoworkTheme.type.small * 1.6f,
         )
     }
@@ -390,16 +399,16 @@ private fun ThemePreviewSample(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(NnoworkLine.control, theme.titleColor.copy(alpha = 0.35f), RoundedCornerShape(NnoworkRadius.tile))
+            .pixelCard()
             .padding(NnoworkSpacing.cozy),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Visibility, contentDescription = null, tint = theme.titleColor.copy(alpha = 0.68f), modifier = Modifier.size(16.dp))
+            Icon(Icons.Filled.Visibility, contentDescription = null, tint = NnoworkTheme.colors.secondaryText, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(NnoworkSpacing.tight))
             Text(
                 stringResource(R.string.theme_preview_sample),
-                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, theme.titleColor),
+                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
             )
         }
 
@@ -407,7 +416,7 @@ private fun ThemePreviewSample(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(theme.cardSurfaceColor, RoundedCornerShape(maxOf(theme.cellCornerRadius, 8.dp)))
-                .border(NnoworkLine.control, theme.borderColor.copy(alpha = 0.72f), RoundedCornerShape(maxOf(theme.cellCornerRadius, 8.dp)))
+                .border(NnoworkLine.emphasis, theme.borderColor, RoundedCornerShape(maxOf(theme.cellCornerRadius, 8.dp)))
                 .padding(NnoworkSpacing.cozy),
             verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
         ) {
@@ -440,36 +449,36 @@ private fun ThemePreviewSample(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(theme.cardSurfaceColor, RoundedCornerShape(NnoworkRadius.chip))
-                .border(NnoworkLine.control, theme.borderColor.copy(alpha = 0.62f), RoundedCornerShape(NnoworkRadius.chip))
+                .clip(RoundedCornerShape(NnoworkRadius.card))
+                .background(NnoworkTheme.colors.appBG)
+                .border(NnoworkLine.hairline, NnoworkTheme.colors.divider, RoundedCornerShape(NnoworkRadius.card))
                 .padding(NnoworkSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(38.dp)
-                    .background(theme.accentColor.copy(alpha = 0.2f), CircleShape),
+                    .background(NnoworkTheme.colors.accentSoft, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Person, contentDescription = null, tint = theme.accentColor, modifier = Modifier.size(20.dp))
+                Icon(Icons.Filled.Person, contentDescription = null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(NnoworkSpacing.snug))
             Column {
-                Text(stringResource(R.string.theme_preview_post), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, theme.titleColor))
-                Text(stringResource(R.string.theme_preview_time), style = pixelTextStyle(NnoworkTheme.type.caption, color = theme.titleColor))
+                Text(stringResource(R.string.theme_preview_post), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Text(stringResource(R.string.theme_preview_time), style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText))
             }
         }
 
         PixelButton(
             onClick = onStamp,
             enabled = !isFull,
-            backgroundColor = theme.accentColor,
-            borderColor = theme.primaryColor,
+            variant = PixelButtonVariant.Primary,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
                 stringResource(if (isFull) R.string.theme_preview_full else R.string.theme_preview_add_stamp),
-                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.palette.onAccent),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.buttonText),
             )
         }
     }
@@ -482,7 +491,7 @@ private fun ThemePreviewCell(
     stamped: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(theme.cellCornerRadius)
+    val shape = RoundedCornerShape(maxOf(theme.cellCornerRadius, NnoworkRadius.small))
     val fill = if (stamped) theme.stampedCellColor else theme.emptyCellColor
     val borderOpacity = if (stamped) theme.stampedCellBorderOpacity else theme.emptyCellBorderOpacity
     Box(

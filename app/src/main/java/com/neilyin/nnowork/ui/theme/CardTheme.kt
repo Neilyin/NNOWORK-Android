@@ -6,6 +6,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Hotel
+import androidx.compose.material.icons.filled.NightsStay
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Restaurant
@@ -33,7 +35,9 @@ enum class CardTheme(val id: Int) {
     NOTION(6),
     SUMMER(7),
     PANDA(8),
-    SLOTH(9);
+    SLOTH(9),
+    /** 第 10 個付費主題：夜空金（色值取自 iOS YearReviewNightStyle）。 */
+    NIGHT(10);
 
     @get:StringRes
     val titleRes: Int
@@ -47,6 +51,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> R.string.theme_summer_title
             PANDA -> R.string.theme_panda_title
             SLOTH -> R.string.theme_sloth_title
+            NIGHT -> R.string.theme_night_title
         }
 
     @get:StringRes
@@ -61,6 +66,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> R.string.theme_summer_description
             PANDA -> R.string.theme_panda_description
             SLOTH -> R.string.theme_sloth_description
+            NIGHT -> R.string.theme_night_description
         }
 
     val title: String
@@ -74,6 +80,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> "夏日海風"
             PANDA -> "厭世熊貓"
             SLOTH -> "樹懶模式"
+            NIGHT -> "夜空金"
         }
 
     val description: String
@@ -87,6 +94,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> "把辦公室的冷氣，\n想像成海邊的風。"
             PANDA -> "黑眼圈是與生俱來的，\n不是加班加出來的。"
             SLOTH -> "再快也是這樣，\n再慢也是這樣。\n那就慢慢來吧。"
+            NIGHT -> "下班後的夜空最安靜，\n星星替你數著，\n離自由還有幾步。"
         }
 
     val primaryColor: Color
@@ -100,6 +108,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerPrimary
             PANDA -> PixelColors.pandaPrimary
             SLOTH -> PixelColors.slothPrimary
+            NIGHT -> PixelColors.nightGold
         }
 
     val backgroundColor: Color
@@ -113,6 +122,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerBackground
             PANDA -> PixelColors.pandaBackground
             SLOTH -> PixelColors.slothBackground
+            NIGHT -> PixelColors.nightSkyTop
         }
 
     val accentColor: Color
@@ -126,6 +136,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerAccent
             PANDA -> PixelColors.pandaAccent
             SLOTH -> PixelColors.slothAccent
+            NIGHT -> PixelColors.nightGold
         }
 
     val stampIcon: ImageVector
@@ -139,6 +150,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> Icons.Filled.WbSunny
             PANDA -> Icons.Filled.LocalFlorist
             SLOTH -> Icons.Filled.Hotel
+            NIGHT -> Icons.Filled.Star
         }
 
     val borderColor: Color
@@ -152,6 +164,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerBorder
             PANDA -> PixelColors.pandaBorder
             SLOTH -> PixelColors.slothBorder
+            NIGHT -> PixelColors.nightCardBorder
         }
 
     val titleColor: Color
@@ -165,12 +178,14 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerText
             PANDA -> PixelColors.pandaText
             SLOTH -> PixelColors.slothText
+            NIGHT -> PixelColors.nightStarWhite
         }
 
     val buttonActionIcon: ImageVector
         get() = when (this) {
             LAZY_CAT -> Icons.Filled.Pets
             NOTION -> Icons.Filled.Check
+            NIGHT -> Icons.Filled.Star
             else -> Icons.Filled.ThumbUp
         }
 
@@ -185,6 +200,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> Icons.Filled.WbSunny
             PANDA -> Icons.Filled.LocalFlorist
             SLOTH -> Icons.Filled.Hotel
+            NIGHT -> Icons.Filled.NightsStay
             else -> Icons.Filled.Edit
         }
 
@@ -209,7 +225,8 @@ enum class CardTheme(val id: Int) {
             SUMMER -> 14.dp
             PANDA -> 18.dp
             SLOTH -> 20.dp
-            else -> 0.dp
+            // iOS reui：rpg／cyberpunk／vacation 由直角改為 PixelRadius.small。
+            else -> NnoworkRadius.small
         }
 
     val stampedCellColor: Color
@@ -220,6 +237,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerStamp
             PANDA -> PixelColors.pandaStamp
             SLOTH -> PixelColors.slothStamp
+            NIGHT -> PixelColors.nightGold
             else -> PixelColors.yellow
         }
 
@@ -231,6 +249,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerEmptyCell
             PANDA -> PixelColors.pandaEmptyCell
             SLOTH -> PixelColors.slothEmptyCell
+            NIGHT -> PixelColors.nightEmptyCell
             else -> PixelColors.white
         }
 
@@ -252,6 +271,7 @@ enum class CardTheme(val id: Int) {
             SUMMER -> "theme.summer"
             PANDA -> "theme.panda"
             SLOTH -> "theme.sloth"
+            NIGHT -> "theme.night"
         }
 
     /** 熊貓／樹懶沒有 Material 對應圖示，依格子序號固定輪替去背 PNG。 */
@@ -281,6 +301,7 @@ enum class CardTheme(val id: Int) {
             PANDA -> PixelColors.pandaPrimary
             SLOTH -> PixelColors.slothPrimary
             SUMMER -> PixelColors.summerText
+            NIGHT -> PixelColors.nightSkyTop
             else -> PixelColors.black
         }
 
@@ -296,11 +317,22 @@ enum class CardTheme(val id: Int) {
             SUMMER -> PixelColors.summerSurface
             PANDA -> PixelColors.pandaSurface
             SLOTH -> PixelColors.slothSurface
+            NIGHT -> PixelColors.nightSurface
             else -> backgroundColor
         }
 
     val isLightTheme: Boolean
-        get() = this != RPG && this != CYBERPUNK
+        get() = this != RPG && this != CYBERPUNK && this != NIGHT
+
+    /**
+     * 會把整個 App 的 chrome 與內容切成淺色語意色的主題（對齊 iOS usesAppWideLightPalette）。
+     * vacation 只有集點卡本身是淺色，全 App 維持深色。
+     */
+    val usesAppWideLightPalette: Boolean
+        get() = when (this) {
+            SAKURA, LAZY_CAT, NOTION, SUMMER, PANDA, SLOTH -> true
+            else -> false
+        }
 
     companion object {
         fun fromId(id: Int): CardTheme = entries.firstOrNull { it.id == id } ?: RPG
