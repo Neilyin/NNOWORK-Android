@@ -27,7 +27,6 @@ import com.neilyin.nnowork.feature.onboarding.WelcomeBackScreen
 import com.neilyin.nnowork.feature.update.UPDATE_NOTICE_VERSION
 import com.neilyin.nnowork.feature.update.AuthBindingGuideScreen
 import com.neilyin.nnowork.feature.update.UpdateNoticeScreen
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import com.neilyin.nnowork.ui.theme.appWideTheme

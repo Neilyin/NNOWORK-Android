@@ -35,8 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material3.MaterialTheme
 
 /**
  * 像素／等寬字體（對應 iOS .monospaced design）。
@@ -52,11 +50,11 @@ fun pixelTextStyle(
     color = color,
 )
 
-/** 方角邊框（像素風格不用圓角）。 */
+/** 像素邊框。預設線寬／圓角來自 NnoworkLine／NnoworkRadius。 */
 fun Modifier.pixelBorder(
     color: Color,
-    width: Dp = 2.dp,
-    shape: Shape = RoundedCornerShape(NnoworkRadius.control),
+    width: Dp = NnoworkLine.control,
+    shape: Shape = RoundedCornerShape(NnoworkRadius.field),
 ): Modifier =
     this.border(width, color, shape)
 
@@ -65,12 +63,12 @@ fun Modifier.pixelBorder(
 fun Modifier.pixelCard(
     backgroundColor: Color = Color.Unspecified,
     borderColor: Color = Color.Unspecified,
-    borderWidth: Dp = 2.dp,
+    borderWidth: Dp = NnoworkLine.control,
     shape: Shape = RoundedCornerShape(NnoworkRadius.card),
     elevation: Dp = NnoworkElevation.card,
 ): Modifier {
-    val resolvedBackground = backgroundColor.takeOrElse { MaterialTheme.colorScheme.surfaceVariant }
-    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
+    val resolvedBackground = backgroundColor.takeOrElse { NnoworkTheme.colors.surface }
+    val resolvedBorder = borderColor.takeOrElse { NnoworkTheme.colors.cardBorder }
     return this
         .shadow(elevation, shape, clip = false)
         .clip(shape)
@@ -78,19 +76,20 @@ fun Modifier.pixelCard(
         .border(borderWidth, resolvedBorder, shape)
 }
 
-/** 集點卡格子。 */
+/** 集點卡格子。預設色為集點格刻意使用的原色（highlight／elevatedSurface／border）。 */
+@Composable
 fun Modifier.pixelCell(
     isStamped: Boolean,
-    stampedColor: Color = PixelColors.yellow,
-    emptyColor: Color = PixelColors.white,
-    borderColor: Color = PixelColors.black,
+    stampedColor: Color = NnoworkTheme.colors.highlight,
+    emptyColor: Color = NnoworkTheme.colors.elevatedSurface,
+    borderColor: Color = NnoworkTheme.colors.border,
     cornerRadius: Dp = 0.dp,
 ): Modifier {
     val shape = if (cornerRadius > 0.dp) RoundedCornerShape(cornerRadius) else RectangleShape
     return this
         .clip(shape)
         .background(if (isStamped) stampedColor else emptyColor)
-        .border(2.dp, borderColor, shape)
+        .border(NnoworkLine.control, borderColor, shape)
 }
 
 /**
@@ -99,19 +98,20 @@ fun Modifier.pixelCell(
 @Composable
 fun PixelBadge(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = PixelColors.red,
+    backgroundColor: Color = Color.Unspecified,
     borderColor: Color = Color.Unspecified,
     content: @Composable () -> Unit,
 ) {
-    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
-    val shape = RoundedCornerShape(NnoworkRadius.compact)
+    val resolvedBackground = backgroundColor.takeOrElse { NnoworkTheme.colors.danger }
+    val resolvedBorder = borderColor.takeOrElse { NnoworkTheme.colors.cardBorder }
+    val shape = RoundedCornerShape(NnoworkRadius.small)
     Box(
         modifier = modifier
             .shadow(2.dp, shape, clip = false)
             .clip(shape)
-            .background(backgroundColor, shape)
-            .border(2.dp, resolvedBorder, shape)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .background(resolvedBackground, shape)
+            .border(NnoworkLine.control, resolvedBorder, shape)
+            .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xxs),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -124,14 +124,15 @@ fun PixelBadge(
 fun PixelButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = PixelColors.blue,
+    backgroundColor: Color = Color.Unspecified,
     borderColor: Color = Color.Unspecified,
     enabled: Boolean = true,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 13.dp),
-    shape: Shape = RoundedCornerShape(NnoworkRadius.control),
+    contentPadding: PaddingValues = PaddingValues(horizontal = NnoworkSpacing.page, vertical = 13.dp),
+    shape: Shape = RoundedCornerShape(NnoworkRadius.button),
     content: @Composable RowScope.() -> Unit,
 ) {
-    val resolvedBorder = borderColor.takeOrElse { MaterialTheme.colorScheme.outline }
+    val resolvedBackground = backgroundColor.takeOrElse { NnoworkTheme.colors.buttonBG }
+    val resolvedBorder = borderColor.takeOrElse { NnoworkTheme.colors.cardBorder }
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val pressProgress by animateFloatAsState(
@@ -142,7 +143,7 @@ fun PixelButton(
 
     Row(
         modifier = modifier
-            .defaultMinSize(minHeight = NnoworkSize.minTouchTarget)
+            .defaultMinSize(minHeight = NnoworkSize.controlHeight)
             // 透明度圖層必須包住完整按鈕；若放在 background 之後，
             // Compose 在 disabled -> enabled 時可能移除圖層卻沒有重畫容器色。
             .alpha(if (enabled) 1f else 0.55f)
@@ -159,8 +160,8 @@ fun PixelButton(
                 clip = false,
             )
             .clip(shape)
-            .background(backgroundColor, shape)
-            .border(2.dp, resolvedBorder, shape)
+            .background(resolvedBackground, shape)
+            .border(NnoworkLine.control, resolvedBorder, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -174,12 +175,3 @@ fun PixelButton(
         content = content,
     )
 }
-
-// 便利：常用字級
-val pixel12 = 12.sp
-val pixel14 = 14.sp
-val pixel16 = 16.sp
-val pixel18 = 18.sp
-val pixel20 = 20.sp
-val pixel22 = 22.sp
-val pixel24 = 24.sp

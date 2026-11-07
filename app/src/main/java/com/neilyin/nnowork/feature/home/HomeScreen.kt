@@ -1,6 +1,8 @@
 package com.neilyin.nnowork.feature.home
 
 import androidx.compose.animation.AnimatedVisibility
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -58,13 +60,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.PixelBadge
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.NnoworkElevation
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import com.neilyin.nnowork.ui.theme.NnoworkSpacing
@@ -109,7 +109,7 @@ fun HomeScreen(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
-                .padding(top = 8.dp, end = 16.dp),
+                .padding(top = NnoworkSpacing.xs, end = NnoworkSpacing.md),
         )
 
         Column(
@@ -122,9 +122,9 @@ fun HomeScreen(
                 .padding(horizontal = NnoworkSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(NnoworkSpacing.md))
             HeaderSection(state, theme)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(NnoworkSpacing.md))
             StampCardSection(
                 state = state,
                 theme = theme,
@@ -139,7 +139,7 @@ fun HomeScreen(
                     }
                 },
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(NnoworkSpacing.md))
             BottomButton(
                 state = state,
                 theme = theme,
@@ -148,7 +148,7 @@ fun HomeScreen(
                     if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
                 },
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(NnoworkSpacing.lg))
         }
 
         AnimatedVisibility(visible = showAnimation) {
@@ -239,11 +239,11 @@ fun HomeScreen(
         AlertDialog(
             onDismissRequest = { showEasterDialog = false },
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("😤 看起來你很生氣", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.yellow)) },
+            title = { Text("😤 看起來你很生氣", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.highlight)) },
             text = {
                 Text(
                     "戳這麼多下…要再多蓋一個章嗎？\n（這次不算每日上限，但也不會多給金幣）",
-                    style = pixelTextStyle(14.sp, color = PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark),
                 )
             },
             confirmButton = {
@@ -253,14 +253,14 @@ fun HomeScreen(
                         isEasterFlow = true
                         showStampDialog = true
                     },
-                    backgroundColor = PixelColors.orange,
+                    backgroundColor = NnoworkTheme.colors.warning,
                 ) {
-                    Text("再蓋一個！", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                    Text("再蓋一個！", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
             dismissButton = {
-                PixelButton(onClick = { showEasterDialog = false }, backgroundColor = PixelColors.gray) {
-                    Text("算了", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = { showEasterDialog = false }, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Text("算了", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -288,7 +288,7 @@ private fun CoinHud(
                 shape = RoundedCornerShape(50),
                 elevation = NnoworkElevation.control,
             )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.tight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -301,7 +301,7 @@ private fun CoinHud(
         Text(
             coins.toString(),
             style = MaterialTheme.typography.labelLarge.copy(
-                color = if (theme.cardSurfaceColor.luminance() > 0.5f) PixelColors.black else PixelColors.white,
+                color = if (theme.cardSurfaceColor.luminance() > 0.5f) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.textOnDark,
             ),
         )
     }
@@ -319,20 +319,20 @@ private fun TreeHoleShareDialog(
     AlertDialog(
         onDismissRequest = { if (!isSharing) onDismiss() },
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("分享到取暖樹洞？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
+        title = { Text("分享到取暖樹洞？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Park, null, tint = PixelColors.green, modifier = Modifier.size(28.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("審核通過後會公開，並獲得離職金幣。", style = pixelTextStyle(13.sp, color = PixelColors.gray))
+                    Icon(Icons.Filled.Park, null, tint = NnoworkTheme.colors.success, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(NnoworkSpacing.xs))
+                    Text("審核通過後會公開，並獲得離職金幣。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
                 }
-                Text(content, style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.white))
+                Text(content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
                 if (!hasProfile) {
-                    Text("你還沒建立樹洞身份，先到「樹洞」分頁設定暱稱、產業與職稱。", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.yellow))
+                    Text("你還沒建立樹洞身份，先到「樹洞」分頁設定暱稱、產業與職稱。", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.highlight))
                 }
                 message?.let {
-                    Text(it, style = pixelTextStyle(13.sp, FontWeight.Bold, if (it.startsWith("已")) PixelColors.green else PixelColors.yellow))
+                    Text(it, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, if (it.startsWith("已")) NnoworkTheme.colors.success else NnoworkTheme.colors.highlight))
                 }
             }
         },
@@ -340,17 +340,17 @@ private fun TreeHoleShareDialog(
             PixelButton(
                 onClick = onShare,
                 enabled = hasProfile && !isSharing,
-                backgroundColor = if (hasProfile) PixelColors.green else PixelColors.gray,
+                backgroundColor = if (hasProfile) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
             ) {
                 Text(
                     if (isSharing) "分享中…" else "分享",
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },
         dismissButton = {
-            PixelButton(onClick = onDismiss, enabled = !isSharing, backgroundColor = PixelColors.gray) {
-                Text("略過", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+            PixelButton(onClick = onDismiss, enabled = !isSharing, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                Text("略過", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         },
     )
@@ -367,31 +367,31 @@ private fun CardCompletionDialog(
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
-                .border(3.dp, PixelColors.black, RectangleShape)
-                .padding(24.dp),
+                .border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape)
+                .padding(NnoworkSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("🎉 集滿一張卡！", style = pixelTextStyle(22.sp, FontWeight.Bold, PixelColors.yellow))
-            Spacer(Modifier.height(16.dp))
-            Text("下一張要幾格？", style = pixelTextStyle(16.sp, color = PixelColors.white))
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("🎉 集滿一張卡！", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.highlight))
+            Spacer(Modifier.height(NnoworkSpacing.md))
+            Text("下一張要幾格？", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, color = NnoworkTheme.colors.textOnDark))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                 listOf(10, 20, 30).forEach { n ->
                     PixelButton(
                         onClick = { selectedMax = n },
-                        backgroundColor = if (selectedMax == n) PixelColors.green else PixelColors.gray,
+                        backgroundColor = if (selectedMax == n) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
                     ) {
-                        Text("$n", style = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.black))
+                        Text("$n", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                     }
                 }
             }
-            Spacer(Modifier.height(20.dp))
-            PixelButton(onClick = { onNewCard(selectedMax) }, backgroundColor = PixelColors.blue, modifier = Modifier.fillMaxWidth()) {
-                Text("開始新的一張", style = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.white))
+            Spacer(Modifier.height(NnoworkSpacing.page))
+            PixelButton(onClick = { onNewCard(selectedMax) }, backgroundColor = NnoworkTheme.colors.buttonBG, modifier = Modifier.fillMaxWidth()) {
+                Text("開始新的一張", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(NnoworkSpacing.xs))
             androidx.compose.material3.TextButton(onClick = onReceipt) {
-                Text("查看離職收據", style = pixelTextStyle(14.sp, color = PixelColors.white))
+                Text("查看離職收據", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark))
             }
         }
     }
@@ -403,25 +403,25 @@ private fun HeaderSection(state: HomeUiState, theme: CardTheme) {
         val company = state.settings.companyName.ifBlank { "公司" }
         Text(
             "$company 離職集點卡",
-            style = pixelTextStyle(24.sp, FontWeight.Bold, theme.titleColor),
+            style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, theme.titleColor),
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(NnoworkSpacing.sm))
         Box(
             modifier = Modifier
                 .pixelCard(
                     backgroundColor = theme.primaryColor,
-                    borderColor = PixelColors.black,
+                    borderColor = NnoworkTheme.colors.border,
                     shape = RoundedCornerShape(NnoworkRadius.compact),
                     elevation = 2.dp,
                 )
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.tight),
         ) {
             Text(
                 DateUtils.formattedToday(),
-                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.palette.onPrimary),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.palette.onPrimary),
             )
         }
     }
@@ -447,27 +447,27 @@ private fun StampCardSection(
                     shape = RoundedCornerShape(NnoworkRadius.card),
                     elevation = NnoworkElevation.card,
                 )
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = NnoworkSpacing.page, vertical = NnoworkSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 "第 ${state.settings.currentRound} 張卡片",
                 style = pixelTextStyle(
-                    18.sp,
+                    NnoworkTheme.type.subtitle,
                     FontWeight.Bold,
-                    if (theme.cardSurfaceColor.luminance() > 0.5f) PixelColors.black else PixelColors.white,
+                    if (theme.cardSurfaceColor.luminance() > 0.5f) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.textOnDark,
                 ),
             )
             Spacer(Modifier.weight(1f))
             PixelBadge(backgroundColor = theme.accentColor) {
                 Text(
                     "${state.currentRoundStamps} / ${state.settings.maxStamps}",
-                    style = pixelTextStyle(20.sp, FontWeight.Bold, theme.palette.onAccent),
+                    style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, theme.palette.onAccent),
                 )
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(NnoworkSpacing.md))
 
         // 卡片佔據剩餘空間，格子依空間自動縮放，整頁不需捲動。
         Box(
@@ -475,26 +475,26 @@ private fun StampCardSection(
                 .fillMaxWidth()
                 .weight(1f)
                 .shadow(NnoworkElevation.hero, RoundedCornerShape(NnoworkRadius.hero), clip = false)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(NnoworkRadius.hero))
                 .background(theme.cardSurfaceColor)
                 .border(
                     if (theme == CardTheme.NOTION) 1.dp else 4.dp,
                     theme.borderColor,
-                    RoundedCornerShape(20.dp),
+                    RoundedCornerShape(NnoworkRadius.hero),
                 )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onEasterTap,
                 )
-                .padding(20.dp),
+                .padding(NnoworkSpacing.page),
             contentAlignment = Alignment.Center,
         ) {
             StampGrid(state, theme)
         }
 
         if (state.isCurrentCardComplete) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
             CompletionBanner(state.isMasterLevel)
         }
     }
@@ -553,7 +553,7 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
             .aspectRatio(1f)
             .clip(shape)
             .background(fill)
-            .border(2.dp, theme.borderColor.copy(alpha = borderOpacity), shape),
+            .border(NnoworkLine.control, theme.borderColor.copy(alpha = borderOpacity), shape),
         contentAlignment = Alignment.Center,
     ) {
         if (isStamped) {
@@ -569,7 +569,7 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
         } else {
             Text(
                 "${index + 1}",
-                style = pixelTextStyle(14.sp, FontWeight.Bold, theme.palette.onContent),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.palette.onContent),
             )
         }
     }
@@ -577,18 +577,18 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
 
 @Composable
 private fun CompletionBanner(isMaster: Boolean) {
-    PixelBadge(backgroundColor = if (isMaster) PixelColors.purple else PixelColors.orange) {
+    PixelBadge(backgroundColor = if (isMaster) NnoworkTheme.colors.special else NnoworkTheme.colors.warning) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 if (isMaster) Icons.Filled.WorkspacePremium else Icons.Filled.Star,
                 contentDescription = null,
-                tint = PixelColors.white,
+                tint = NnoworkTheme.colors.textOnDark,
                 modifier = Modifier.size(24.dp),
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(NnoworkSpacing.xs))
             Text(
                 if (isMaster) "大師級社畜" else "集滿啦！",
-                style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
             )
         }
     }
@@ -610,9 +610,9 @@ private fun BottomButton(
         else -> theme.buttonActionIcon
     }
     when {
-        state.isMasterLevel -> { bg = PixelColors.purple; contentColor = PixelColors.white; text = "What's Next" }
-        state.isCurrentCardComplete -> { bg = PixelColors.orange; contentColor = PixelColors.black; text = "What's Next" }
-        state.hasStampedToday -> { bg = PixelColors.gray; contentColor = PixelColors.black; text = "今天已蓋章" }
+        state.isMasterLevel -> { bg = NnoworkTheme.colors.special; contentColor = NnoworkTheme.colors.textOnDark; text = "What's Next" }
+        state.isCurrentCardComplete -> { bg = NnoworkTheme.colors.warning; contentColor = NnoworkTheme.colors.primaryText; text = "What's Next" }
+        state.hasStampedToday -> { bg = NnoworkTheme.colors.disabledBG; contentColor = NnoworkTheme.colors.primaryText; text = "今天已蓋章" }
         else -> {
             bg = theme.stampActionBackgroundColor
             contentColor = theme.stampActionContentColor
@@ -627,9 +627,9 @@ private fun BottomButton(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(NnoworkSpacing.sm))
             Text(text, style = MaterialTheme.typography.titleLarge.copy(color = contentColor))
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(NnoworkSpacing.sm))
             Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
         }
     }
@@ -651,7 +651,7 @@ private fun StampSuccessOverlay(theme: CardTheme) {
                 .size(140.dp)
                 .scale(animScale)
                 .clip(CircleShape)
-                .background(PixelColors.white)
+                .background(NnoworkTheme.colors.elevatedSurface)
                 .border(6.dp, theme.primaryColor, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
@@ -663,7 +663,7 @@ private fun StampSuccessOverlay(theme: CardTheme) {
                     tint = theme.primaryColor,
                     modifier = Modifier.size(50.dp),
                 )
-                Text("蓋章成功", style = pixelTextStyle(16.sp, FontWeight.Bold, theme.primaryColor))
+                Text("蓋章成功", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, theme.primaryColor))
             }
         }
     }
@@ -679,16 +679,16 @@ private fun MasterEasterEggOverlay(round: Int, onOpen: () -> Unit) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(40.dp),
+            modifier = Modifier.padding(NnoworkSpacing.xxl),
         ) {
-            Text("🔥🔥🔥", style = pixelTextStyle(48.sp))
-            Spacer(Modifier.height(16.dp))
-            Text("是個狠人！", style = pixelTextStyle(36.sp, FontWeight.Bold, PixelColors.yellow))
-            Spacer(Modifier.height(12.dp))
-            Text("你已經集滿第 $round 張卡了", style = pixelTextStyle(18.sp, color = PixelColors.white))
-            Spacer(Modifier.height(24.dp))
-            PixelButton(onClick = onOpen, backgroundColor = PixelColors.purple) {
-                Text("打開驚喜", style = pixelTextStyle(22.sp, FontWeight.Bold, PixelColors.white))
+            Text("🔥🔥🔥", style = pixelTextStyle(NnoworkTheme.type.hero))
+            Spacer(Modifier.height(NnoworkSpacing.md))
+            Text("是個狠人！", style = pixelTextStyle(NnoworkTheme.type.display, FontWeight.Bold, NnoworkTheme.colors.highlight))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
+            Text("你已經集滿第 $round 張卡了", style = pixelTextStyle(NnoworkTheme.type.subtitle, color = NnoworkTheme.colors.textOnDark))
+            Spacer(Modifier.height(NnoworkSpacing.lg))
+            PixelButton(onClick = onOpen, backgroundColor = NnoworkTheme.colors.special) {
+                Text("打開驚喜", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         }
     }

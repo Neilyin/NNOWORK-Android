@@ -1,6 +1,9 @@
 package com.neilyin.nnowork.feature.history
 
 import androidx.activity.compose.BackHandler
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,9 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
@@ -57,16 +58,16 @@ fun FreedomScreen(
         AlertDialog(
             onDismissRequest = { confirmRestart = false },
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("重新開始？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
-            text = { Text("會清除集點紀錄與離職計畫，金幣和已解鎖主題會保留。", style = pixelTextStyle(14.sp, color = PixelColors.white)) },
+            title = { Text("重新開始？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+            text = { Text("會清除集點紀錄與離職計畫，金幣和已解鎖主題會保留。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark)) },
             confirmButton = {
-                PixelButton(onClick = onStartNewCompany, backgroundColor = PixelColors.red) {
-                    Text("確認重新開始", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white))
+                PixelButton(onClick = onStartNewCompany, backgroundColor = NnoworkTheme.colors.danger) {
+                    Text("確認重新開始", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
                 }
             },
             dismissButton = {
-                PixelButton(onClick = { confirmRestart = false }, backgroundColor = PixelColors.gray) {
-                    Text("取消", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = { confirmRestart = false }, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -78,43 +79,43 @@ fun FreedomScreen(
             .background(MaterialTheme.colorScheme.primary)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
+            .padding(horizontal = NnoworkSpacing.lg, vertical = NnoworkSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.lg),
     ) {
         Icon(Icons.Filled.Celebration, "完成離職集點", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(82.dp))
-        Text("恭喜你！", style = pixelTextStyle(38.sp, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
-        Text("祝你奔向自由！", style = pixelTextStyle(25.sp, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
+        Text("恭喜你！", style = pixelTextStyle(NnoworkTheme.type.display, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
+        Text("祝你奔向自由！", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
 
         Text(
             "再見了，${companyName.ifBlank { "公司" }}！",
-            style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.black),
+            style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .border(3.dp, MaterialTheme.colorScheme.outline, RectangleShape)
-                .padding(horizontal = 18.dp, vertical = 12.dp),
+                .border(NnoworkLine.emphasis, MaterialTheme.colorScheme.outline, RectangleShape)
+                .padding(horizontal = NnoworkSpacing.roomy, vertical = NnoworkSpacing.sm),
         )
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
             FreedomStat(Icons.Filled.GridView, completedCards.toString(), "完成卡片", Modifier.weight(1f))
             FreedomStat(Icons.Filled.CheckCircle, totalStamps.toString(), "總蓋章數", Modifier.weight(1f))
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("願你找到更好的歸屬", style = pixelTextStyle(17.sp, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
-            Text("人生苦短，不要委屈自己", style = pixelTextStyle(14.sp, color = MaterialTheme.colorScheme.onPrimary))
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
+            Text("願你找到更好的歸屬", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onPrimary))
+            Text("人生苦短，不要委屈自己", style = pixelTextStyle(NnoworkTheme.type.body, color = MaterialTheme.colorScheme.onPrimary))
         }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(NnoworkSpacing.xxs))
         PixelButton(onClick = onViewHistory, backgroundColor = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = PixelColors.black)
-            Spacer(Modifier.size(8.dp))
-            Text("查看離職紀錄", style = pixelTextStyle(17.sp, FontWeight.Bold, PixelColors.black))
+            Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = NnoworkTheme.colors.primaryText)
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text("查看離職紀錄", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         }
-        PixelButton(onClick = { confirmRestart = true }, backgroundColor = PixelColors.green, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.RestartAlt, null, tint = PixelColors.black)
-            Spacer(Modifier.size(8.dp))
-            Text("重新集點（新公司）", style = pixelTextStyle(17.sp, FontWeight.Bold, PixelColors.black))
+        PixelButton(onClick = { confirmRestart = true }, backgroundColor = NnoworkTheme.colors.success, modifier = Modifier.fillMaxWidth()) {
+            Icon(Icons.Filled.RestartAlt, null, tint = NnoworkTheme.colors.primaryText)
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text("重新集點（新公司）", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         }
     }
 }
@@ -127,12 +128,12 @@ private fun FreedomStat(
     modifier: Modifier,
 ) {
     Column(
-        modifier = modifier.pixelCard().padding(vertical = 18.dp, horizontal = 8.dp),
+        modifier = modifier.pixelCard().padding(vertical = NnoworkSpacing.roomy, horizontal = NnoworkSpacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
     ) {
-        Icon(icon, null, tint = PixelColors.black, modifier = Modifier.size(30.dp))
-        Text(value, style = pixelTextStyle(30.sp, FontWeight.Bold, PixelColors.black))
-        Text(label, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
+        Icon(icon, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(30.dp))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
     }
 }

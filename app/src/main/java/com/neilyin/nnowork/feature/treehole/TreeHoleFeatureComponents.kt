@@ -1,6 +1,10 @@
 package com.neilyin.nnowork.feature.treehole
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkSize
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -53,6 +57,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -81,7 +86,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 import java.util.Locale
@@ -125,8 +129,8 @@ fun TreeHoleFeedFilterBar(
         modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FeedModePill(
@@ -151,7 +155,7 @@ fun TreeHoleFeedFilterBar(
             selected = selectedMode == TreeHoleFeedMode.QUESTION,
             selectedState = strings.selectedState,
             notSelectedState = strings.notSelectedState,
-            selectedColor = QUESTION_ACCENT,
+            selectedColor = NnoworkTheme.colors.treeHole.questionAccent,
             onClick = { onModeSelected(TreeHoleFeedMode.QUESTION) },
         )
 
@@ -185,8 +189,8 @@ fun TreeHoleFeedFilterBar(
                 .semantics(mergeDescendants = true) {
                     contentDescription = "${strings.openIndustryFilter}，$industryLabel"
                 }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -199,7 +203,7 @@ fun TreeHoleFeedFilterBar(
             Text(
                 text = industryLabel.ifBlank { strings.allIndustries },
                 style = pixelTextStyle(
-                    13.sp,
+                    NnoworkTheme.type.small,
                     if (industryFilterActive) FontWeight.Bold else FontWeight.Medium,
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
@@ -226,7 +230,7 @@ private fun FeedModePill(
     selectedState: String,
     notSelectedState: String,
     onClick: () -> Unit,
-    selectedColor: Color = PixelColors.green,
+    selectedColor: Color = NnoworkTheme.colors.success,
 ) {
     Row(
         modifier = Modifier
@@ -246,22 +250,22 @@ private fun FeedModePill(
             .semantics(mergeDescendants = true) {
                 stateDescription = if (selected) selectedState else notSelectedState
             }
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(17.dp),
         )
         Text(
             text = label,
             style = pixelTextStyle(
-                12.sp,
+                NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         )
     }
@@ -271,9 +275,13 @@ private fun FeedModePill(
 data class TreeHoleIndustryOptionUi(
     val key: String,
     val label: String = key,
-    val color: Color = PixelColors.green,
+    /** Unspecified 表示使用主題的 success 色（資料類別不能直接讀 CompositionLocal）。 */
+    val color: Color = Color.Unspecified,
     val icon: ImageVector = Icons.Filled.Work,
 )
+
+@Composable
+private fun TreeHoleIndustryOptionUi.resolvedColor(): Color = color.takeOrElse { NnoworkTheme.colors.success }
 
 @Immutable
 data class TreeHoleIndustryFilterStrings(
@@ -332,17 +340,17 @@ fun TreeHoleIndustryFilterSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = strings.title,
-                        style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                        style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
                     )
                     Text(
                         text = summary,
-                        style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.78f)),
+                        style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.78f)),
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
@@ -359,8 +367,8 @@ fun TreeHoleIndustryFilterSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.snug),
+                horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
             ) {
                 FilterQuickAction(
                     label = strings.all,
@@ -388,8 +396,8 @@ fun TreeHoleIndustryFilterSheet(
             if (options.isEmpty()) {
                 Text(
                     text = strings.showingAll,
-                    style = pixelTextStyle(14.sp, color = MaterialTheme.colorScheme.onBackground),
-                    modifier = Modifier.padding(20.dp),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = MaterialTheme.colorScheme.onBackground),
+                    modifier = Modifier.padding(NnoworkSpacing.page),
                 )
             } else {
                 LazyVerticalGrid(
@@ -397,9 +405,9 @@ fun TreeHoleIndustryFilterSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 112.dp, max = 420.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(NnoworkSpacing.md),
+                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
                 ) {
                     items(options, key = { it.key }) { option ->
                         IndustryToggleChip(
@@ -422,17 +430,17 @@ fun TreeHoleIndustryFilterSheet(
                     onApply(draft)
                     onDismiss()
                 },
-                backgroundColor = PixelColors.green,
+                backgroundColor = NnoworkTheme.colors.success,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm)
                     .semantics { role = Role.Button },
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
             ) {
                 Text(
                     text = if (draft.isEmpty()) strings.applyAll else strings.applyCountTemplate.withCount(draft.size),
-                    style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         }
@@ -480,12 +488,12 @@ fun TreeHoleIndustryPickerSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = strings.title,
-                    style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
                     modifier = Modifier.weight(1f),
                 )
                 PixelIconAction(
@@ -502,9 +510,9 @@ fun TreeHoleIndustryPickerSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 112.dp, max = 460.dp),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(NnoworkSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
             ) {
                 items(options, key = { it.key }) { option ->
                     IndustryRadioChip(
@@ -527,15 +535,15 @@ fun TreeHoleIndustryPickerSheet(
                     onDismiss()
                 },
                 enabled = canApply,
-                backgroundColor = if (canApply) PixelColors.green else PixelColors.gray,
+                backgroundColor = if (canApply) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm)
                     .semantics { role = Role.Button },
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
             ) {
-                Text(strings.apply, style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black))
+                Text(strings.apply, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
     }
@@ -553,8 +561,8 @@ private fun IndustryRadioChip(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = MIN_TOUCH_TARGET)
-            .background(if (selected) option.color else MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, if (selected) option.color else MaterialTheme.colorScheme.outline, RectangleShape)
+            .background(if (selected) option.resolvedColor() else MaterialTheme.colorScheme.surfaceVariant)
+            .border(NnoworkLine.control, if (selected) option.resolvedColor() else MaterialTheme.colorScheme.outline, RectangleShape)
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
@@ -563,22 +571,22 @@ private fun IndustryRadioChip(
             .semantics(mergeDescendants = true) {
                 stateDescription = if (selected) selectedState else notSelectedState
             }
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = option.icon,
             contentDescription = null,
-            tint = if (selected) PixelColors.black else option.color,
+            tint = if (selected) NnoworkTheme.colors.primaryText else option.resolvedColor(),
             modifier = Modifier.size(18.dp),
         )
         Text(
             text = option.label,
             style = pixelTextStyle(
-                12.sp,
+                NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -588,7 +596,7 @@ private fun IndustryRadioChip(
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
-                tint = PixelColors.black,
+                tint = NnoworkTheme.colors.primaryText,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -607,7 +615,7 @@ private fun FilterQuickAction(
             .heightIn(min = MIN_TOUCH_TARGET)
             .semantics { role = Role.Button },
         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
     ) {
         Icon(
             imageVector = icon,
@@ -616,7 +624,7 @@ private fun FilterQuickAction(
             modifier = Modifier.size(17.dp),
         )
         Spacer(Modifier.width(5.dp))
-        Text(label, style = pixelTextStyle(12.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant))
     }
 }
 
@@ -632,8 +640,8 @@ private fun IndustryToggleChip(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = MIN_TOUCH_TARGET)
-            .background(if (selected) option.color else MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, if (selected) option.color else MaterialTheme.colorScheme.outline, RectangleShape)
+            .background(if (selected) option.resolvedColor() else MaterialTheme.colorScheme.surfaceVariant)
+            .border(NnoworkLine.control, if (selected) option.resolvedColor() else MaterialTheme.colorScheme.outline, RectangleShape)
             .toggleable(
                 value = selected,
                 role = Role.Checkbox,
@@ -642,22 +650,22 @@ private fun IndustryToggleChip(
             .semantics(mergeDescendants = true) {
                 stateDescription = if (selected) selectedState else notSelectedState
             }
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = option.icon,
             contentDescription = null,
-            tint = if (selected) PixelColors.black else option.color,
+            tint = if (selected) NnoworkTheme.colors.primaryText else option.resolvedColor(),
             modifier = Modifier.size(18.dp),
         )
         Text(
             text = option.label,
             style = pixelTextStyle(
-                12.sp,
+                NnoworkTheme.type.small,
                 if (selected) FontWeight.Bold else FontWeight.Medium,
-                if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -667,7 +675,7 @@ private fun IndustryToggleChip(
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
-                tint = PixelColors.black,
+                tint = NnoworkTheme.colors.primaryText,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -688,7 +696,8 @@ data class TreeHoleQuestionIdentityUi(
     val role: String = "",
     val companyName: String = "",
     val showCompany: Boolean = false,
-    val accentColor: Color = PixelColors.green,
+    /** Unspecified 表示使用主題的 success 色。 */
+    val accentColor: Color = Color.Unspecified,
 )
 
 @Immutable
@@ -770,14 +779,14 @@ fun TreeHoleQuestionSheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = NnoworkSpacing.page)
+                .padding(bottom = NnoworkSpacing.page),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = strings.title,
-                    style = pixelTextStyle(19.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
                     modifier = Modifier.weight(1f),
                 )
                 PixelIconAction(
@@ -794,27 +803,27 @@ fun TreeHoleQuestionSheet(
                     .pixelCard(
                         // Sheet 是深色底，使用實色 content surface，避免半透明藍色與深色底混合後讓文字失去對比。
                         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                        borderColor = QUESTION_ACCENT,
+                        borderColor = NnoworkTheme.colors.treeHole.questionAccent,
                         borderWidth = 2.dp,
                     )
-                    .padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(NnoworkSpacing.cozy),
+                horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Help,
                     contentDescription = null,
-                    tint = QUESTION_ACCENT_DARK,
+                    tint = NnoworkTheme.colors.treeHole.questionAccentDark,
                     modifier = Modifier.size(26.dp),
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         strings.introTitle,
-                        style = pixelTextStyle(14.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
                     )
                     Text(
                         resolvedQuotaMessage,
-                        style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                        style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
@@ -856,8 +865,8 @@ fun TreeHoleQuestionSheet(
                     focusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                    cursorColor = QUESTION_ACCENT_DARK,
-                    focusedBorderColor = QUESTION_ACCENT,
+                    cursorColor = NnoworkTheme.colors.treeHole.questionAccentDark,
+                    focusedBorderColor = NnoworkTheme.colors.treeHole.questionAccent,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                     disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
                     focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -887,7 +896,7 @@ fun TreeHoleQuestionSheet(
             errorMessage?.takeIf { it.isNotBlank() }?.let { message ->
                 Text(
                     text = message,
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, MaterialTheme.colorScheme.error),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.error),
                     modifier = Modifier
                         .fillMaxWidth()
                         .semantics { liveRegion = LiveRegionMode.Assertive },
@@ -901,7 +910,7 @@ fun TreeHoleQuestionSheet(
                     onSubmit(trimmed)
                 },
                 enabled = canSubmit,
-                backgroundColor = if (canSubmit) QUESTION_ACCENT else PixelColors.gray,
+                backgroundColor = if (canSubmit) NnoworkTheme.colors.treeHole.questionAccent else NnoworkTheme.colors.disabledBG,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
@@ -909,25 +918,25 @@ fun TreeHoleQuestionSheet(
                         role = Role.Button
                         if (busy) stateDescription = strings.submitting
                     },
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 13.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = 13.dp),
             ) {
                 if (busy) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(18.dp)
                             .semantics { contentDescription = strings.submitting },
-                        color = PixelColors.black,
+                        color = NnoworkTheme.colors.primaryText,
                         strokeWidth = 2.dp,
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(strings.submitting, style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black))
+                    Spacer(Modifier.width(NnoworkSpacing.xs))
+                    Text(strings.submitting, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 } else {
-                    Text(strings.submit, style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black))
-                    Spacer(Modifier.width(8.dp))
+                    Text(strings.submit, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                    Spacer(Modifier.width(NnoworkSpacing.xs))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = null,
-                        tint = PixelColors.black,
+                        tint = NnoworkTheme.colors.primaryText,
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -941,11 +950,11 @@ fun TreeHoleQuestionSheet(
                     .fillMaxWidth()
                     .heightIn(min = MIN_TOUCH_TARGET)
                     .semantics { role = Role.Button },
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.md, vertical = NnoworkSpacing.sm),
             ) {
                 Text(
                     strings.cancel,
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
                 )
             }
         }
@@ -961,34 +970,34 @@ private fun QuestionIdentityCard(
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard()
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(NnoworkSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TreeHoleInitialsAvatar(
             nickname = identity.nickname,
-            accentColor = identity.accentColor,
+            accentColor = identity.accentColor.takeOrElse { NnoworkTheme.colors.success },
             size = 42.dp,
             contentDescription = "${identity.nickname}$avatarSuffix",
         )
         Column(modifier = Modifier.weight(1f)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     identity.nickname,
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 identity.role.takeIf { it.isNotBlank() }?.let { role ->
                     Text(
                         role,
-                        style = pixelTextStyle(10.sp, FontWeight.Bold, PixelColors.black),
+                        style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                         modifier = Modifier
-                            .background(PixelColors.yellow)
-                            .border(1.dp, PixelColors.black, RectangleShape)
+                            .background(NnoworkTheme.colors.highlight)
+                            .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape)
                             .padding(horizontal = 5.dp, vertical = 2.dp)
                             .semantics { contentDescription = "職稱：$role" },
                         maxLines = 1,
@@ -1000,7 +1009,7 @@ private fun QuestionIdentityCard(
                     identity.industry.takeIf { it.isNotBlank() }?.let(::add)
                     if (identity.showCompany) identity.companyName.takeIf { it.isNotBlank() }?.let(::add)
                 }.joinToString(" · ").ifBlank { "職場倖存者" },
-                style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1052,12 +1061,12 @@ fun TreeHoleAnswerBadgeMark(
         modifier = modifier
             .wrapContentWidth()
             .background(color.copy(alpha = 0.13f))
-            .border(1.dp, color, RectangleShape)
+            .border(NnoworkLine.hairline, color, RectangleShape)
             .semantics(mergeDescendants = true) {
                 contentDescription = "$name，$safeExp EXP"
             }
-            .padding(horizontal = 6.dp, vertical = 3.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(horizontal = NnoworkSpacing.tight, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -1066,7 +1075,7 @@ fun TreeHoleAnswerBadgeMark(
             tint = color,
             modifier = Modifier.size(13.dp),
         )
-        Text(name, style = pixelTextStyle(10.sp, FontWeight.Bold, color))
+        Text(name, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, color))
     }
 }
 
@@ -1105,18 +1114,18 @@ fun TreeHoleAnswerBadgeProgressCard(
                     }
                 }
             }
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(NnoworkSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
                     .size(42.dp)
                     .background(color.copy(alpha = 0.14f), CircleShape)
-                    .border(1.dp, color.copy(alpha = 0.65f), CircleShape),
+                    .border(NnoworkLine.hairline, color.copy(alpha = 0.65f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1127,10 +1136,10 @@ fun TreeHoleAnswerBadgeProgressCard(
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(currentName, style = pixelTextStyle(15.sp, FontWeight.Bold, color))
+                Text(currentName, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, color))
                 Text(
                     strings.expSummaryTemplate.withCountAndName(safeExp, safeHelpfulCount.toString()),
-                    style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
                 )
             }
         }
@@ -1138,7 +1147,7 @@ fun TreeHoleAnswerBadgeProgressCard(
         if (next == null) {
             Text(
                 strings.highestTier,
-                style = pixelTextStyle(11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.caption, color = MaterialTheme.colorScheme.onSurfaceVariant),
             )
         } else {
             LinearProgressIndicator(
@@ -1154,7 +1163,7 @@ fun TreeHoleAnswerBadgeProgressCard(
                     (next.threshold - safeExp).coerceAtLeast(0),
                     next.displayName(strings),
                 ),
-                style = pixelTextStyle(11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.caption, color = MaterialTheme.colorScheme.onSurfaceVariant),
             )
         }
     }
@@ -1165,7 +1174,7 @@ fun TreeHoleAnswerBadgeProgressCard(
 fun TreeHoleInitialsAvatar(
     nickname: String,
     modifier: Modifier = Modifier,
-    accentColor: Color = PixelColors.green,
+    accentColor: Color = NnoworkTheme.colors.success,
     size: Dp = 40.dp,
     contentDescription: String? = null,
 ) {
@@ -1178,7 +1187,7 @@ fun TreeHoleInitialsAvatar(
         modifier = modifier
             .size(size)
             .background(accentColor.copy(alpha = 0.18f), CircleShape)
-            .border(2.dp, accentColor.copy(alpha = 0.72f), CircleShape)
+            .border(NnoworkLine.control, accentColor.copy(alpha = 0.72f), CircleShape)
             .semantics { this.contentDescription = resolvedDescription },
         contentAlignment = Alignment.Center,
     ) {
@@ -1202,7 +1211,7 @@ private fun PixelIconAction(
         modifier = modifier
             .sizeIn(minWidth = MIN_TOUCH_TARGET, minHeight = MIN_TOUCH_TARGET)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
             .clickable(
                 enabled = enabled,
                 role = Role.Button,
@@ -1256,12 +1265,13 @@ private fun TreeHoleAnswerBadgeTierUi.icon(): ImageVector = when (this) {
 }
 
 /** 深色版 tier 顏色，在淺色卡片上仍有足夠的文字對比。 */
+@Composable
 private fun TreeHoleAnswerBadgeTierUi.accessibleColor(): Color = when (this) {
-    TreeHoleAnswerBadgeTierUi.Rookie -> Color(0xFF455A64)
-    TreeHoleAnswerBadgeTierUi.Passerby -> Color(0xFF2E7D32)
-    TreeHoleAnswerBadgeTierUi.Senior -> Color(0xFF0D5BA7)
-    TreeHoleAnswerBadgeTierUi.Strategist -> Color(0xFF6A1B9A)
-    TreeHoleAnswerBadgeTierUi.Master -> Color(0xFF7A5000)
+    TreeHoleAnswerBadgeTierUi.Rookie -> NnoworkTheme.colors.treeHole.tierRookie
+    TreeHoleAnswerBadgeTierUi.Passerby -> NnoworkTheme.colors.treeHole.tierPasserby
+    TreeHoleAnswerBadgeTierUi.Senior -> NnoworkTheme.colors.treeHole.tierSenior
+    TreeHoleAnswerBadgeTierUi.Strategist -> NnoworkTheme.colors.treeHole.tierStrategist
+    TreeHoleAnswerBadgeTierUi.Master -> NnoworkTheme.colors.treeHole.tierMaster
 }
 
 private fun String.withCount(count: Int): String = replace("%d", count.toString())
@@ -1275,9 +1285,7 @@ private fun String.firstCodePointOrQuestionMark(): String {
     return substring(0, end).uppercase(Locale.getDefault())
 }
 
-private val QUESTION_ACCENT = Color(0xFF6BB8FA)
-private val QUESTION_ACCENT_DARK = Color(0xFF0B5FA5)
-private val MIN_TOUCH_TARGET = 48.dp
+private val MIN_TOUCH_TARGET = NnoworkSize.minTouchTarget
 private const val MIN_QUESTION_LENGTH = 5
 private const val MAX_QUESTION_LENGTH = 200
 private const val SUBMIT_DEBOUNCE_MILLIS = 700L

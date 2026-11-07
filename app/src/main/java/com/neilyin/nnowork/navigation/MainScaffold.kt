@@ -1,6 +1,7 @@
 package com.neilyin.nnowork.navigation
 
 import androidx.compose.foundation.layout.Box
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -58,11 +59,11 @@ fun MainScaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = NnoworkTheme.colors.navBarBG,
                 tonalElevation = 0.dp,
                 modifier = Modifier.border(
                     width = 2.dp,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = NnoworkTheme.colors.cardBorder,
                     shape = RectangleShape,
                 ),
             ) {
@@ -82,11 +83,11 @@ fun MainScaffold(
                         },
                         label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
-                            indicatorColor = MaterialTheme.colorScheme.primary,
+                            selectedIconColor = NnoworkTheme.colors.tabSelected,
+                            unselectedIconColor = NnoworkTheme.colors.tabUnselected,
+                            selectedTextColor = NnoworkTheme.colors.navBarText,
+                            unselectedTextColor = NnoworkTheme.colors.tabUnselected,
+                            indicatorColor = NnoworkTheme.colors.tabIndicator,
                         ),
                     )
                 }

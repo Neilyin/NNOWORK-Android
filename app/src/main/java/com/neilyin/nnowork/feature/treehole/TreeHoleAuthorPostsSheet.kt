@@ -1,6 +1,10 @@
 package com.neilyin.nnowork.feature.treehole
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkSize
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,10 +46,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.data.treehole.TreeHolePost
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
@@ -111,21 +113,21 @@ fun TreeHoleAuthorPostsSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.92f),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(start = NnoworkSpacing.md, end = NnoworkSpacing.md, bottom = NnoworkSpacing.xl),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
         ) {
             item(key = "header") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         strings.title,
-                        style = pixelTextStyle(20.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                        style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.weight(1f),
                     )
                     PixelButton(
                         onClick = onDismiss,
                         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(48.dp),
-                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.size(NnoworkSize.minTouchTarget),
+                        contentPadding = PaddingValues(NnoworkSpacing.xs),
                     ) {
                         Icon(
                             Icons.Filled.Close,
@@ -141,14 +143,14 @@ fun TreeHoleAuthorPostsSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .pixelCard(backgroundColor = MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(16.dp),
+                        .padding(NnoworkSpacing.md),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
                 ) {
                     TreeHoleInitialsAvatar(nickname = author.nickname, size = 64.dp)
                     Text(
                         author.nickname,
-                        style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                        style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -164,7 +166,7 @@ fun TreeHoleAuthorPostsSheet(
                         )
                         Text(
                             industryLabel.ifBlank { strings.fallbackIndustry },
-                            style = pixelTextStyle(12.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
                         )
                     }
                     Row(
@@ -186,23 +188,23 @@ fun TreeHoleAuthorPostsSheet(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFFFE7E7))
-                            .border(2.dp, Color(0xFF9A1F1F), RectangleShape)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .background(NnoworkTheme.colors.treeHole.errorSoft)
+                            .border(NnoworkLine.control, NnoworkTheme.colors.treeHole.errorBorder, RectangleShape)
+                            .padding(NnoworkSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
                     ) {
                         Text(
                             errorMessage,
-                            style = pixelTextStyle(13.sp, FontWeight.Bold, Color(0xFF711515)),
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.treeHole.errorText),
                         )
                         PixelButton(
                             onClick = onRetry,
-                            backgroundColor = PixelColors.yellow,
-                            modifier = Modifier.heightIn(min = 48.dp),
+                            backgroundColor = NnoworkTheme.colors.highlight,
+                            modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
                         ) {
-                            Icon(Icons.Filled.Refresh, contentDescription = null, tint = PixelColors.black)
-                            Spacer(Modifier.size(6.dp))
-                            Text(strings.retry, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+                            Icon(Icons.Filled.Refresh, contentDescription = null, tint = NnoworkTheme.colors.primaryText)
+                            Spacer(Modifier.size(NnoworkSpacing.tight))
+                            Text(strings.retry, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                         }
                     }
                 }
@@ -228,9 +230,9 @@ private fun AuthorStat(value: Int, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             value.coerceAtLeast(0).toString(),
-            style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant),
         )
-        Text(label, style = pixelTextStyle(10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, color = MaterialTheme.colorScheme.onSurfaceVariant))
     }
 }
 
@@ -240,12 +242,12 @@ private fun AuthorMessageCard(message: String, icon: ImageVector) {
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard(backgroundColor = MaterialTheme.colorScheme.surfaceVariant)
-            .padding(18.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(NnoworkSpacing.roomy),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(message, style = pixelTextStyle(13.sp, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant))
+        Text(message, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.onSurfaceVariant))
     }
 }
 
@@ -262,8 +264,8 @@ private fun AuthorPostCard(
             .fillMaxWidth()
             .pixelCard(backgroundColor = MaterialTheme.colorScheme.surfaceVariant)
             .clickable(role = Role.Button, onClickLabel = strings.openPost, onClick = onOpen)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(NnoworkSpacing.cozy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -273,29 +275,29 @@ private fun AuthorPostCard(
             if (post.isQuestion) {
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFF6BB8FA))
-                        .border(1.dp, PixelColors.black, RectangleShape)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                        .background(NnoworkTheme.colors.treeHole.questionAccent)
+                        .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape)
+                        .padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp),
                 ) {
-                    Text(strings.questionTag, style = pixelTextStyle(10.sp, FontWeight.Bold, PixelColors.black))
+                    Text(strings.questionTag, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
             TreeHoleAnswerBadgeMark(exp = post.authorExp, strings = badgeStrings)
         }
         Text(
             post.content,
-            style = pixelTextStyle(15.sp, FontWeight.Medium, MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, MaterialTheme.colorScheme.onSurfaceVariant),
         )
         if (post.isQuestion) {
             Text(
                 if (post.commentCount > 0) strings.replyCountTemplate.withCount(post.commentCount)
                 else strings.waitingForAnswer,
-                style = pixelTextStyle(11.sp, FontWeight.Bold, Color(0xFF0B5FA5)),
+                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.treeHole.questionAccentDark),
             )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AuthorReactionButton(Icons.Filled.ThumbUp, strings.like, post.likesCount) {
@@ -321,12 +323,12 @@ private fun AuthorReactionButton(
     PixelButton(
         onClick = onClick,
         backgroundColor = MaterialTheme.colorScheme.background,
-        modifier = Modifier.heightIn(min = 48.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 7.dp),
+        modifier = Modifier.heightIn(min = NnoworkSize.minTouchTarget),
+        contentPadding = PaddingValues(horizontal = NnoworkSpacing.xs, vertical = 7.dp),
     ) {
         Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.size(4.dp))
-        Text(count.coerceAtLeast(0).toString(), style = pixelTextStyle(11.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+        Spacer(Modifier.size(NnoworkSpacing.xxs))
+        Text(count.coerceAtLeast(0).toString(), style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
     }
 }
 

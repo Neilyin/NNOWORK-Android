@@ -1,6 +1,9 @@
 package com.neilyin.nnowork.feature.settings
 
 import android.content.Intent
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -73,7 +76,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -98,7 +100,6 @@ import com.neilyin.nnowork.di.ServiceLocator
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.isUnlocked
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.NnoworkTextField
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
@@ -467,22 +468,22 @@ private fun SettingsContent(
         AlertDialog(
             onDismissRequest = { showReset = false },
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("確定要全部重來？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
-            text = { Text("這會刪除集點紀錄、離職計畫與設定。此操作無法復原。", style = pixelTextStyle(14.sp, color = PixelColors.gray)) },
+            title = { Text("確定要全部重來？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
+            text = { Text("這會刪除集點紀錄、離職計畫與設定。此操作無法復原。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText)) },
             confirmButton = {
                 PixelButton(
                     onClick = {
                         onResetAll()
                         showReset = false
                     },
-                    backgroundColor = PixelColors.red,
+                    backgroundColor = NnoworkTheme.colors.danger,
                 ) {
-                    Text("確定重置", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white))
+                    Text("確定重置", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
                 }
             },
             dismissButton = {
-                PixelButton(onClick = { showReset = false }, backgroundColor = PixelColors.gray) {
-                    Text("取消", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = { showReset = false }, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -494,10 +495,10 @@ private fun SettingsContent(
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(NnoworkSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
-        Text("設定", style = pixelTextStyle(30.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+        Text("設定", style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
         ManualSection()
         AccountSection(
             state = authState,
@@ -520,16 +521,16 @@ private fun SettingsContent(
                 placeholder = "輸入公司名稱",
                 onValueChange = { company = it },
             )
-            Spacer(Modifier.height(10.dp))
-            PixelButton(onClick = { onUpdateCompany(company) }, backgroundColor = PixelColors.blue, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Save, null, tint = PixelColors.white)
-                Spacer(Modifier.size(8.dp))
-                Text("儲存公司名稱", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.white))
+            Spacer(Modifier.height(NnoworkSpacing.snug))
+            PixelButton(onClick = { onUpdateCompany(company) }, backgroundColor = NnoworkTheme.colors.buttonBG, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Save, null, tint = NnoworkTheme.colors.textOnDark)
+                Spacer(Modifier.size(NnoworkSpacing.xs))
+                Text("儲存公司名稱", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         }
         SettingsSection(icon = Icons.Filled.Style, title = stringResource(com.neilyin.nnowork.R.string.theme_shop_title)) {
-            Text("目標格數：${settings.maxStamps} 格，集滿後可在首頁建立下一張卡時更換。", style = pixelTextStyle(13.sp, color = PixelColors.gray))
-            Spacer(Modifier.height(12.dp))
+            Text("目標格數：${settings.maxStamps} 格，集滿後可在首頁建立下一張卡時更換。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
             ThemeShopGrid(
                 selectedThemeId = settings.cardStyle,
                 unlockedStyles = settings.unlockedStyles,
@@ -546,65 +547,65 @@ private fun SettingsContent(
                     value = newReason,
                     onValueChange = { newReason = it },
                     singleLine = true,
-                    textStyle = pixelTextStyle(15.sp, FontWeight.Medium, PixelColors.black),
-                    cursorBrush = SolidColor(PixelColors.black),
+                    textStyle = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText),
+                    cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
                     modifier = Modifier
                         .weight(1f)
-                        .background(PixelColors.white)
-                        .border(3.dp, PixelColors.black, RectangleShape)
-                        .padding(12.dp),
+                        .background(NnoworkTheme.colors.elevatedSurface)
+                        .border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape)
+                        .padding(NnoworkSpacing.sm),
                     decorationBox = { inner ->
-                        if (newReason.isEmpty()) Text("輸入新原因...", style = pixelTextStyle(14.sp, color = PixelColors.gray))
+                        if (newReason.isEmpty()) Text("輸入新原因...", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText))
                         inner()
                     },
                 )
-                Spacer(Modifier.size(8.dp))
+                Spacer(Modifier.size(NnoworkSpacing.xs))
                 PixelButton(
                     onClick = {
                         onAddReason(newReason)
                         newReason = ""
                     },
                     enabled = newReason.isNotBlank(),
-                    backgroundColor = if (newReason.isBlank()) PixelColors.gray else PixelColors.green,
-                    contentPadding = PaddingValues(12.dp),
+                    backgroundColor = if (newReason.isBlank()) NnoworkTheme.colors.disabledBG else NnoworkTheme.colors.success,
+                    contentPadding = PaddingValues(NnoworkSpacing.sm),
                 ) {
-                    Icon(Icons.Filled.Add, null, tint = PixelColors.black)
+                    Icon(Icons.Filled.Add, null, tint = NnoworkTheme.colors.primaryText)
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(NnoworkSpacing.snug))
             settings.commonReasons.forEach { reason ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(PixelColors.white)
-                        .border(2.dp, PixelColors.black, RectangleShape)
-                        .padding(12.dp),
+                        .background(NnoworkTheme.colors.elevatedSurface)
+                        .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+                        .padding(NnoworkSpacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(reason, style = pixelTextStyle(15.sp, FontWeight.Medium, PixelColors.black), modifier = Modifier.weight(1f))
-                    PixelButton(onClick = { onDeleteReason(reason) }, backgroundColor = PixelColors.red, contentPadding = PaddingValues(7.dp)) {
-                        Icon(Icons.Filled.Delete, null, tint = PixelColors.white, modifier = Modifier.size(18.dp))
+                    Text(reason, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
+                    PixelButton(onClick = { onDeleteReason(reason) }, backgroundColor = NnoworkTheme.colors.danger, contentPadding = PaddingValues(7.dp)) {
+                        Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(18.dp))
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(NnoworkSpacing.xs))
             }
         }
         SettingsSection(icon = Icons.Filled.Timer, title = "小工具設定") {
-            Text("語錄刷新頻率", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            Text("語錄刷新頻率", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+            Spacer(Modifier.height(NnoworkSpacing.xs))
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs), modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 listOf(5, 10, 30, 60, 180, 300, 480, 1440).forEach { minutes ->
                     PixelButton(
                         onClick = { onUpdateWidgetInterval(minutes) },
-                        backgroundColor = if (settings.widgetRefreshInterval == minutes) PixelColors.yellow else PixelColors.gray,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                        backgroundColor = if (settings.widgetRefreshInterval == minutes) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+                        contentPadding = PaddingValues(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.snug),
                     ) {
-                        Text(intervalLabel(minutes), style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+                        Text(intervalLabel(minutes), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                     }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text("注意：Android 小工具實際刷新可能受系統省電策略影響。", style = pixelTextStyle(12.sp, color = PixelColors.gray))
+            Spacer(Modifier.height(NnoworkSpacing.xs))
+            Text("注意：Android 小工具實際刷新可能受系統省電策略影響。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
         FeedbackSection(onSubmit = onSubmitFeedback)
         BackupSection(
@@ -617,29 +618,29 @@ private fun SettingsContent(
         SettingsSection(icon = Icons.Filled.Campaign, title = "更新與公告") {
             Text(
                 "查看這次的資料保護更新、道歉啟事與後續說明。",
-                style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(NnoworkSpacing.snug))
             PixelButton(
                 onClick = onShowUpdateNotice,
-                backgroundColor = PixelColors.yellow,
+                backgroundColor = NnoworkTheme.colors.highlight,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("查看本次更新", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black))
+                Text("查看本次更新", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
         SettingsSection(icon = Icons.Filled.RestartAlt, title = "重置") {
-            PixelButton(onClick = { showReset = true }, backgroundColor = PixelColors.red, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Delete, null, tint = PixelColors.white)
-                Spacer(Modifier.size(8.dp))
-                Text("全部重來", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.white))
+            PixelButton(onClick = { showReset = true }, backgroundColor = NnoworkTheme.colors.danger, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark)
+                Spacer(Modifier.size(NnoworkSpacing.xs))
+                Text("全部重來", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         }
         Text(
             "離職集點卡 Android ${BuildConfig.VERSION_NAME}\nMade By Neil 尼歐",
-            style = pixelTextStyle(12.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = NnoworkSpacing.xs, bottom = NnoworkSpacing.md),
         )
     }
 }
@@ -658,64 +659,64 @@ private fun TreeHoleSafetySettingsSection(
     ) {
         Text(
             stringResource(com.neilyin.nnowork.R.string.treehole_blocked_users_hint),
-            style = pixelTextStyle(13.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(NnoworkSpacing.snug))
         if (blockedAuthors.isEmpty()) {
             Text(
                 stringResource(com.neilyin.nnowork.R.string.treehole_blocked_users_empty),
-                style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             )
         } else {
             blockedAuthors.forEach { author ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(PixelColors.white)
-                        .border(2.dp, PixelColors.black, RectangleShape)
-                        .padding(10.dp),
+                        .background(NnoworkTheme.colors.elevatedSurface)
+                        .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+                        .padding(NnoworkSpacing.snug),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             author.nickname,
-                            style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                         )
                         Text(
                             author.authorKey.take(8),
-                            style = pixelTextStyle(10.sp, color = PixelColors.gray),
+                            style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
                         )
                     }
                     PixelButton(
                         onClick = { onUnblock(author.authorKey) },
-                        backgroundColor = PixelColors.gray,
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                        backgroundColor = NnoworkTheme.colors.disabledBG,
+                        contentPadding = PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
                     ) {
                         Text(
                             stringResource(com.neilyin.nnowork.R.string.treehole_unblock),
-                            style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black),
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(NnoworkSpacing.xs))
             }
             Text(
                 stringResource(com.neilyin.nnowork.R.string.treehole_blocked_users_notice),
-                style = pixelTextStyle(11.sp, color = PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(NnoworkSpacing.md))
         Text(
             stringResource(com.neilyin.nnowork.R.string.treehole_support_title),
-            style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black),
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
         )
         Text(
             stringResource(com.neilyin.nnowork.R.string.treehole_support_body),
-            style = pixelTextStyle(12.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(NnoworkSpacing.xs))
         PixelButton(
             onClick = {
                 runCatching {
@@ -724,14 +725,14 @@ private fun TreeHoleSafetySettingsSection(
                     )
                 }
             },
-            backgroundColor = PixelColors.blue,
+            backgroundColor = NnoworkTheme.colors.buttonBG,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Icon(Icons.Filled.Email, contentDescription = null, tint = PixelColors.white)
+            Icon(Icons.Filled.Email, contentDescription = null, tint = NnoworkTheme.colors.textOnDark)
             Spacer(Modifier.size(7.dp))
             Text(
                 stringResource(com.neilyin.nnowork.R.string.treehole_support_email_action),
-                style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
             )
         }
     }
@@ -777,11 +778,11 @@ private fun AccountSection(
         AlertDialog(
             onDismissRequest = { if (!state.isProcessing) confirmDelete = false },
             containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("刪除雲端帳號？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
+            title = { Text("刪除雲端帳號？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
             text = {
                 Text(
                     "Supabase 登入身份會永久刪除。本機集點紀錄會保留，樹洞資料會解除帳號綁定並回到匿名裝置身份。",
-                    style = pixelTextStyle(14.sp, color = PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark),
                 )
             },
             confirmButton = {
@@ -791,14 +792,14 @@ private fun AccountSection(
                         confirmDelete = false
                     },
                     enabled = !state.isProcessing,
-                    backgroundColor = PixelColors.red,
+                    backgroundColor = NnoworkTheme.colors.danger,
                 ) {
-                    Text("永久刪除帳號", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white))
+                    Text("永久刪除帳號", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
                 }
             },
             dismissButton = {
-                PixelButton(onClick = { confirmDelete = false }, enabled = !state.isProcessing, backgroundColor = PixelColors.gray) {
-                    Text("取消", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = { confirmDelete = false }, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -806,54 +807,54 @@ private fun AccountSection(
 
     SettingsSection(icon = Icons.Filled.AccountCircle, title = "帳號與跨裝置") {
         if (state.isSignedIn) {
-            Text("已登入", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.green))
+            Text("已登入", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.success))
             state.email?.let {
                 Spacer(Modifier.height(5.dp))
-                Text(maskEmail(it), style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                Text(maskEmail(it), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
             val providers = state.linkedProviders.ifEmpty { listOfNotNull(state.lastProvider) }
             if (providers.isNotEmpty()) {
                 Spacer(Modifier.height(5.dp))
                 Text(
                     "已綁定：${providers.joinToString("、") { authProviderName(it) }}",
-                    style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                    style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
                 )
             }
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PixelButton(onClick = onSignOut, enabled = !state.isProcessing, backgroundColor = PixelColors.gray, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, null, tint = PixelColors.black, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
+                PixelButton(onClick = onSignOut, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(5.dp))
-                    Text("登出", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                    Text("登出", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
-                PixelButton(onClick = { confirmDelete = true }, enabled = !state.isProcessing, backgroundColor = PixelColors.red, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Filled.PersonRemove, null, tint = PixelColors.white, modifier = Modifier.size(18.dp))
+                PixelButton(onClick = { confirmDelete = true }, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.danger, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Filled.PersonRemove, null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(5.dp))
-                    Text("刪除帳號", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white))
+                    Text("刪除帳號", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
                 }
             }
         } else {
             Text(
                 "登入是為了讓樹洞資料日後能跨裝置找回；你也可以先不登入，其他功能照常使用。",
-                style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
             state.lastProvider?.let {
-                Spacer(Modifier.height(6.dp))
-                Text("上次使用 ${authProviderName(it)} 登入", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.blue))
+                Spacer(Modifier.height(NnoworkSpacing.tight))
+                Text("上次使用 ${authProviderName(it)} 登入", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.info))
             }
-            Spacer(Modifier.height(12.dp))
-            PixelButton(onClick = { showAuth = true }, backgroundColor = PixelColors.blue, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.AutoMirrored.Filled.Login, null, tint = PixelColors.white)
-                Spacer(Modifier.size(8.dp))
-                Text("登入或建立帳號", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.white))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
+            PixelButton(onClick = { showAuth = true }, backgroundColor = NnoworkTheme.colors.buttonBG, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.AutoMirrored.Filled.Login, null, tint = NnoworkTheme.colors.textOnDark)
+                Spacer(Modifier.size(NnoworkSpacing.xs))
+                Text("登入或建立帳號", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         }
         state.message?.let { message ->
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(NnoworkSpacing.snug))
             Text(
                 message,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                style = pixelTextStyle(13.sp, FontWeight.Bold, if (state.isError) PixelColors.red else PixelColors.green),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, if (state.isError) NnoworkTheme.colors.danger else NnoworkTheme.colors.success),
             )
         }
     }
@@ -873,26 +874,26 @@ private fun AuthDialog(
     AlertDialog(
         onDismissRequest = { if (!state.isProcessing) onDismiss() },
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text(if (registerMode) "建立雲端帳號" else "登入雲端帳號", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
+        title = { Text(if (registerMode) "建立雲端帳號" else "登入雲端帳號", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PixelButton(onClick = { onModeChange(false) }, enabled = !state.isProcessing, backgroundColor = if (!registerMode) PixelColors.yellow else PixelColors.gray, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 10.dp)) {
-                        Text("登入", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
+                    PixelButton(onClick = { onModeChange(false) }, enabled = !state.isProcessing, backgroundColor = if (!registerMode) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = NnoworkSpacing.snug)) {
+                        Text("登入", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                     }
-                    PixelButton(onClick = { onModeChange(true) }, enabled = !state.isProcessing, backgroundColor = if (registerMode) PixelColors.yellow else PixelColors.gray, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = 10.dp)) {
-                        Text("註冊", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+                    PixelButton(onClick = { onModeChange(true) }, enabled = !state.isProcessing, backgroundColor = if (registerMode) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG, modifier = Modifier.weight(1f), contentPadding = PaddingValues(vertical = NnoworkSpacing.snug)) {
+                        Text("註冊", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                     }
                 }
                 LabeledTextField("Email", email, "name@example.com", { email = it })
                 LabeledTextField("密碼", password, "至少 6 個字元", { password = it }, PasswordVisualTransformation())
                 state.message?.let {
-                    Text(it, style = pixelTextStyle(13.sp, FontWeight.Bold, if (state.isError) PixelColors.red else PixelColors.green))
+                    Text(it, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, if (state.isError) NnoworkTheme.colors.danger else NnoworkTheme.colors.success))
                 }
-                PixelButton(onClick = onGoogle, enabled = !state.isProcessing, backgroundColor = PixelColors.white, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Filled.AccountCircle, null, tint = PixelColors.blue)
-                    Spacer(Modifier.size(8.dp))
-                    Text("使用 Google 繼續", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = onGoogle, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.elevatedSurface, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Filled.AccountCircle, null, tint = NnoworkTheme.colors.info)
+                    Spacer(Modifier.size(NnoworkSpacing.xs))
+                    Text("使用 Google 繼續", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
         },
@@ -900,14 +901,14 @@ private fun AuthDialog(
             PixelButton(
                 onClick = { onSubmit(email, password) },
                 enabled = email.isNotBlank() && password.length >= 6 && !state.isProcessing,
-                backgroundColor = PixelColors.green,
+                backgroundColor = NnoworkTheme.colors.success,
             ) {
-                Text(if (state.isProcessing) "處理中..." else if (registerMode) "建立帳號" else "登入", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                Text(if (state.isProcessing) "處理中..." else if (registerMode) "建立帳號" else "登入", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         },
         dismissButton = {
-            PixelButton(onClick = onDismiss, enabled = !state.isProcessing, backgroundColor = PixelColors.gray) {
-                Text("稍後再說", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+            PixelButton(onClick = onDismiss, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                Text("稍後再說", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         },
     )
@@ -938,22 +939,22 @@ private val manualChapters = listOf(
 private fun ManualSection() {
     var expanded by remember { mutableStateOf(false) }
     var openChapter by remember { mutableStateOf(-1) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = PixelColors.yellow, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.size(8.dp))
-            Text("使用手冊", style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
+            Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = NnoworkTheme.colors.highlight, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text("使用手冊", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground))
         }
         Column(
-            modifier = Modifier.fillMaxWidth().pixelCard().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("第一次用？點開看看每個功能怎麼玩", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black), modifier = Modifier.weight(1f))
-                Icon(if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = PixelColors.black)
+                Text("第一次用？點開看看每個功能怎麼玩", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
+                Icon(if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = NnoworkTheme.colors.primaryText)
             }
             if (expanded) {
                 manualChapters.forEachIndexed { index, (title, body) ->
@@ -961,23 +962,23 @@ private fun ManualSection() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .pixelCard(
-                                backgroundColor = PixelColors.white,
-                                borderColor = PixelColors.black,
+                                backgroundColor = NnoworkTheme.colors.elevatedSurface,
+                                borderColor = NnoworkTheme.colors.border,
                                 borderWidth = 2.dp,
                                 elevation = 2.dp,
                             )
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                            .padding(NnoworkSpacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable { openChapter = if (openChapter == index) -1 else index },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(title, style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black), modifier = Modifier.weight(1f))
-                            Icon(if (openChapter == index) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = PixelColors.gray, modifier = Modifier.size(18.dp))
+                            Text(title, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
+                            Icon(if (openChapter == index) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = NnoworkTheme.colors.secondaryText, modifier = Modifier.size(18.dp))
                         }
                         if (openChapter == index) {
-                            Text(body, style = pixelTextStyle(13.sp, color = PixelColors.darkGray))
+                            Text(body, style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.mutedText))
                         }
                     }
                 }
@@ -992,25 +993,25 @@ private fun FeedbackSection(onSubmit: (String, (String) -> Unit) -> Unit) {
     var message by remember { mutableStateOf<String?>(null) }
     var sending by remember { mutableStateOf(false) }
     SettingsSection(icon = Icons.Filled.Favorite, title = "分享使用心得") {
-        Text("把對 App 的想法或建議丟給我，審核通過後會送你金幣。", style = pixelTextStyle(13.sp, color = PixelColors.gray))
-        Spacer(Modifier.height(10.dp))
+        Text("把對 App 的想法或建議丟給我，審核通過後會送你金幣。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
+        Spacer(Modifier.height(NnoworkSpacing.snug))
         BasicTextField(
             value = text,
             onValueChange = { text = it.take(300) },
-            textStyle = pixelTextStyle(15.sp, FontWeight.Medium, PixelColors.black),
-            cursorBrush = SolidColor(PixelColors.black),
-            modifier = Modifier.fillMaxWidth().height(90.dp).background(PixelColors.white).border(3.dp, PixelColors.black, RectangleShape).padding(12.dp),
-            decorationBox = { inner -> if (text.isEmpty()) Text("想說什麼都可以...", style = pixelTextStyle(14.sp, color = PixelColors.gray)); inner() },
+            textStyle = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.primaryText),
+            cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
+            modifier = Modifier.fillMaxWidth().height(90.dp).background(NnoworkTheme.colors.elevatedSurface).border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape).padding(NnoworkSpacing.sm),
+            decorationBox = { inner -> if (text.isEmpty()) Text("想說什麼都可以...", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText)); inner() },
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(NnoworkSpacing.tight))
         Text(
             "送出時會在回饋最後自動加上「$ANDROID_FEEDBACK_SOURCE」",
-            style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(NnoworkSpacing.xs))
         message?.let {
-            Text(it, style = pixelTextStyle(13.sp, FontWeight.Bold, if (it.startsWith("已")) PixelColors.green else PixelColors.yellow))
-            Spacer(Modifier.height(8.dp))
+            Text(it, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, if (it.startsWith("已")) NnoworkTheme.colors.success else NnoworkTheme.colors.highlight))
+            Spacer(Modifier.height(NnoworkSpacing.xs))
         }
         PixelButton(
             onClick = {
@@ -1022,12 +1023,12 @@ private fun FeedbackSection(onSubmit: (String, (String) -> Unit) -> Unit) {
                 }
             },
             enabled = text.trim().length >= 5 && !sending,
-            backgroundColor = if (text.trim().length >= 5) PixelColors.green else PixelColors.gray,
+            backgroundColor = if (text.trim().length >= 5) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Icon(Icons.AutoMirrored.Filled.Send, null, tint = PixelColors.black, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.size(8.dp))
-            Text(if (sending) "送出中..." else "送出心得", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black))
+            Icon(Icons.AutoMirrored.Filled.Send, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text(if (sending) "送出中..." else "送出心得", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         }
     }
 }
@@ -1056,17 +1057,17 @@ private fun BackupSection(
             onDismissRequest = { if (!state.inProgress) onDismissPreparedImport() },
             containerColor = MaterialTheme.colorScheme.surface,
             title = {
-                Text("確定要匯入這份備份？", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white))
+                Text("確定要匯入這份備份？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
                     Text(
                         "備份格式 v${prepared.schemaVersion}，包含 ${prepared.stampCount} 筆集點紀錄。",
-                        style = pixelTextStyle(14.sp, color = PixelColors.white),
+                        style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.textOnDark),
                     )
                     Text(
                         "匯入會以備份內容取代目前的集點紀錄、離職計畫與 App 設定。裝置身份與樹洞遠端貼文不會被取代。匯入進行時請保持 App 開啟。",
-                        style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                        style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
                     )
                 }
             },
@@ -1074,11 +1075,11 @@ private fun BackupSection(
                 PixelButton(
                     onClick = onImport,
                     enabled = !state.inProgress,
-                    backgroundColor = PixelColors.red,
+                    backgroundColor = NnoworkTheme.colors.danger,
                 ) {
                     Text(
                         if (state.inProgress) "匯入中..." else "取代並匯入",
-                        style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                     )
                 }
             },
@@ -1086,9 +1087,9 @@ private fun BackupSection(
                 PixelButton(
                     onClick = onDismissPreparedImport,
                     enabled = !state.inProgress,
-                    backgroundColor = PixelColors.gray,
+                    backgroundColor = NnoworkTheme.colors.disabledBG,
                 ) {
-                    Text("取消", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -1097,49 +1098,49 @@ private fun BackupSection(
     SettingsSection(icon = Icons.Filled.FileDownload, title = "資料備份與移轉") {
         Text(
             "將集點紀錄、離職計畫、薪水設定與 App 設定存成版本化 JSON 檔案。",
-            style = pixelTextStyle(13.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
         )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(NnoworkSpacing.snug))
         PixelButton(
             onClick = { exportLauncher.launch(BackupRepository.suggestedFileName()) },
             enabled = !state.inProgress,
-            backgroundColor = PixelColors.green,
+            backgroundColor = NnoworkTheme.colors.success,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Icon(Icons.Filled.FileDownload, contentDescription = null, tint = PixelColors.black)
-            Spacer(Modifier.size(8.dp))
+            Icon(Icons.Filled.FileDownload, contentDescription = null, tint = NnoworkTheme.colors.primaryText)
+            Spacer(Modifier.size(NnoworkSpacing.xs))
             Text(
                 if (state.inProgress) "處理中..." else "匯出備份",
-                style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             )
         }
         Spacer(Modifier.height(9.dp))
         PixelButton(
             onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
             enabled = !state.inProgress,
-            backgroundColor = PixelColors.blue,
+            backgroundColor = NnoworkTheme.colors.buttonBG,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Icon(Icons.Filled.FileUpload, contentDescription = null, tint = PixelColors.white)
-            Spacer(Modifier.size(8.dp))
-            Text("匯入備份", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.white))
+            Icon(Icons.Filled.FileUpload, contentDescription = null, tint = NnoworkTheme.colors.textOnDark)
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text("匯入備份", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
         }
         state.statusMessage?.let { message ->
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(NnoworkSpacing.snug))
             Text(
                 message,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 style = pixelTextStyle(
-                    13.sp,
+                    NnoworkTheme.type.small,
                     FontWeight.Bold,
-                    if (state.statusIsError) PixelColors.red else PixelColors.green,
+                    if (state.statusIsError) NnoworkTheme.colors.danger else NnoworkTheme.colors.success,
                 ),
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(NnoworkSpacing.xs))
         Text(
             "提醒：匯入會全刪全換目前資料。備份檔可能含公司名稱與私人記錄，請先匯出現況並妥善保管。",
-            style = pixelTextStyle(12.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
         )
     }
 }
@@ -1174,8 +1175,8 @@ private fun CoinSection(coins: Int) {
                 modifier = Modifier
                     .size(54.dp)
                     .pixelCard(
-                        backgroundColor = PixelColors.yellow,
-                        borderColor = PixelColors.black,
+                        backgroundColor = NnoworkTheme.colors.highlight,
+                        borderColor = NnoworkTheme.colors.border,
                         elevation = 3.dp,
                     ),
                 contentAlignment = Alignment.Center,
@@ -1183,14 +1184,14 @@ private fun CoinSection(coins: Int) {
                 Icon(
                     Icons.Filled.MonetizationOn,
                     contentDescription = "離職金幣",
-                    tint = PixelColors.black,
+                    tint = NnoworkTheme.colors.primaryText,
                     modifier = Modifier.size(30.dp),
                 )
             }
-            Spacer(Modifier.size(10.dp))
+            Spacer(Modifier.size(NnoworkSpacing.snug))
             Column {
-                Text(coins.toString(), style = pixelTextStyle(28.sp, FontWeight.Bold, PixelColors.black))
-                Text("每日蓋章 +1，一天上限一枚", style = pixelTextStyle(12.sp, color = PixelColors.gray))
+                Text(coins.toString(), style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Text("每日蓋章 +1，一天上限一枚", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             }
         }
     }
@@ -1202,20 +1203,20 @@ private fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.size(8.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
             Text(
                 title,
-                style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
             )
         }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .pixelCard()
-                .padding(16.dp),
+                .padding(NnoworkSpacing.md),
             content = content,
         )
     }

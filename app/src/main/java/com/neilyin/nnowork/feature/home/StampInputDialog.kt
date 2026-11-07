@@ -1,6 +1,9 @@
 package com.neilyin.nnowork.feature.home
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
@@ -40,7 +42,6 @@ import androidx.compose.material.icons.filled.Check
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.NnoworkTextField
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.PixelBadge
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
@@ -65,11 +66,11 @@ fun StampInputDialog(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .statusBarsPadding()
-                .padding(24.dp),
+                .padding(NnoworkSpacing.lg),
         ) {
             // 取消按鈕
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopStart)) {
-                Text("取消", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.white))
+                Text("取消", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
 
             Column(
@@ -78,17 +79,17 @@ fun StampInputDialog(
                     .align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Icon(theme.sheetIcon, contentDescription = null, tint = PixelColors.white, modifier = Modifier.size(60.dp))
-                Spacer(Modifier.height(12.dp))
-                Text(theme.sheetTitle, style = pixelTextStyle(24.sp, FontWeight.Bold, PixelColors.white))
-                Spacer(Modifier.height(24.dp))
+                Icon(theme.sheetIcon, contentDescription = null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(60.dp))
+                Spacer(Modifier.height(NnoworkSpacing.sm))
+                Text(theme.sheetTitle, style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
+                Spacer(Modifier.height(NnoworkSpacing.lg))
 
                 Text(
                     "說說你的理由吧",
-                    style = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(NnoworkSpacing.sm))
 
                 NnoworkTextField(
                     value = reason,
@@ -101,7 +102,7 @@ fun StampInputDialog(
                         .height(150.dp),
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(NnoworkSpacing.sm))
 
                 // 常用原因
                 if (commonReasons.isNotEmpty()) {
@@ -109,18 +110,18 @@ fun StampInputDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
                     ) {
                         commonReasons.forEach { r ->
                             val selected = reason == r
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(NnoworkRadius.sheet))
                                     .background(
-                                        if (selected) PixelColors.green.copy(alpha = 0.8f)
-                                        else PixelColors.gray.copy(alpha = 0.3f)
+                                        if (selected) NnoworkTheme.colors.success.copy(alpha = 0.8f)
+                                        else NnoworkTheme.colors.secondaryText.copy(alpha = 0.3f)
                                     )
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.tight),
                             ) {
                                 TextButton(
                                     onClick = { reason = r },
@@ -129,16 +130,16 @@ fun StampInputDialog(
                                     Text(
                                         r,
                                         style = pixelTextStyle(
-                                            14.sp,
+                                            NnoworkTheme.type.body,
                                             FontWeight.Medium,
-                                            if (selected) PixelColors.black else PixelColors.white,
+                                            if (selected) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.textOnDark,
                                         ),
                                     )
                                 }
                             }
                         }
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(NnoworkSpacing.sm))
                 }
 
                 // 加入常用原因
@@ -147,34 +148,34 @@ fun StampInputDialog(
                         Checkbox(
                             checked = addToCommon,
                             onCheckedChange = { addToCommon = it },
-                            colors = CheckboxDefaults.colors(checkedColor = PixelColors.green),
+                            colors = CheckboxDefaults.colors(checkedColor = NnoworkTheme.colors.success),
                         )
-                        Text("加入常用原因", style = pixelTextStyle(14.sp, FontWeight.Medium, PixelColors.white))
+                        Text("加入常用原因", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.textOnDark))
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(NnoworkSpacing.xs))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    PixelBadge(backgroundColor = PixelColors.gray) {
-                        Text("${reason.length} 字", style = pixelTextStyle(14.sp, FontWeight.Medium, PixelColors.white))
+                    PixelBadge(backgroundColor = NnoworkTheme.colors.disabledBG) {
+                        Text("${reason.length} 字", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, NnoworkTheme.colors.textOnDark))
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(NnoworkSpacing.lg))
 
                 PixelButton(
                     onClick = { if (canConfirm) onConfirm(trimmed, addToCommon) },
                     // 與首頁「我要蓋章」共用 theme primary，避免進入表單後按鈕突然換色。
-                    backgroundColor = if (canConfirm) theme.stampActionBackgroundColor else PixelColors.gray,
+                    backgroundColor = if (canConfirm) theme.stampActionBackgroundColor else NnoworkTheme.colors.disabledBG,
                     enabled = canConfirm,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    val actionContentColor = if (canConfirm) theme.stampActionContentColor else PixelColors.black
+                    val actionContentColor = if (canConfirm) theme.stampActionContentColor else NnoworkTheme.colors.primaryText
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                         Icon(Icons.Filled.Check, contentDescription = null, tint = actionContentColor, modifier = Modifier.size(24.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("蓋章！", style = pixelTextStyle(22.sp, FontWeight.Bold, actionContentColor))
+                        Spacer(Modifier.width(NnoworkSpacing.xs))
+                        Text("蓋章！", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, actionContentColor))
                     }
                 }
             }

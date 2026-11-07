@@ -7,6 +7,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -201,42 +202,43 @@ fun NnoworkTheme(
     content: @Composable () -> Unit,
 ) {
     val palette = cardTheme.palette
+    val tokens = cardTheme.nnoworkColors
     val view = LocalView.current
     val colors = if (cardTheme.isLightTheme) {
         lightColorScheme(
-            primary = palette.primary,
-            onPrimary = palette.onPrimary,
-            secondary = palette.accent,
-            onSecondary = palette.onAccent,
-            tertiary = palette.contentAlt,
-            onTertiary = palette.onContent,
-            background = palette.page,
-            onBackground = palette.onPage,
-            surface = palette.chrome,
-            onSurface = palette.onChrome,
-            surfaceVariant = palette.content,
-            onSurfaceVariant = palette.onContent,
-            outline = palette.border,
-            error = PixelColors.red,
-            onError = PixelColors.white,
+            primary = tokens.primary,
+            onPrimary = tokens.onPrimary,
+            secondary = tokens.accent,
+            onSecondary = tokens.onAccent,
+            tertiary = tokens.accentSoft,
+            onTertiary = tokens.onSurface,
+            background = tokens.appBG,
+            onBackground = tokens.onAppBG,
+            surface = tokens.dialogBG,
+            onSurface = tokens.navBarText,
+            surfaceVariant = tokens.surface,
+            onSurfaceVariant = tokens.onSurface,
+            outline = tokens.cardBorder,
+            error = tokens.danger,
+            onError = tokens.textOnDark,
         )
     } else {
         darkColorScheme(
-            primary = palette.primary,
-            onPrimary = palette.onPrimary,
-            secondary = palette.accent,
-            onSecondary = palette.onAccent,
-            tertiary = palette.contentAlt,
-            onTertiary = palette.onContent,
-            background = palette.page,
-            onBackground = palette.onPage,
-            surface = palette.chrome,
-            onSurface = palette.onChrome,
-            surfaceVariant = palette.content,
-            onSurfaceVariant = palette.onContent,
-            outline = palette.border,
-            error = PixelColors.red,
-            onError = PixelColors.white,
+            primary = tokens.primary,
+            onPrimary = tokens.onPrimary,
+            secondary = tokens.accent,
+            onSecondary = tokens.onAccent,
+            tertiary = tokens.accentSoft,
+            onTertiary = tokens.onSurface,
+            background = tokens.appBG,
+            onBackground = tokens.onAppBG,
+            surface = tokens.dialogBG,
+            onSurface = tokens.navBarText,
+            surfaceVariant = tokens.surface,
+            onSurfaceVariant = tokens.onSurface,
+            outline = tokens.cardBorder,
+            error = tokens.danger,
+            onError = tokens.textOnDark,
         )
     }
     if (!view.isInEditMode) {
@@ -248,10 +250,15 @@ fun NnoworkTheme(
             }
         }
     }
-    MaterialTheme(
-        colorScheme = colors,
-        typography = PixelTypography,
-        shapes = NnoworkShapes,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalNnoworkColors provides tokens,
+        LocalNnoworkTypeScale provides cardTheme.typeScale,
+    ) {
+        MaterialTheme(
+            colorScheme = colors,
+            typography = PixelTypography,
+            shapes = NnoworkShapes,
+            content = content,
+        )
+    }
 }

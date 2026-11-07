@@ -1,6 +1,9 @@
 package com.neilyin.nnowork.feature.plan
 
 import android.app.DatePickerDialog
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,7 +71,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -86,7 +88,6 @@ import com.neilyin.nnowork.notify.ReminderScheduler
 import com.neilyin.nnowork.ui.theme.NnoworkTextField
 import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.PixelBadge
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 import kotlinx.coroutines.delay
@@ -274,14 +275,14 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(horizontal = NnoworkSpacing.page),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.roomy),
     ) {
         item {
             Text(
                 "離職計畫",
-                style = pixelTextStyle(30.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
-                modifier = Modifier.padding(top = 16.dp),
+                style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+                modifier = Modifier.padding(top = NnoworkSpacing.md),
             )
         }
         item { HeaderCard() }
@@ -293,7 +294,7 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
             TodoRow(item, false, { viewModel.completeTodo(item) }, {}, { viewModel.deleteTodo(item) })
         }
         if (plan.completedTodoItems.isNotEmpty()) {
-            item { Text("已完成", style = pixelTextStyle(18.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground)) }
+            item { Text("已完成", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, MaterialTheme.colorScheme.onBackground)) }
             items(plan.completedTodoItems, key = { it.id }) { item ->
                 TodoRow(item, true, {}, { viewModel.restoreTodo(item) }, { viewModel.deleteTodo(item) })
             }
@@ -302,12 +303,12 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
             item {
                 Text(
                     "還沒有待辦事項，先寫下一件能讓自由更靠近的小事。",
-                    style = pixelTextStyle(14.sp, color = PixelColors.gray),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = NnoworkSpacing.lg),
                 )
             }
         }
-        item { Spacer(Modifier.height(12.dp)) }
+        item { Spacer(Modifier.height(NnoworkSpacing.sm)) }
     }
 }
 
@@ -329,22 +330,22 @@ private fun SalaryTimerCard(plan: ResignationPlan, viewModel: PlanViewModel) {
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().pixelCard().padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SectionTitle(Icons.Filled.AttachMoney, "薪水計時器", PixelColors.yellow)
-            Spacer(Modifier.width(6.dp))
-            Box(Modifier.background(PixelColors.orange).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                Text("BETA", style = pixelTextStyle(9.sp, FontWeight.Bold, PixelColors.black))
+            SectionTitle(Icons.Filled.AttachMoney, "薪水計時器", NnoworkTheme.colors.highlight)
+            Spacer(Modifier.width(NnoworkSpacing.tight))
+            Box(Modifier.background(NnoworkTheme.colors.warning).padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp)) {
+                Text("BETA", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
             Spacer(Modifier.weight(1f))
             PixelButton(
                 onClick = { expanded = !expanded },
-                backgroundColor = PixelColors.gray,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                backgroundColor = NnoworkTheme.colors.disabledBG,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
             ) {
-                Text(if (expanded) "收合" else "設定", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black))
+                Text(if (expanded) "收合" else "設定", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
 
@@ -361,7 +362,7 @@ private fun SalaryTimerCard(plan: ResignationPlan, viewModel: PlanViewModel) {
         } else if (snapshot.configured) {
             SalaryBoard(snapshot, plan)
         } else {
-            Text("設定薪資和上班時間後，就能即時看今天賺了多少。", style = pixelTextStyle(13.sp, color = PixelColors.gray))
+            Text("設定薪資和上班時間後，就能即時看今天賺了多少。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
     }
 }
@@ -377,9 +378,9 @@ private fun ManualHourlyTimerBoard(
     val elapsed = ManualSalaryTimer.elapsedMillis(plan, now)
     val earnings = ManualSalaryTimer.earned(plan, now)
     val (statusLabel, statusColor) = when (plan.manualTimerStatus) {
-        ManualSalaryTimer.RUNNING -> "計時中" to PixelColors.green
-        ManualSalaryTimer.PAUSED -> "已暫停" to PixelColors.yellow
-        else -> if (elapsed > 0L) "已停止" to PixelColors.gray else "尚未開始" to PixelColors.gray
+        ManualSalaryTimer.RUNNING -> "計時中" to NnoworkTheme.colors.success
+        ManualSalaryTimer.PAUSED -> "已暫停" to NnoworkTheme.colors.highlight
+        else -> if (elapsed > 0L) "已停止" to NnoworkTheme.colors.secondaryText else "尚未開始" to NnoworkTheme.colors.secondaryText
     }
 
     Column(
@@ -389,101 +390,101 @@ private fun ManualHourlyTimerBoard(
                 backgroundColor = MaterialTheme.colorScheme.tertiary,
                 borderColor = MaterialTheme.colorScheme.outline,
             )
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(NnoworkSpacing.cozy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Timer, contentDescription = null, tint = PixelColors.blue, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.size(8.dp))
-            Text("手動計時", style = pixelTextStyle(15.sp, FontWeight.Bold, PixelColors.black), modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.Timer, contentDescription = null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text("手動計時", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
             PixelBadge(backgroundColor = statusColor) {
-                Text(statusLabel, style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.black))
+                Text(statusLabel, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
 
         Text(
             SalaryCalculator.formatCountdown(elapsed),
-            style = pixelTextStyle(28.sp, FontWeight.Bold, PixelColors.black),
+            style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
         Text(
             "本次累積 ${SalaryCalculator.formatMoney(plan, earnings)}",
-            style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.green),
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.success),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             PixelButton(
                 onClick = onStart,
                 enabled = plan.manualTimerStatus != ManualSalaryTimer.RUNNING,
-                backgroundColor = PixelColors.green,
+                backgroundColor = NnoworkTheme.colors.success,
                 modifier = Modifier.weight(1f),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = PixelColors.black, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(4.dp))
+                Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.size(NnoworkSpacing.xxs))
                 Text(
                     when {
                         plan.manualTimerStatus == ManualSalaryTimer.PAUSED -> "繼續"
                         elapsed > 0L -> "重新開始"
                         else -> "開始"
                     },
-                    style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                     maxLines = 1,
                 )
             }
             PixelButton(
                 onClick = onPause,
                 enabled = plan.manualTimerStatus == ManualSalaryTimer.RUNNING,
-                backgroundColor = PixelColors.yellow,
+                backgroundColor = NnoworkTheme.colors.highlight,
                 modifier = Modifier.weight(1f),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
-                Icon(Icons.Filled.Pause, contentDescription = null, tint = PixelColors.black, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(4.dp))
-                Text("暫停", style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.black), maxLines = 1)
+                Icon(Icons.Filled.Pause, contentDescription = null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.size(NnoworkSpacing.xxs))
+                Text("暫停", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText), maxLines = 1)
             }
             PixelButton(
                 onClick = onStop,
                 enabled = plan.manualTimerStatus == ManualSalaryTimer.RUNNING ||
                     plan.manualTimerStatus == ManualSalaryTimer.PAUSED,
-                backgroundColor = PixelColors.red,
+                backgroundColor = NnoworkTheme.colors.danger,
                 modifier = Modifier.weight(1f),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
-                Icon(Icons.Filled.Stop, contentDescription = null, tint = PixelColors.white, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(4.dp))
-                Text("停止", style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.white), maxLines = 1)
+                Icon(Icons.Filled.Stop, contentDescription = null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.size(NnoworkSpacing.xxs))
+                Text("停止", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.textOnDark), maxLines = 1)
             }
         }
         Text(
             "停止會保留本次結果；再次開始會從 00:00:00 重新計算。",
-            style = pixelTextStyle(11.sp, color = PixelColors.gray),
+            style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
         )
     }
 }
 
 @Composable
 private fun SalaryBoard(snapshot: SalaryCalculator.Snapshot, plan: ResignationPlan) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SalaryStat("今日已賺", SalaryCalculator.formatMoney(plan, snapshot.todayEarned), PixelColors.green, Modifier.weight(1f))
-            SalaryStat("本期累積", SalaryCalculator.formatMoney(plan, snapshot.cycleEarned), PixelColors.blue, Modifier.weight(1f))
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
+            SalaryStat("今日已賺", SalaryCalculator.formatMoney(plan, snapshot.todayEarned), NnoworkTheme.colors.success, Modifier.weight(1f))
+            SalaryStat("本期累積", SalaryCalculator.formatMoney(plan, snapshot.cycleEarned), NnoworkTheme.colors.info, Modifier.weight(1f))
         }
         LinearProgressIndicator(
             progress = { snapshot.progress },
-            modifier = Modifier.fillMaxWidth().height(20.dp).border(3.dp, PixelColors.black, RectangleShape),
-            color = PixelColors.yellow,
-            trackColor = PixelColors.white,
+            modifier = Modifier.fillMaxWidth().height(20.dp).border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape),
+            color = NnoworkTheme.colors.highlight,
+            trackColor = NnoworkTheme.colors.elevatedSurface,
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Schedule, null, tint = PixelColors.orange, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.size(8.dp))
-            Text(snapshot.statusText, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray), modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.Schedule, null, tint = NnoworkTheme.colors.warning, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
+            Text(snapshot.statusText, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText), modifier = Modifier.weight(1f))
             if (snapshot.phase == SalaryCalculator.Phase.WORKING) {
-                Text("剩 ${SalaryCalculator.formatCountdown(snapshot.countdownMillis)}", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.orange))
+                Text("剩 ${SalaryCalculator.formatCountdown(snapshot.countdownMillis)}", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.warning))
             }
         }
     }
@@ -494,12 +495,12 @@ private fun SalaryStat(label: String, value: String, color: Color, modifier: Mod
     Column(
         modifier = modifier
             .background(MaterialTheme.colorScheme.tertiary)
-            .border(3.dp, MaterialTheme.colorScheme.outline, RectangleShape)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .border(NnoworkLine.emphasis, MaterialTheme.colorScheme.outline, RectangleShape)
+            .padding(NnoworkSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
     ) {
-        Text(label, style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.gray))
-        Text(value, style = pixelTextStyle(20.sp, FontWeight.Bold, color))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, color))
     }
 }
 
@@ -517,39 +518,39 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
         )
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy)) {
         // 計薪方式
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             listOf(0 to "月薪制", 1 to "時薪制").forEach { (mode, label) ->
                 PixelButton(
                     onClick = { viewModel.setSalaryPayMode(mode) },
-                    backgroundColor = if (plan.salaryPayMode == mode) PixelColors.yellow else PixelColors.gray,
+                    backgroundColor = if (plan.salaryPayMode == mode) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
                     modifier = Modifier.weight(1f),
-                ) { Text(label, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black)) }
+                ) { Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
             }
         }
 
         val hourlyMode = HourlyTrackingMode.normalize(plan.hourlyTrackingMode)
         if (plan.salaryPayMode == 1) {
-            Text("時薪計時方式", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("時薪計時方式", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                 listOf(
                     HourlyTrackingMode.SCHEDULE to "時段制",
                     HourlyTrackingMode.MANUAL to "手動計時",
                 ).forEach { (mode, label) ->
                     PixelButton(
                         onClick = { viewModel.setHourlyTrackingMode(mode) },
-                        backgroundColor = if (hourlyMode == mode) PixelColors.blue else PixelColors.gray,
+                        backgroundColor = if (hourlyMode == mode) NnoworkTheme.colors.buttonBG else NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.weight(1f),
                     ) {
                         Icon(
                             if (mode == HourlyTrackingMode.SCHEDULE) Icons.Filled.Schedule else Icons.Filled.Timer,
                             contentDescription = null,
-                            tint = PixelColors.black,
+                            tint = NnoworkTheme.colors.primaryText,
                             modifier = Modifier.size(18.dp),
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text(label, style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black), maxLines = 1)
+                        Spacer(Modifier.width(NnoworkSpacing.tight))
+                        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText), maxLines = 1)
                     }
                 }
             }
@@ -559,7 +560,7 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
                 } else {
                     "由你自己按開始、暫停與停止，只累計實際計時。"
                 },
-                style = pixelTextStyle(12.sp, color = PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
         }
 
@@ -582,8 +583,8 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
         }
 
         // 上下班時間
-        Text("上下班時間（end ≤ start 視為夜班跨日）", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("上下班時間（end ≤ start 視為夜班跨日）", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             TimeField("上班", plan.workStartMinutes, viewModel::setWorkStart, Modifier.weight(1f))
             TimeField("下班", plan.workEndMinutes, viewModel::setWorkEnd, Modifier.weight(1f))
         }
@@ -591,47 +592,47 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
         // 午休
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("午休不計薪", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
-                Text("開啟後會從每日工時扣除午休", style = pixelTextStyle(12.sp, color = PixelColors.gray))
+                Text("午休不計薪", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Text("開啟後會從每日工時扣除午休", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             }
-            Switch(plan.lunchUnpaid, viewModel::setLunchUnpaid, colors = SwitchDefaults.colors(checkedThumbColor = PixelColors.green))
+            Switch(plan.lunchUnpaid, viewModel::setLunchUnpaid, colors = SwitchDefaults.colors(checkedThumbColor = NnoworkTheme.colors.success))
         }
         if (plan.lunchUnpaid) {
             ChipRow("午休分鐘（15 為單位）", listOf(15, 30, 45, 60, 90, 120), plan.lunchMinutes) { viewModel.setLunchMinutes(it) }
         }
 
         // 發薪日（多選）
-        Text("發薪日（可多選 1–30）", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
+        Text("發薪日（可多選 1–30）", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         MultiChipRow(listOf(5, 10, 15, 25), plan.paydayDays) { viewModel.togglePayday(it) }
         PixelButton(
             onClick = { showAllPaydays = !showAllPaydays },
-            backgroundColor = PixelColors.gray,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        ) { Text(if (showAllPaydays) "收合" else "⋯ 1–30", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black)) }
+            backgroundColor = NnoworkTheme.colors.disabledBG,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
+        ) { Text(if (showAllPaydays) "收合" else "⋯ 1–30", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
         if (showAllPaydays) {
             DayGrid(selected = plan.paydayDays) { viewModel.togglePayday(it) }
         }
 
         // 班制
-        Text("排休方式", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("排休方式", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             listOf(0 to "見紅休", 1 to "排班制").forEach { (mode, label) ->
                 PixelButton(
                     onClick = { viewModel.setScheduleMode(mode) },
-                    backgroundColor = if (plan.monthlyScheduleMode == mode) PixelColors.green else PixelColors.gray,
+                    backgroundColor = if (plan.monthlyScheduleMode == mode) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
                     modifier = Modifier.weight(1f),
-                ) { Text(label, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black)) }
+                ) { Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
             }
         }
 
         if (plan.monthlyScheduleMode == 1) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                 listOf(false to "固定工時", true to "多種班別").forEach { (use, label) ->
                     PixelButton(
                         onClick = { viewModel.setShiftUseTemplates(use) },
-                        backgroundColor = if (plan.shiftUseTemplates == use) PixelColors.blue else PixelColors.gray,
+                        backgroundColor = if (plan.shiftUseTemplates == use) NnoworkTheme.colors.buttonBG else NnoworkTheme.colors.disabledBG,
                         modifier = Modifier.weight(1f),
-                    ) { Text(label, style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.white)) }
+                    ) { Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) }
                 }
             }
             if (plan.shiftUseTemplates) {
@@ -644,9 +645,9 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
         } else {
             PixelButton(
                 onClick = viewModel::resetRestDays,
-                backgroundColor = PixelColors.gray,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) { Text("重設假日（週末+國定假日）", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black)) }
+                backgroundColor = NnoworkTheme.colors.disabledBG,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
+            ) { Text("重設假日（週末+國定假日）", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
         }
 
         // 月曆
@@ -656,30 +657,30 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
 
 @Composable
 private fun ShiftTemplateSection(shifts: List<Shift>, onAdd: () -> Unit, onEdit: (Shift) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("班別模板", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray), modifier = Modifier.weight(1f))
-            PixelButton(onClick = onAdd, backgroundColor = PixelColors.green, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
-                Icon(Icons.Filled.Add, null, tint = PixelColors.black, modifier = Modifier.size(16.dp))
+            Text("班別模板", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText), modifier = Modifier.weight(1f))
+            PixelButton(onClick = onAdd, backgroundColor = NnoworkTheme.colors.success, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
+                Icon(Icons.Filled.Add, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(16.dp))
             }
         }
         if (shifts.isEmpty()) {
-            Text("先新增班別，再到下方月曆點格子指派。", style = pixelTextStyle(12.sp, color = PixelColors.gray))
+            Text("先新增班別，再到下方月曆點格子指派。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
         shifts.forEach { shift ->
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .background(MaterialTheme.colorScheme.tertiary)
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
-                    .clickable { onEdit(shift) }.padding(10.dp),
+                    .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+                    .clickable { onEdit(shift) }.padding(NnoworkSpacing.snug),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(26.dp).background(parseColor(shift.colorHex)).border(2.dp, PixelColors.black, RectangleShape), contentAlignment = Alignment.Center) {
-                    Icon(shiftIcon(shift.icon), null, tint = PixelColors.white, modifier = Modifier.size(16.dp))
+                Box(Modifier.size(26.dp).background(parseColor(shift.colorHex)).border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape), contentAlignment = Alignment.Center) {
+                    Icon(shiftIcon(shift.icon), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(16.dp))
                 }
-                Spacer(Modifier.size(10.dp))
-                Text(shift.name.ifBlank { "未命名班別" }, style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black), modifier = Modifier.weight(1f))
-                Text("${minToHHmm(shift.startMinutes)}–${minToHHmm(shift.endMinutes)}", style = pixelTextStyle(12.sp, color = PixelColors.gray))
+                Spacer(Modifier.size(NnoworkSpacing.snug))
+                Text(shift.name.ifBlank { "未命名班別" }, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
+                Text("${minToHHmm(shift.startMinutes)}–${minToHHmm(shift.endMinutes)}", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             }
         }
     }
@@ -689,21 +690,21 @@ private fun ShiftTemplateSection(shifts: List<Shift>, onAdd: () -> Unit, onEdit:
 private fun ScheduleCalendar(plan: ResignationPlan, now: Long, viewModel: PlanViewModel) {
     val multiShift = plan.monthlyScheduleMode == 1 && plan.shiftUseTemplates
     var expanded by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Filled.CalendarMonth, null, tint = PixelColors.blue, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.size(6.dp))
+            Icon(Icons.Filled.CalendarMonth, null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(NnoworkSpacing.tight))
             Text(
                 if (multiShift) "排班月曆（點格子循環班別）" else "排休月曆（點格子切換工作/休假）",
-                style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
                 modifier = Modifier.weight(1f),
             )
             Icon(
                 if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                null, tint = PixelColors.gray, modifier = Modifier.size(20.dp),
+                null, tint = NnoworkTheme.colors.secondaryText, modifier = Modifier.size(20.dp),
             )
         }
         if (expanded) {
@@ -728,14 +729,14 @@ private fun MonthGrid(monthStart: Long, plan: ResignationPlan, multiShift: Boole
     Column(
         modifier = Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.tertiary)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
+            .padding(NnoworkSpacing.xs),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
     ) {
-        Text("${year}年 ${month}月", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+        Text("${year}年 ${month}月", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         Row(Modifier.fillMaxWidth()) {
             listOf("日", "一", "二", "三", "四", "五", "六").forEach {
-                Text(it, style = pixelTextStyle(10.sp, FontWeight.Bold, PixelColors.gray), textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                Text(it, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.secondaryText), textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             }
         }
         val cells = leading + daysInMonth
@@ -773,21 +774,21 @@ private fun androidx.compose.foundation.layout.RowScope.DayCell(
 
     val bg = when {
         shift != null -> parseColor(shift.colorHex)
-        rest -> PixelColors.yellow
-        else -> PixelColors.white
+        rest -> NnoworkTheme.colors.highlight
+        else -> NnoworkTheme.colors.textOnDark
     }
     Box(
         modifier = Modifier.weight(1f).aspectRatio(1f)
-            .background(bg).border(1.dp, PixelColors.gray, RectangleShape)
+            .background(bg).border(NnoworkLine.hairline, NnoworkTheme.colors.disabledBG, RectangleShape)
             .clickable { onTapDay(key) },
         contentAlignment = Alignment.Center,
     ) {
         if (shift != null) {
-            Icon(shiftIcon(shift.icon), null, tint = PixelColors.white, modifier = Modifier.size(13.dp))
+            Icon(shiftIcon(shift.icon), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(13.dp))
         } else {
             Text(
                 dayNum.toString(),
-                style = pixelTextStyle(11.sp, FontWeight.Bold, if (rest) PixelColors.black else PixelColors.darkGray)
+                style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, if (rest) NnoworkTheme.colors.primaryText else NnoworkTheme.colors.mutedText)
                     .copy(textDecoration = if (holiday) TextDecoration.Underline else null),
             )
         }
@@ -805,9 +806,9 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("編輯班別", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white)) },
+        title = { Text("編輯班別", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 NnoworkTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -816,39 +817,39 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                     TimeField("開始", start, { start = it }, Modifier.weight(1f))
                     TimeField("結束", end, { end = it }, Modifier.weight(1f))
                 }
-                Text("圖示", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.gray))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("圖示", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+                Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                     shiftIconKeys.forEach { k ->
                         Box(
-                            Modifier.size(38.dp).background(if (icon == k) PixelColors.blue else PixelColors.gray)
-                                .border(2.dp, PixelColors.black, RectangleShape).clickable { icon = k },
+                            Modifier.size(38.dp).background(if (icon == k) NnoworkTheme.colors.info else NnoworkTheme.colors.disabledBG)
+                                .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape).clickable { icon = k },
                             contentAlignment = Alignment.Center,
-                        ) { Icon(shiftIcon(k), null, tint = PixelColors.white, modifier = Modifier.size(20.dp)) }
+                        ) { Icon(shiftIcon(k), null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(20.dp)) }
                     }
                 }
-                Text("底色", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.gray))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("底色", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+                Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
                     shiftColors.forEach { hex ->
                         Box(
                             Modifier.size(34.dp).background(parseColor(hex))
-                                .border(if (color == hex) 3.dp else 2.dp, PixelColors.black, RectangleShape).clickable { color = hex },
+                                .border(if (color == hex) 3.dp else 2.dp, NnoworkTheme.colors.border, RectangleShape).clickable { color = hex },
                         )
                     }
                 }
             }
         },
         confirmButton = {
-            PixelButton(onClick = { onSave(shift.copy(name = name.trim(), startMinutes = start, endMinutes = end, colorHex = color, icon = icon)) }, backgroundColor = PixelColors.green) {
-                Text("儲存", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+            PixelButton(onClick = { onSave(shift.copy(name = name.trim(), startMinutes = start, endMinutes = end, colorHex = color, icon = icon)) }, backgroundColor = NnoworkTheme.colors.success) {
+                Text("儲存", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         },
         dismissButton = {
-            PixelButton(onClick = { onDelete(shift) }, backgroundColor = PixelColors.red) {
-                Text("刪除", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white))
+            PixelButton(onClick = { onDelete(shift) }, backgroundColor = NnoworkTheme.colors.danger) {
+                Text("刪除", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         },
     )
@@ -857,29 +858,29 @@ private fun ShiftEditorDialog(shift: Shift, onDismiss: () -> Unit, onSave: (Shif
 @Composable
 private fun MoneyField(label: String, value: Double, currency: String, onCurrency: () -> Unit, onSave: (Double) -> Unit) {
     var text by remember(value) { mutableStateOf(if (value == 0.0) "" else value.toLong().toString()) }
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .pixelCard(backgroundColor = PixelColors.white)
-                .padding(start = 14.dp, top = 8.dp, bottom = 8.dp, end = 8.dp),
+                .pixelCard(backgroundColor = NnoworkTheme.colors.elevatedSurface)
+                .padding(start = NnoworkSpacing.cozy, top = NnoworkSpacing.xs, bottom = NnoworkSpacing.xs, end = NnoworkSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PixelButton(onClick = onCurrency, backgroundColor = PixelColors.yellow, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
-                Text(currency, style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black))
+            PixelButton(onClick = onCurrency, backgroundColor = NnoworkTheme.colors.highlight, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.tight)) {
+                Text(currency, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
-            Spacer(Modifier.size(8.dp))
+            Spacer(Modifier.size(NnoworkSpacing.xs))
             BasicTextField(
                 value = text,
                 onValueChange = { v -> text = v.filter { it.isDigit() } },
                 singleLine = true,
-                textStyle = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.black),
-                cursorBrush = SolidColor(PixelColors.black),
+                textStyle = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
                 modifier = Modifier.weight(1f),
             )
-            PixelButton(onClick = { onSave(text.toDoubleOrNull() ?: 0.0) }, backgroundColor = PixelColors.blue, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 8.dp)) {
-                Text("儲存", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.white))
+            PixelButton(onClick = { onSave(text.toDoubleOrNull() ?: 0.0) }, backgroundColor = NnoworkTheme.colors.buttonBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs)) {
+                Text("儲存", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark))
             }
         }
     }
@@ -888,29 +889,29 @@ private fun MoneyField(label: String, value: Double, currency: String, onCurrenc
 @Composable
 private fun TimeField(label: String, minutes: Int, onPick: (Int) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.gray))
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
         Box(
-            Modifier.fillMaxWidth().pixelCard(backgroundColor = PixelColors.white)
+            Modifier.fillMaxWidth().pixelCard(backgroundColor = NnoworkTheme.colors.elevatedSurface)
                 .clickable {
                     TimePickerDialog(context, { _, h, m -> onPick(h * 60 + m) }, minutes / 60, minutes % 60, true).show()
-                }.padding(12.dp),
+                }.padding(NnoworkSpacing.sm),
             contentAlignment = Alignment.Center,
-        ) { Text(minToHHmm(minutes), style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.black)) }
+        ) { Text(minToHHmm(minutes), style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
     }
 }
 
 @Composable
 private fun ChipRow(label: String, options: List<Int>, selected: Int, onSelect: (Int) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.gray))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
             options.forEach { item ->
                 PixelButton(
                     onClick = { onSelect(item) },
-                    backgroundColor = if (selected == item) PixelColors.yellow else PixelColors.gray,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 8.dp),
-                ) { Text(item.toString(), style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black)) }
+                    backgroundColor = if (selected == item) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
+                ) { Text(item.toString(), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
             }
         }
     }
@@ -918,30 +919,30 @@ private fun ChipRow(label: String, options: List<Int>, selected: Int, onSelect: 
 
 @Composable
 private fun MultiChipRow(options: List<Int>, selected: Set<Int>, onToggle: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
         options.forEach { item ->
             PixelButton(
                 onClick = { onToggle(item) },
-                backgroundColor = if (selected.contains(item)) PixelColors.yellow else PixelColors.gray,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) { Text("${item}號", style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black)) }
+                backgroundColor = if (selected.contains(item)) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
+            ) { Text("${item}號", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
         }
     }
 }
 
 @Composable
 private fun DayGrid(selected: Set<Int>, onToggle: (Int) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs)) {
         (1..30 step 6).forEach { startDay ->
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs)) {
                 (startDay until startDay + 6).forEach { d ->
                     if (d <= 30) {
                         Box(
                             Modifier.weight(1f).aspectRatio(1f)
-                                .background(if (selected.contains(d)) PixelColors.yellow else PixelColors.gray)
-                                .border(1.dp, PixelColors.black, RectangleShape).clickable { onToggle(d) },
+                                .background(if (selected.contains(d)) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG)
+                                .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RectangleShape).clickable { onToggle(d) },
                             contentAlignment = Alignment.Center,
-                        ) { Text(d.toString(), style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.black)) }
+                        ) { Text(d.toString(), style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText)) }
                     } else Box(Modifier.weight(1f))
                 }
             }
@@ -954,14 +955,14 @@ private fun DayGrid(selected: Set<Int>, onToggle: (Int) -> Unit) {
 @Composable
 private fun HeaderCard() {
     Row(
-        modifier = Modifier.fillMaxWidth().pixelCard().padding(18.dp),
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.TravelExplore, null, tint = PixelColors.blue, modifier = Modifier.size(42.dp))
-        Spacer(Modifier.size(14.dp))
+        Icon(Icons.Filled.TravelExplore, null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(42.dp))
+        Spacer(Modifier.size(NnoworkSpacing.cozy))
         Column {
-            Text("自由需要準備", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.black))
-            Text("好好規劃，邁向更好的未來", style = pixelTextStyle(13.sp, color = PixelColors.gray))
+            Text("自由需要準備", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            Text("好好規劃，邁向更好的未來", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
     }
 }
@@ -969,33 +970,33 @@ private fun HeaderCard() {
 @Composable
 private fun FundCard(plan: ResignationPlan, progress: Float, onTarget: (Double) -> Unit, onSaved: (Double) -> Unit, onQuickAdd: (Double) -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().pixelCard().padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.cozy),
     ) {
-        SectionTitle(Icons.Filled.Savings, "自由預備金", PixelColors.green)
+        SectionTitle(Icons.Filled.Savings, "自由預備金", NnoworkTheme.colors.success)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("目標進度", style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.gray))
+            Text("目標進度", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
             Spacer(Modifier.weight(1f))
-            Text("${(progress * 100).toInt()}%", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.green))
+            Text("${(progress * 100).toInt()}%", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.success))
         }
         LinearProgressIndicator(
             progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(22.dp).border(3.dp, PixelColors.black, RectangleShape),
-            color = PixelColors.green,
-            trackColor = PixelColors.white,
+            modifier = Modifier.fillMaxWidth().height(22.dp).border(NnoworkLine.emphasis, NnoworkTheme.colors.border, RectangleShape),
+            color = NnoworkTheme.colors.success,
+            trackColor = NnoworkTheme.colors.elevatedSurface,
         )
         MoneyField("目標金額", plan.targetAmount, plan.currencySymbol, {}, onTarget)
         MoneyField("目前已存", plan.currentSaved, plan.currencySymbol, {}, onSaved)
         if (plan.targetAmount > plan.currentSaved) {
             Text(
                 "還差 ${SalaryCalculator.formatMoney(plan, plan.targetAmount - plan.currentSaved)} 就達標了",
-                style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.orange),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.warning),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug)) {
             listOf(5_000.0, 10_000.0).forEach { amount ->
-                PixelButton(onClick = { onQuickAdd(amount) }, backgroundColor = PixelColors.green.copy(alpha = 0.25f), modifier = Modifier.weight(1f)) {
-                    Text("+ ${SalaryCalculator.formatMoney(plan, amount)}", style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black))
+                PixelButton(onClick = { onQuickAdd(amount) }, backgroundColor = NnoworkTheme.colors.success.copy(alpha = 0.25f), modifier = Modifier.weight(1f)) {
+                    Text("+ ${SalaryCalculator.formatMoney(plan, amount)}", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
         }
@@ -1005,20 +1006,20 @@ private fun FundCard(plan: ResignationPlan, progress: Float, onTarget: (Double) 
 @Composable
 private fun ResumeCard(checked: Boolean, onToggle: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().pixelCard().padding(18.dp),
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Filled.Description, null, tint = PixelColors.blue, modifier = Modifier.size(28.dp))
-        Spacer(Modifier.size(12.dp))
+        Icon(Icons.Filled.Description, null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(28.dp))
+        Spacer(Modifier.size(NnoworkSpacing.sm))
         Column(Modifier.weight(1f)) {
-            Text("履歷準備", style = pixelTextStyle(18.sp, FontWeight.Bold, PixelColors.black))
+            Text("履歷準備", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             Text(
                 if (checked) "太好了，隨時可以出發" else "記得更新履歷和作品集",
-                style = pixelTextStyle(13.sp, color = if (checked) PixelColors.green else PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = if (checked) NnoworkTheme.colors.success else NnoworkTheme.colors.secondaryText),
             )
         }
-        PixelButton(onClick = onToggle, backgroundColor = if (checked) PixelColors.green else PixelColors.gray, contentPadding = androidx.compose.foundation.layout.PaddingValues(10.dp)) {
-            Icon(if (checked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, null, tint = PixelColors.black)
+        PixelButton(onClick = onToggle, backgroundColor = if (checked) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.snug)) {
+            Icon(if (checked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked, null, tint = NnoworkTheme.colors.primaryText)
         }
     }
 }
@@ -1030,10 +1031,10 @@ private fun TodoComposer(onAdd: (String, Long?) -> Unit) {
     var reminderAt by remember { mutableStateOf<Long?>(null) }
 
     Column(
-        modifier = Modifier.fillMaxWidth().pixelCard().padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
     ) {
-        SectionTitle(Icons.Filled.CheckCircle, "待辦事項", PixelColors.orange)
+        SectionTitle(Icons.Filled.CheckCircle, "待辦事項", NnoworkTheme.colors.warning)
         Row(verticalAlignment = Alignment.CenterVertically) {
             NnoworkTextField(
                 value = text,
@@ -1043,31 +1044,31 @@ private fun TodoComposer(onAdd: (String, Long?) -> Unit) {
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.size(10.dp))
+            Spacer(Modifier.size(NnoworkSpacing.snug))
             PixelButton(
                 onClick = { onAdd(text, reminderAt); text = ""; reminderAt = null },
-                backgroundColor = if (text.isBlank()) PixelColors.gray else PixelColors.orange,
+                backgroundColor = if (text.isBlank()) NnoworkTheme.colors.disabledBG else NnoworkTheme.colors.warning,
                 enabled = text.isNotBlank(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
-            ) { Icon(Icons.Filled.Add, null, tint = PixelColors.black) }
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.cozy),
+            ) { Icon(Icons.Filled.Add, null, tint = NnoworkTheme.colors.primaryText) }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             PixelButton(
                 onClick = { pickDateTime(context) { reminderAt = it } },
-                backgroundColor = if (reminderAt != null) PixelColors.yellow else PixelColors.gray,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                backgroundColor = if (reminderAt != null) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.snug, vertical = NnoworkSpacing.xs),
             ) {
-                Icon(Icons.Filled.NotificationsActive, null, tint = PixelColors.black, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.size(6.dp))
+                Icon(Icons.Filled.NotificationsActive, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.size(NnoworkSpacing.tight))
                 Text(
                     reminderAt?.let { reminderFormat.format(Date(it)) } ?: "設定提醒",
-                    style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
             if (reminderAt != null) {
-                Spacer(Modifier.size(8.dp))
-                PixelButton(onClick = { reminderAt = null }, backgroundColor = PixelColors.red, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
-                    Icon(Icons.Filled.Delete, null, tint = PixelColors.white, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.size(NnoworkSpacing.xs))
+                PixelButton(onClick = { reminderAt = null }, backgroundColor = NnoworkTheme.colors.danger, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
+                    Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -1080,29 +1081,29 @@ private fun TodoRow(item: TodoItem, completed: Boolean, onComplete: () -> Unit, 
         modifier = Modifier.fillMaxWidth().pixelCard(
             backgroundColor = if (completed) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.75f)
             else MaterialTheme.colorScheme.surfaceVariant,
-        ).padding(14.dp),
+        ).padding(NnoworkSpacing.cozy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PixelButton(onClick = if (completed) onRestore else onComplete, backgroundColor = if (completed) PixelColors.green else PixelColors.orange, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
-            Icon(if (completed) Icons.Filled.Restore else Icons.Filled.RadioButtonUnchecked, null, tint = PixelColors.black)
+        PixelButton(onClick = if (completed) onRestore else onComplete, backgroundColor = if (completed) NnoworkTheme.colors.success else NnoworkTheme.colors.warning, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
+            Icon(if (completed) Icons.Filled.Restore else Icons.Filled.RadioButtonUnchecked, null, tint = NnoworkTheme.colors.primaryText)
         }
-        Spacer(Modifier.size(12.dp))
+        Spacer(Modifier.size(NnoworkSpacing.sm))
         Column(Modifier.weight(1f)) {
             Text(
                 item.title,
-                style = pixelTextStyle(16.sp, FontWeight.Medium, if (completed) PixelColors.gray else PixelColors.black)
+                style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Medium, if (completed) NnoworkTheme.colors.secondaryText else NnoworkTheme.colors.primaryText)
                     .copy(textDecoration = if (completed) TextDecoration.LineThrough else null),
             )
             item.reminderAt?.let {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.NotificationsActive, null, tint = PixelColors.orange, modifier = Modifier.size(12.dp))
-                    Spacer(Modifier.size(4.dp))
-                    Text(reminderFormat.format(Date(it)), style = pixelTextStyle(11.sp, FontWeight.Bold, PixelColors.orange))
+                    Icon(Icons.Filled.NotificationsActive, null, tint = NnoworkTheme.colors.warning, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.size(NnoworkSpacing.xxs))
+                    Text(reminderFormat.format(Date(it)), style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.warning))
                 }
             }
         }
-        PixelButton(onClick = onDelete, backgroundColor = PixelColors.red, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
-            Icon(Icons.Filled.Delete, null, tint = PixelColors.white)
+        PixelButton(onClick = onDelete, backgroundColor = NnoworkTheme.colors.danger, contentPadding = androidx.compose.foundation.layout.PaddingValues(NnoworkSpacing.xs)) {
+            Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.textOnDark)
         }
     }
 }
@@ -1111,8 +1112,8 @@ private fun TodoRow(item: TodoItem, completed: Boolean, onComplete: () -> Unit, 
 private fun SectionTitle(icon: ImageVector, title: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = color)
-        Spacer(Modifier.size(8.dp))
-        Text(title, style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.black))
+        Spacer(Modifier.size(NnoworkSpacing.xs))
+        Text(title, style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText))
     }
 }
 
@@ -1129,7 +1130,11 @@ private fun shiftIcon(key: String): ImageVector = when (key) {
     else -> Icons.Filled.WbSunny
 }
 
-private fun parseColor(hex: String): Color = runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(Color(0xFF4A90D9))
+@Composable
+private fun parseColor(hex: String): Color {
+    val fallback = NnoworkTheme.colors.shiftFallback
+    return runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(fallback)
+}
 
 private fun minToHHmm(minutes: Int): String = "%02d:%02d".format(minutes / 60, minutes % 60)
 

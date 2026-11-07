@@ -1,6 +1,10 @@
 package com.neilyin.nnowork.feature.treehole
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkSize
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -61,12 +65,10 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.data.treehole.MyTreeHoleComment
 import com.neilyin.nnowork.data.treehole.TreeHolePost
 import com.neilyin.nnowork.data.treehole.TreeHoleProfile
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 import java.time.Duration
@@ -202,8 +204,8 @@ fun TreeHoleMyContentSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(MY_SHEET_HEIGHT_FRACTION),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(start = NnoworkSpacing.md, end = NnoworkSpacing.md, bottom = NnoworkSpacing.xl),
+            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
         ) {
             item(key = "header") {
                 SheetHeader(
@@ -341,7 +343,7 @@ private fun SheetHeader(
     ) {
         Text(
             text = title,
-            style = pixelTextStyle(24.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+            style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
             modifier = Modifier.weight(1f),
         )
         TreeHoleMyIconAction(
@@ -371,26 +373,26 @@ private fun TreeHoleProfileSummary(
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard()
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(NnoworkSpacing.cozy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
         ) {
             TreeHoleInitialsAvatar(
                 nickname = nickname,
-                size = 48.dp,
+                size = NnoworkSize.minTouchTarget,
                 contentDescription = "$nickname${strings.avatarSuffix}",
             )
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
             ) {
                 Text(
                     text = nickname,
                     style = pixelTextStyle(
-                        16.sp,
+                        NnoworkTheme.type.bodyLarge,
                         FontWeight.Bold,
                         MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
@@ -398,7 +400,7 @@ private fun TreeHoleProfileSummary(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -410,7 +412,7 @@ private fun TreeHoleProfileSummary(
                     Text(
                         text = identityLine,
                         style = pixelTextStyle(
-                            12.sp,
+                            NnoworkTheme.type.small,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         maxLines = 2,
@@ -421,7 +423,7 @@ private fun TreeHoleProfileSummary(
                     Text(
                         text = strings.companyTemplate.withText(profile.companyName),
                         style = pixelTextStyle(
-                            11.sp,
+                            NnoworkTheme.type.caption,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         maxLines = 1,
@@ -433,23 +435,23 @@ private fun TreeHoleProfileSummary(
 
         PixelButton(
             onClick = onEditProfile,
-            backgroundColor = PixelColors.green,
+            backgroundColor = NnoworkTheme.colors.success,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = MY_MIN_TOUCH_TARGET)
                 .semantics { role = Role.Button },
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+            contentPadding = PaddingValues(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.snug),
         ) {
             Icon(
                 imageVector = Icons.Filled.Edit,
                 contentDescription = null,
-                tint = PixelColors.black,
+                tint = NnoworkTheme.colors.primaryText,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(Modifier.width(7.dp))
             Text(
                 strings.editProfile,
-                style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
             )
         }
     }
@@ -466,26 +468,26 @@ private fun TreeHoleIndustrySyncCard(
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard(
-                backgroundColor = PixelColors.yellow.copy(alpha = 0.18f),
-                borderColor = PixelColors.orange,
+                backgroundColor = NnoworkTheme.colors.highlight.copy(alpha = 0.18f),
+                borderColor = NnoworkTheme.colors.warning,
             )
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(NnoworkSpacing.cozy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Filled.Sync,
                 contentDescription = null,
-                tint = PixelColors.orange,
+                tint = NnoworkTheme.colors.warning,
                 modifier = Modifier.size(22.dp),
             )
             Text(
                 state.title,
                 style = pixelTextStyle(
-                    15.sp,
+                    NnoworkTheme.type.body,
                     FontWeight.Bold,
                     MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
@@ -493,12 +495,12 @@ private fun TreeHoleIndustrySyncCard(
         }
         Text(
             state.message,
-            style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
         )
         PixelButton(
             onClick = { onSync?.invoke() },
             enabled = canSync,
-            backgroundColor = if (canSync) PixelColors.yellow else PixelColors.gray,
+            backgroundColor = if (canSync) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = MY_MIN_TOUCH_TARGET)
@@ -509,25 +511,25 @@ private fun TreeHoleIndustrySyncCard(
                         liveRegion = LiveRegionMode.Polite
                     }
                 },
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+            contentPadding = PaddingValues(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.snug),
         ) {
             if (state.loading) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .size(18.dp)
                         .semantics { contentDescription = loadingLabel },
-                    color = PixelColors.black,
+                    color = NnoworkTheme.colors.primaryText,
                     strokeWidth = 2.dp,
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(NnoworkSpacing.xs))
                 Text(
                     loadingLabel,
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             } else {
                 Text(
                     state.actionLabel,
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         }
@@ -546,7 +548,7 @@ private fun MySectionTabs(
         modifier = Modifier
             .fillMaxWidth()
             .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
     ) {
         TreeHoleMyTab(
             label = strings.postsTabTemplate.withCount(postCount),
@@ -579,8 +581,8 @@ private fun TreeHoleMyTab(
     Box(
         modifier = modifier
             .heightIn(min = MY_MIN_TOUCH_TARGET)
-            .background(if (selected) PixelColors.green else MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .background(if (selected) NnoworkTheme.colors.success else MaterialTheme.colorScheme.surfaceVariant)
+            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
             .selectable(
                 selected = selected,
                 role = Role.Tab,
@@ -589,15 +591,15 @@ private fun TreeHoleMyTab(
             .semantics(mergeDescendants = true) {
                 stateDescription = if (selected) selectedState else notSelectedState
             }
-            .padding(horizontal = 8.dp, vertical = 10.dp),
+            .padding(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
             style = pixelTextStyle(
-                13.sp,
+                NnoworkTheme.type.small,
                 FontWeight.Bold,
-                if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -619,7 +621,7 @@ private fun MyPostStatusFilters(
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
             .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
     ) {
         TreeHoleStatusFilterChip(
             label = strings.allFilterTemplate.withCount(allCount),
@@ -633,7 +635,7 @@ private fun MyPostStatusFilters(
             selected = selected == TreeHoleMyPostStatusFilter.PENDING,
             selectedState = strings.selectedState,
             notSelectedState = strings.notSelectedState,
-            selectedColor = PixelColors.orange,
+            selectedColor = NnoworkTheme.colors.warning,
             onClick = { onSelected(TreeHoleMyPostStatusFilter.PENDING) },
         )
         TreeHoleStatusFilterChip(
@@ -641,7 +643,7 @@ private fun MyPostStatusFilters(
             selected = selected == TreeHoleMyPostStatusFilter.APPROVED,
             selectedState = strings.selectedState,
             notSelectedState = strings.notSelectedState,
-            selectedColor = PixelColors.green,
+            selectedColor = NnoworkTheme.colors.success,
             onClick = { onSelected(TreeHoleMyPostStatusFilter.APPROVED) },
         )
     }
@@ -653,14 +655,14 @@ private fun TreeHoleStatusFilterChip(
     selected: Boolean,
     selectedState: String,
     notSelectedState: String,
-    selectedColor: Color = PixelColors.blue,
+    selectedColor: Color = NnoworkTheme.colors.info,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .sizeIn(minWidth = MY_MIN_TOUCH_TARGET, minHeight = MY_MIN_TOUCH_TARGET)
             .background(if (selected) selectedColor else MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
             .selectable(
                 selected = selected,
                 role = Role.Tab,
@@ -669,15 +671,15 @@ private fun TreeHoleStatusFilterChip(
             .semantics(mergeDescendants = true) {
                 stateDescription = if (selected) selectedState else notSelectedState
             }
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.xs),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
             style = pixelTextStyle(
-                12.sp,
+                NnoworkTheme.type.small,
                 FontWeight.Bold,
-                if (selected) PixelColors.black else MaterialTheme.colorScheme.onSurfaceVariant,
+                if (selected) NnoworkTheme.colors.primaryText else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         )
     }
@@ -693,8 +695,8 @@ private fun TreeHoleMyPostCard(
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard()
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(NnoworkSpacing.cozy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -708,8 +710,8 @@ private fun TreeHoleMyPostCard(
             TreeHoleMyIconAction(
                 icon = Icons.Filled.Delete,
                 contentDescription = strings.deletePost,
-                backgroundColor = PixelColors.red,
-                iconColor = PixelColors.white,
+                backgroundColor = NnoworkTheme.colors.danger,
+                iconColor = NnoworkTheme.colors.textOnDark,
                 onClick = onDelete,
             )
         }
@@ -717,7 +719,7 @@ private fun TreeHoleMyPostCard(
         Text(
             text = post.content,
             style = pixelTextStyle(
-                15.sp,
+                NnoworkTheme.type.body,
                 FontWeight.Medium,
                 MaterialTheme.colorScheme.onSurfaceVariant,
             ),
@@ -740,20 +742,20 @@ private fun TreeHoleMyCommentCard(
         modifier = Modifier
             .fillMaxWidth()
             .pixelCard()
-            .padding(14.dp),
+            .padding(NnoworkSpacing.cozy),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
         ) {
             TreeHoleMyStatusBadge(comment.status.statusCategory(), strings)
             Spacer(Modifier.weight(1f))
             TreeHoleMyIconAction(
                 icon = Icons.Filled.Delete,
                 contentDescription = strings.deleteComment,
-                backgroundColor = PixelColors.red,
-                iconColor = PixelColors.white,
+                backgroundColor = NnoworkTheme.colors.danger,
+                iconColor = NnoworkTheme.colors.textOnDark,
                 onClick = onDelete,
             )
         }
@@ -761,7 +763,7 @@ private fun TreeHoleMyCommentCard(
         Text(
             text = comment.content,
             style = pixelTextStyle(
-                15.sp,
+                NnoworkTheme.type.body,
                 FontWeight.Bold,
                 MaterialTheme.colorScheme.onSurfaceVariant,
             ),
@@ -770,7 +772,7 @@ private fun TreeHoleMyCommentCard(
         comment.postContent?.takeIf(String::isNotBlank)?.let { postContent ->
             Text(
                 text = strings.repliedPostTemplate.withText(postContent),
-                style = pixelTextStyle(12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -807,7 +809,7 @@ private fun TreeHoleCreatedAt(
         Text(
             text = displayValue,
             style = pixelTextStyle(
-                11.sp,
+                NnoworkTheme.type.caption,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             ),
         )
@@ -818,20 +820,20 @@ private fun TreeHoleCreatedAt(
 private fun TreeHoleMyQuestionTag(label: String) {
     Row(
         modifier = Modifier
-            .background(MY_QUESTION_ACCENT)
-            .border(1.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .background(NnoworkTheme.colors.treeHole.questionAccent)
+            .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RectangleShape)
             .semantics(mergeDescendants = true) { contentDescription = label }
             .padding(horizontal = 7.dp, vertical = 3.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Filled.QuestionAnswer,
             contentDescription = null,
-            tint = PixelColors.black,
+            tint = NnoworkTheme.colors.primaryText,
             modifier = Modifier.size(13.dp),
         )
-        Text(label, style = pixelTextStyle(10.sp, FontWeight.Bold, PixelColors.black))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
     }
 }
 
@@ -841,18 +843,18 @@ private fun TreeHoleMyStatusBadge(
     strings: TreeHoleMyContentStrings,
 ) {
     val (label, color) = when (status) {
-        TreeHoleContentStatus.APPROVED -> strings.approvedStatus to PixelColors.green
-        TreeHoleContentStatus.PENDING -> strings.pendingStatus to PixelColors.orange
-        TreeHoleContentStatus.REJECTED -> strings.rejectedStatus to PixelColors.red
+        TreeHoleContentStatus.APPROVED -> strings.approvedStatus to NnoworkTheme.colors.success
+        TreeHoleContentStatus.PENDING -> strings.pendingStatus to NnoworkTheme.colors.warning
+        TreeHoleContentStatus.REJECTED -> strings.rejectedStatus to NnoworkTheme.colors.danger
     }
     Box(
         modifier = Modifier
             .background(color)
-            .border(1.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .border(NnoworkLine.hairline, MaterialTheme.colorScheme.outline, RectangleShape)
             .semantics(mergeDescendants = true) { contentDescription = label }
             .padding(horizontal = 7.dp, vertical = 3.dp),
     ) {
-        Text(label, style = pixelTextStyle(10.sp, FontWeight.Bold, PixelColors.black))
+        Text(label, style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText))
     }
 }
 
@@ -871,13 +873,13 @@ private fun TreeHoleMyLoadingState(label: String) {
     ) {
         CircularProgressIndicator(
             modifier = Modifier.size(24.dp),
-            color = PixelColors.green,
+            color = NnoworkTheme.colors.success,
             strokeWidth = 3.dp,
         )
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(NnoworkSpacing.snug))
         Text(
             label,
-            style = pixelTextStyle(13.sp, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
+            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, MaterialTheme.colorScheme.onBackground),
         )
     }
 }
@@ -889,12 +891,12 @@ private fun TreeHoleMyEmptyState(label: String) {
             .fillMaxWidth()
             .heightIn(min = 112.dp)
             .pixelCard()
-            .padding(16.dp),
+            .padding(NnoworkSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            style = pixelTextStyle(13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+            style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
         )
     }
 }
@@ -911,7 +913,7 @@ private fun TreeHoleMyIconAction(
         modifier = Modifier
             .sizeIn(minWidth = MY_MIN_TOUCH_TARGET, minHeight = MY_MIN_TOUCH_TARGET)
             .background(backgroundColor)
-            .border(2.dp, MaterialTheme.colorScheme.outline, RectangleShape)
+            .border(NnoworkLine.control, MaterialTheme.colorScheme.outline, RectangleShape)
             .clickable(
                 role = Role.Button,
                 onClickLabel = contentDescription,
@@ -944,7 +946,7 @@ private fun TreeHoleDeleteConfirmationDialog(
             Text(
                 text = if (isPost) strings.deletePostTitle else strings.deleteCommentTitle,
                 style = pixelTextStyle(
-                    19.sp,
+                    NnoworkTheme.type.subtitle,
                     FontWeight.Bold,
                     MaterialTheme.colorScheme.onSurface,
                 ),
@@ -953,32 +955,32 @@ private fun TreeHoleDeleteConfirmationDialog(
         text = {
             Text(
                 text = if (isPost) strings.deletePostBody else strings.deleteCommentBody,
-                style = pixelTextStyle(13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = MaterialTheme.colorScheme.onSurfaceVariant),
             )
         },
         confirmButton = {
             PixelButton(
                 onClick = onConfirm,
-                backgroundColor = PixelColors.red,
+                backgroundColor = NnoworkTheme.colors.danger,
                 modifier = Modifier.heightIn(min = MY_MIN_TOUCH_TARGET),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.snug),
             ) {
                 Text(
                     strings.confirmDelete,
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                 )
             }
         },
         dismissButton = {
             PixelButton(
                 onClick = onDismiss,
-                backgroundColor = PixelColors.gray,
+                backgroundColor = NnoworkTheme.colors.disabledBG,
                 modifier = Modifier.heightIn(min = MY_MIN_TOUCH_TARGET),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                contentPadding = PaddingValues(horizontal = NnoworkSpacing.cozy, vertical = NnoworkSpacing.snug),
             ) {
                 Text(
                     strings.cancel,
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },
@@ -1072,8 +1074,7 @@ private sealed interface TreeHoleDeleteTarget {
 
 private val SHORT_HOUR_OFFSET = Regex("([+-]\\d{2})$")
 private val COMPACT_HOUR_MINUTE_OFFSET = Regex("([+-]\\d{2})(\\d{2})$")
-private val MY_QUESTION_ACCENT = Color(0xFF6BB8FA)
-private val MY_MIN_TOUCH_TARGET = 48.dp
+private val MY_MIN_TOUCH_TARGET = NnoworkSize.minTouchTarget
 private const val MY_SHEET_HEIGHT_FRACTION = 0.94f
 private const val SECONDS_PER_MINUTE = 60L
 private const val SECONDS_PER_HOUR = 60L * SECONDS_PER_MINUTE

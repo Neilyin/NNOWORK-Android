@@ -1,6 +1,10 @@
 package com.neilyin.nnowork.feature.treehole
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkLine
+import com.neilyin.nnowork.ui.theme.NnoworkSize
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,13 +46,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.R
 import com.neilyin.nnowork.data.treehole.TreeHoleBlockPolicy
 import com.neilyin.nnowork.data.treehole.TreeHoleReportReason
 import com.neilyin.nnowork.data.treehole.TreeHoleReportTargetType
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
 @Immutable
@@ -70,14 +72,14 @@ fun TreeHoleSafetyActionButton(
 ) {
     PixelButton(
         onClick = onClick,
-        backgroundColor = PixelColors.white,
-        modifier = modifier.size(48.dp),
-        contentPadding = PaddingValues(8.dp),
+        backgroundColor = NnoworkTheme.colors.elevatedSurface,
+        modifier = modifier.size(NnoworkSize.minTouchTarget),
+        contentPadding = PaddingValues(NnoworkSpacing.xs),
     ) {
         Icon(
             Icons.Filled.MoreVert,
             contentDescription = stringResource(R.string.treehole_safety_more_actions),
-            tint = PixelColors.black,
+            tint = NnoworkTheme.colors.primaryText,
             modifier = Modifier.size(21.dp),
         )
     }
@@ -96,23 +98,23 @@ fun TreeHoleContentActionsDialog(
         title = {
             Text(
                 stringResource(R.string.treehole_safety_title),
-                style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm)) {
                 Text(
                     target.preview,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                    style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
                 )
                 PixelButton(
                     onClick = onReport,
-                    backgroundColor = PixelColors.yellow,
+                    backgroundColor = NnoworkTheme.colors.highlight,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Filled.Flag, contentDescription = null, tint = PixelColors.black)
+                    Icon(Icons.Filled.Flag, contentDescription = null, tint = NnoworkTheme.colors.primaryText)
                     Spacer(Modifier.size(7.dp))
                     Text(
                         stringResource(
@@ -122,35 +124,35 @@ fun TreeHoleContentActionsDialog(
                                 R.string.treehole_report_comment
                             },
                         ),
-                        style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                     )
                 }
                 PixelButton(
                     onClick = onBlock,
                     enabled = target.canBlock,
-                    backgroundColor = if (target.canBlock) PixelColors.red else PixelColors.gray,
+                    backgroundColor = if (target.canBlock) NnoworkTheme.colors.danger else NnoworkTheme.colors.disabledBG,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Filled.Block, contentDescription = null, tint = PixelColors.white)
+                    Icon(Icons.Filled.Block, contentDescription = null, tint = NnoworkTheme.colors.textOnDark)
                     Spacer(Modifier.size(7.dp))
                     Text(
                         stringResource(
                             if (target.canBlock) R.string.treehole_block_author
                             else R.string.treehole_block_unavailable,
                         ),
-                        style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white),
+                        style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                     )
                 }
             }
         },
         confirmButton = {},
         dismissButton = {
-            PixelButton(onClick = onDismiss, backgroundColor = PixelColors.gray) {
-                Icon(Icons.Filled.Close, contentDescription = null, tint = PixelColors.black)
+            PixelButton(onClick = onDismiss, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                Icon(Icons.Filled.Close, contentDescription = null, tint = NnoworkTheme.colors.primaryText)
                 Spacer(Modifier.size(5.dp))
                 Text(
                     stringResource(R.string.treehole_action_close),
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },
@@ -181,7 +183,7 @@ fun TreeHoleReportDialog(
                         R.string.treehole_report_comment_title
                     },
                 ),
-                style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
             )
         },
         text = {
@@ -189,11 +191,11 @@ fun TreeHoleReportDialog(
                 modifier = Modifier
                     .heightIn(max = 540.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),
             ) {
                 Text(
                     stringResource(R.string.treehole_report_reason),
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                 )
                 TreeHoleReportReason.entries.forEach { option ->
                     Row(
@@ -204,39 +206,39 @@ fun TreeHoleReportDialog(
                                 role = Role.RadioButton,
                                 onClick = { reason = option },
                             )
-                            .background(PixelColors.white)
-                            .border(2.dp, PixelColors.black, RectangleShape)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .background(NnoworkTheme.colors.elevatedSurface)
+                            .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+                            .padding(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.xxs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = reason == option, onClick = null)
                         Text(
                             reportReasonLabel(option),
-                            style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.black),
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                         )
                     }
                 }
                 Text(
                     stringResource(R.string.treehole_report_note),
-                    style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                 )
                 BasicTextField(
                     value = note,
                     onValueChange = { note = it.take(200) },
                     enabled = !submitting,
-                    textStyle = pixelTextStyle(13.sp, color = PixelColors.black),
-                    cursorBrush = SolidColor(PixelColors.black),
+                    textStyle = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.primaryText),
+                    cursorBrush = SolidColor(NnoworkTheme.colors.primaryText),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(90.dp)
-                        .background(PixelColors.white)
-                        .border(2.dp, PixelColors.black, RectangleShape)
-                        .padding(10.dp),
+                        .background(NnoworkTheme.colors.elevatedSurface)
+                        .border(NnoworkLine.control, NnoworkTheme.colors.border, RectangleShape)
+                        .padding(NnoworkSpacing.snug),
                     decorationBox = { inner ->
                         if (note.isEmpty()) {
                             Text(
                                 stringResource(R.string.treehole_report_note_placeholder),
-                                style = pixelTextStyle(12.sp, color = PixelColors.gray),
+                                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
                             )
                         }
                         inner()
@@ -244,7 +246,7 @@ fun TreeHoleReportDialog(
                 )
                 Text(
                     stringResource(R.string.treehole_report_note_count, note.length),
-                    style = pixelTextStyle(11.sp, color = PixelColors.gray),
+                    style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
                 )
                 if (target.canBlock) {
                     Row(
@@ -256,18 +258,18 @@ fun TreeHoleReportDialog(
                         Checkbox(checked = alsoBlock, onCheckedChange = null)
                         Text(
                             stringResource(R.string.treehole_report_also_block),
-                            style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white),
+                            style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                         )
                     }
                 }
                 Text(
                     stringResource(R.string.treehole_report_review_24h),
-                    style = pixelTextStyle(12.sp, color = PixelColors.yellow),
+                    style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.highlight),
                 )
                 errorMessage?.let {
                     Text(
                         it,
-                        style = pixelTextStyle(12.sp, FontWeight.Bold, PixelColors.red),
+                        style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.danger),
                     )
                 }
             }
@@ -276,22 +278,22 @@ fun TreeHoleReportDialog(
             PixelButton(
                 onClick = { onSubmit(reason, note, alsoBlock) },
                 enabled = !submitting,
-                backgroundColor = PixelColors.yellow,
+                backgroundColor = NnoworkTheme.colors.highlight,
             ) {
                 Text(
                     stringResource(
                         if (submitting) R.string.treehole_report_submitting
                         else R.string.treehole_report_submit,
                     ),
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },
         dismissButton = {
-            PixelButton(onClick = onDismiss, enabled = !submitting, backgroundColor = PixelColors.gray) {
+            PixelButton(onClick = onDismiss, enabled = !submitting, backgroundColor = NnoworkTheme.colors.disabledBG) {
                 Text(
                     stringResource(R.string.treehole_report_cancel),
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },
@@ -310,28 +312,28 @@ fun TreeHoleBlockConfirmationDialog(
         title = {
             Text(
                 stringResource(R.string.treehole_block_confirm_title),
-                style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.white),
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
             )
         },
         text = {
             Text(
                 stringResource(R.string.treehole_block_confirm_body, target.nickname),
-                style = pixelTextStyle(13.sp, color = PixelColors.gray),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
         },
         confirmButton = {
-            PixelButton(onClick = onConfirm, backgroundColor = PixelColors.red) {
+            PixelButton(onClick = onConfirm, backgroundColor = NnoworkTheme.colors.danger) {
                 Text(
                     stringResource(R.string.treehole_block_author),
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.white),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.textOnDark),
                 )
             }
         },
         dismissButton = {
-            PixelButton(onClick = onDismiss, backgroundColor = PixelColors.gray) {
+            PixelButton(onClick = onDismiss, backgroundColor = NnoworkTheme.colors.disabledBG) {
                 Text(
                     stringResource(R.string.treehole_action_cancel),
-                    style = pixelTextStyle(14.sp, FontWeight.Bold, PixelColors.black),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 )
             }
         },

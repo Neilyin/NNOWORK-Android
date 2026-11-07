@@ -1,6 +1,8 @@
 package com.neilyin.nnowork.ui.common
 
 import androidx.compose.foundation.background
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.neilyin.nnowork.ui.theme.PixelColors
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
 /** 尚未移植完成的分頁暫用畫面。 */
@@ -28,11 +28,11 @@ fun PlaceholderScreen(title: String, subtitle: String = "施工中…即將完�
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("🚧", style = pixelTextStyle(48.sp))
-            Spacer(Modifier.height(12.dp))
-            Text(title, style = pixelTextStyle(24.sp, FontWeight.Bold, PixelColors.white), textAlign = TextAlign.Center)
-            Spacer(Modifier.height(8.dp))
-            Text(subtitle, style = pixelTextStyle(14.sp, color = PixelColors.gray), textAlign = TextAlign.Center)
+            Text("🚧", style = pixelTextStyle(NnoworkTheme.type.hero))
+            Spacer(Modifier.height(NnoworkSpacing.sm))
+            Text(title, style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.textOnDark), textAlign = TextAlign.Center)
+            Spacer(Modifier.height(NnoworkSpacing.xs))
+            Text(subtitle, style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText), textAlign = TextAlign.Center)
         }
     }
 }
