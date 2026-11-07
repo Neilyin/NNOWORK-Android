@@ -136,7 +136,7 @@ private fun FreedomStat(
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
     ) {
         Icon(icon, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(30.dp))
-        Text(value, style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true))
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
     }
 }

@@ -458,7 +458,7 @@ private fun StatCard(label: String, value: String, icon: androidx.compose.ui.gra
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
     ) {
         Icon(icon, null, tint = color, modifier = Modifier.size(28.dp))
-        Text(value, style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true))
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
     }
 }
@@ -480,7 +480,7 @@ private fun RoundHeader(round: Int, count: Int) {
         Text(roundSubtitle(round), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, roundColor(round)))
         Spacer(Modifier.size(NnoworkSpacing.sm))
         PixelBadge(backgroundColor = roundColor(round)) {
-            Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+            Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true))
         }
     }
 }

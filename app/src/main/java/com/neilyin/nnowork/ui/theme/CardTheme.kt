@@ -250,7 +250,20 @@ enum class CardTheme(val id: Int) {
             PANDA -> PixelColors.pandaEmptyCell
             SLOTH -> PixelColors.slothEmptyCell
             NIGHT -> PixelColors.nightEmptyCell
-            else -> PixelColors.white
+            // 深色卡片主題：空格用卡片底色的柔和一階，不再是刺眼的純白（同夜空的作法）。
+            RPG -> colorHex("#2D3E50")
+            CYBERPUNK -> colorHex("#122017")
+            // 度假的卡片是蜜桃色：空格用更淺一階的蜜桃。
+            VACATION -> colorHex("#FDE8C6")
+        }
+
+    /** 空格上的數字色（對空格底色 ≥ 4.5:1，由 NnoworkPaletteTest 鎖定）。 */
+    val emptyCellTextColor: Color
+        get() = when (this) {
+            RPG -> colorHex("#E6EDF4")
+            CYBERPUNK -> colorHex("#A9F0C4")
+            VACATION -> PixelColors.black
+            else -> palette.onContent
         }
 
     val requiresCoins: Boolean

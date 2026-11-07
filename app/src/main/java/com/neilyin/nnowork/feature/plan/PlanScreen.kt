@@ -410,7 +410,7 @@ private fun ManualHourlyTimerBoard(
 
         Text(
             SalaryCalculator.formatCountdown(elapsed),
-            style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+            style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )

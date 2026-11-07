@@ -1,5 +1,8 @@
 package com.neilyin.nnowork.feature.home
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
 import com.neilyin.nnowork.ui.theme.cardShadowColor
 import com.neilyin.nnowork.ui.theme.softShadow
 import com.neilyin.nnowork.ui.theme.NnoworkSize
@@ -121,23 +124,35 @@ fun HomeScreen(
                 .padding(top = NnoworkSpacing.xs, end = NnoworkSpacing.md),
         )
 
-        Column(
+        // 版面對齊 iOS HomeView（直向）：標題靠上，回合列＋集點卡＋按鈕成一組在剩餘空間置中。
+        // 集點卡依內容高度（不再撐滿整個畫面），空間不夠（例如 30 格的小螢幕）時整頁可捲動。
+        BoxWithConstraints(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .widthIn(max = 640.dp)
+                .fillMaxSize()
+                .statusBarsPadding(),
+        ) {
+        val viewportHeight = maxHeight
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
-                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = viewportHeight)
                 .padding(horizontal = NnoworkSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
+            // SpaceBetween＋最小高度＝視窗高：標題貼頂、卡片＋按鈕這組落在剩餘空間中間。
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Spacer(Modifier.height(NnoworkSpacing.md))
-            HeaderSection(state, theme)
-            Spacer(Modifier.height(NnoworkSpacing.md))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(NnoworkSpacing.md))
+                HeaderSection(state, theme)
+                Spacer(Modifier.height(NnoworkSpacing.lg))
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
             StampCardSection(
                 state = state,
                 theme = theme,
-                modifier = Modifier.weight(1f),
                 onEasterTap = {
                     if (state.hasStampedToday && !state.isCurrentCardComplete) {
                         easterTapCount++
@@ -148,7 +163,7 @@ fun HomeScreen(
                     }
                 },
             )
-            Spacer(Modifier.height(NnoworkSpacing.md))
+            Spacer(Modifier.height(NnoworkSpacing.lg))
             BottomButton(
                 state = state,
                 theme = theme,
@@ -157,7 +172,9 @@ fun HomeScreen(
                     if (state.settings.currentRound >= 3) showMasterOverlay = true else showCompletionDialog = true
                 },
             )
-            Spacer(Modifier.height(NnoworkSpacing.lg))
+            }
+            Spacer(Modifier.height(NnoworkSpacing.xl))
+        }
         }
 
         AnimatedVisibility(visible = showAnimation) {
@@ -306,6 +323,7 @@ private fun CoinHud(
         Text(
             coins.toString(),
             style = MaterialTheme.typography.labelLarge.copy(
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 color = NnoworkTheme.colors.primaryText,
             ),
         )
@@ -411,7 +429,7 @@ private fun HeaderSection(state: HomeUiState, theme: CardTheme) {
         val company = state.settings.companyName.ifBlank { "公司" }
         Text(
             "$company 離職集點卡",
-            style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+            style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -425,7 +443,7 @@ private fun HeaderSection(state: HomeUiState, theme: CardTheme) {
         ) {
             Text(
                 DateUtils.formattedToday(),
-                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.accentForeground),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.accentForeground, monospace = true),
             )
         }
     }
@@ -461,18 +479,17 @@ private fun StampCardSection(
             PixelBadge(backgroundColor = NnoworkTheme.colors.accent) {
                 Text(
                     "${state.currentRoundStamps} / ${state.settings.maxStamps}",
-                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onAccent),
+                    style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.onAccent, monospace = true),
                 )
             }
         }
 
         Spacer(Modifier.height(NnoworkSpacing.md))
 
-        // 卡片佔據剩餘空間，格子依空間自動縮放，整頁不需捲動。
+        // 卡片高度貼合格子（iOS stampCard：padding 24、格子上限 70pt），不再撐滿畫面留大片空白。
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
                 // 集點卡主視覺保留像素品牌：主題底色＋粗框（emphasis 3dp），外圍用柔和投影取代 Material 硬陰影。
                 .softShadow(RoundedCornerShape(NnoworkRadius.hero), cardShadowColor(theme.cardSurfaceColor))
                 .clip(RoundedCornerShape(NnoworkRadius.hero))
@@ -487,7 +504,7 @@ private fun StampCardSection(
                     indication = null,
                     onClick = onEasterTap,
                 )
-                .padding(NnoworkSpacing.page),
+                .padding(NnoworkSpacing.lg),
             contentAlignment = Alignment.Center,
         ) {
             StampGrid(state, theme)
@@ -500,6 +517,8 @@ private fun StampCardSection(
     }
 }
 
+private val StampCellMaxSize = 70.dp
+
 @Composable
 private fun StampGrid(state: HomeUiState, theme: CardTheme) {
     val maxStamps = state.settings.maxStamps
@@ -509,13 +528,12 @@ private fun StampGrid(state: HomeUiState, theme: CardTheme) {
     val gap = 8.dp
 
     BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        // 取寬高限制中較小者算出方形格子尺寸，確保整個集點卡完整顯示。
+        // 格子大小由卡片寬度決定，上限 StampCellMaxSize（iOS 70pt），卡片高度跟著格子走。
         val cellByWidth = (maxWidth - gap * (columns - 1)) / columns
-        val cellByHeight = (maxHeight - gap * (rows - 1)) / rows
-        val cell = minOf(cellByWidth, cellByHeight)
+        val cell = minOf(cellByWidth, StampCellMaxSize)
 
         Column(
             verticalArrangement = Arrangement.spacedBy(gap, Alignment.CenterVertically),
@@ -569,7 +587,7 @@ private fun StampCell(index: Int, isStamped: Boolean, theme: CardTheme, modifier
         } else {
             Text(
                 "${index + 1}",
-                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.palette.onContent),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.emptyCellTextColor, monospace = true),
             )
         }
     }

@@ -47,18 +47,17 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
 /**
- * 文字樣式。方向 B 的字型分工（iOS 同款）：
- * - 粗體以上（頁面標題、卡片標題、數字、徽章、按鈕字）→ 等寬，延續像素品牌。
- * - 其餘（內文、說明、表單）→ 系統 Sans（中文 Noto Sans CJK，不會混出兩種字形）。
- * [monospace] 可強制指定（例如細字的數字）。
+ * 文字樣式。預設一律系統 Sans（標題、按鈕字也是 Sans 粗體），中英文同一套字形。
+ * 等寬只在呼叫點明確指定 [monospace] = true：數字（格數、金幣、計時、統計）、集點格、
+ * 徽章與品牌標題（NnoworkPageTitle、首頁「離職集點卡」標題），延續像素品牌但不擴散到整頁。
  */
 fun pixelTextStyle(
     fontSize: TextUnit,
     weight: FontWeight = FontWeight.Normal,
     color: Color = Color.Unspecified,
-    monospace: Boolean? = null,
+    monospace: Boolean = false,
 ): TextStyle = TextStyle(
-    fontFamily = if (monospace ?: (weight >= FontWeight.Bold)) FontFamily.Monospace else FontFamily.Default,
+    fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
     fontSize = fontSize,
     fontWeight = weight,
     color = color,

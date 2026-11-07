@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
  * | display    | display              | 32 |
  * | 數字 hero  | hero                 | 40 |（只給慶祝畫面的大數字）
  *
- * 字型分工見 [pixelTextStyle]：粗體（標題、數字、徽章）用等寬，其餘用系統 Sans。
+ * 字型分工見 [pixelTextStyle]：預設 Sans；數字、集點格、徽章、品牌標題才用等寬。
  */
 @Immutable
 data class NnoworkTypeScale(

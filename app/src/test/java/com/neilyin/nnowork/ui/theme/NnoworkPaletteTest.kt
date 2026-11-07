@@ -19,7 +19,7 @@ class NnoworkPaletteTest {
             assertContrast(theme, "primary", palette.onPrimary, palette.primary)
             assertContrast(theme, "accent", palette.onAccent, palette.accent)
             assertContrast(theme, "preview title", theme.titleColor, theme.backgroundColor)
-            assertContrast(theme, "empty cell number", palette.onContent, theme.emptyCellColor)
+            assertContrast(theme, "empty cell number", theme.emptyCellTextColor, theme.emptyCellColor)
         }
     }
 

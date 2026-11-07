@@ -289,7 +289,7 @@ fun NnoworkPageTitle(
     Text(
         text,
         modifier = modifier,
-        style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, color),
+        style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, color, monospace = true),
     )
 }
 

@@ -1185,7 +1185,7 @@ private fun CoinSection(coins: Int) {
             }
             Spacer(Modifier.size(NnoworkSpacing.snug))
             Column {
-                Text(coins.toString(), style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Text(coins.toString(), style = pixelTextStyle(NnoworkTheme.type.pageTitle, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true))
                 Text("每日蓋章 +1，一天上限一枚", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             }
         }

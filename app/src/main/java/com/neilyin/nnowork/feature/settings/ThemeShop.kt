@@ -188,19 +188,23 @@ private fun ThemeShopTile(
                 modifier = Modifier.size(30.dp),
             )
             if (!unlocked) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(NnoworkTheme.colors.scrim),
-                    contentAlignment = Alignment.Center,
+                // 未解鎖：預覽圖維持原色，右上角一顆鎖頭＋價格的小徽章（取代整塊半透明遮罩）。
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(NnoworkSpacing.xxs)
+                        .clip(RoundedCornerShape(50))
+                        .background(NnoworkTheme.colors.elevatedSurface)
+                        .border(NnoworkLine.hairline, NnoworkTheme.colors.border, RoundedCornerShape(50))
+                        .padding(horizontal = NnoworkSpacing.tight, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.Lock, contentDescription = null, tint = NnoworkTheme.colors.onStrong, modifier = Modifier.size(18.dp))
-                        Text(
-                            theme.coinCost.toString(),
-                            style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.onStrong),
-                        )
-                    }
+                    Icon(Icons.Filled.Lock, contentDescription = null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        theme.coinCost.toString(),
+                        style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
+                    )
                 }
             } else if (selected) {
                 Box(
@@ -428,7 +432,7 @@ private fun ThemePreviewSample(
                 )
                 Text(
                     "$stampedCount / $totalCells",
-                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.titleColor),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, theme.titleColor, monospace = true),
                 )
             }
             repeat(2) { row ->
@@ -514,7 +518,7 @@ private fun ThemePreviewCell(
         } else {
             Text(
                 (index + 1).toString(),
-                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, theme.palette.onContent),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, theme.emptyCellTextColor, monospace = true),
             )
         }
     }
