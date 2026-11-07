@@ -15,6 +15,12 @@ import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.graphics.Brush
 import com.neilyin.nnowork.ui.theme.NnoworkDialogDefaults
+import com.neilyin.nnowork.R
+import com.neilyin.nnowork.feature.history.FreedomScreen
+import com.neilyin.nnowork.feature.history.computeFreedomStats
+import com.neilyin.nnowork.feature.jobarchive.JobTransitionSheet
+import com.neilyin.nnowork.ui.theme.PixelButtonVariant
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.animation.AnimatedVisibility
 import com.neilyin.nnowork.ui.theme.NnoworkLine
 import com.neilyin.nnowork.ui.theme.NnoworkTheme
@@ -103,6 +109,11 @@ import com.neilyin.nnowork.ui.theme.stampTiltDegrees
 import com.neilyin.nnowork.util.DateUtils
 import kotlinx.coroutines.delay
 
+/**
+ * @param onMasterCompleted 舊版「忍耐大師 → 歷史頁收據」的出口。iOS 第 3 張起改成在首頁看階段總結、
+ * 自己選「再來一張／勇敢離職」，所以首頁已不再呼叫它；保留參數讓導覽層不用跟著改。
+ */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun HomeScreen(
     onCardCompleted: () -> Unit = {},
@@ -118,6 +129,11 @@ fun HomeScreen(
     var showAnimation by remember { mutableStateOf(false) }
     var showMasterOverlay by rememberSaveable { mutableStateOf(false) }
     var showCompletionDialog by rememberSaveable { mutableStateOf(false) }
+    // 忍耐大師流程（iOS HomeView）：里程碑遮罩 → 階段總結 →「勇敢離職」→ 恭喜離職成功 → 自由畫面 → 換工作。
+    var showMasterSummary by rememberSaveable { mutableStateOf(false) }
+    var showResignCongrats by rememberSaveable { mutableStateOf(false) }
+    var showFreedom by rememberSaveable { mutableStateOf(false) }
+    var showJobTransition by rememberSaveable { mutableStateOf(false) }
     // StampCreationResult 不是 Parcelable，且分享對話框只在剛蓋完章時出現，維持 remember。
     var pendingTreeHoleShare by remember { mutableStateOf<StampCreationResult?>(null) }
     var treeHoleShareMessage by remember { mutableStateOf<String?>(null) }
@@ -158,14 +174,85 @@ fun HomeScreen(
         }
 
         if (showMasterOverlay) {
-            MasterEasterEggOverlay(
+            MasterMilestoneOverlay(
                 round = state.settings.currentRound,
                 onOpen = {
                     showMasterOverlay = false
-                    onMasterCompleted()
+                    showMasterSummary = true
                 },
             )
         }
+    }
+
+    if (showMasterSummary) {
+        MasterLevelSummaryDialog(
+            stats = computeMasterSummaryStats(state.settings, state.stamps, state.savedAmount),
+            onDismiss = { showMasterSummary = false },
+            onStartNewCard = { maxStamps ->
+                showMasterSummary = false
+                viewModel.startNewCard(maxStamps)
+            },
+            onQuit = {
+                // 集滿時 addStamp 已記下 cardCompletedDate／roundCompletedDates（iOS 這裡才補記），不用再寫一次。
+                showMasterSummary = false
+                showResignCongrats = true
+            },
+        )
+    }
+
+    if (showResignCongrats) {
+        AlertDialog(
+            onDismissRequest = { showResignCongrats = false },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = {
+                Text(
+                    stringResource(R.string.master_congrats_title),
+                    style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.master_congrats_message),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
+                )
+            },
+            confirmButton = {
+                PixelButton(
+                    onClick = {
+                        showResignCongrats = false
+                        showFreedom = true
+                    },
+                    variant = PixelButtonVariant.Primary,
+                ) {
+                    Text(stringResource(R.string.master_congrats_action), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold))
+                }
+            },
+        )
+    }
+
+    if (showFreedom) {
+        // 自由畫面全螢幕蓋在首頁上（iOS fullScreenCover）；「重新集點（新公司）」走既有換工作流程。
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showFreedom = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            FreedomScreen(
+                stats = computeFreedomStats(state.settings, state.stamps),
+                onViewHistory = { showFreedom = false },
+                onStartNewCompany = { showJobTransition = true },
+            )
+        }
+    }
+
+    if (showJobTransition) {
+        JobTransitionSheet(
+            onDismiss = { showJobTransition = false },
+            onCompleted = {
+                showJobTransition = false
+                showFreedom = false
+            },
+        )
     }
 
     if (showStampDialog) {
@@ -1002,32 +1089,6 @@ private fun StampSuccessOverlay(theme: CardTheme) {
                     modifier = Modifier.size(50.dp),
                 )
                 Text("蓋章成功", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, theme.primaryColor))
-            }
-        }
-    }
-}
-
-@Composable
-private fun MasterEasterEggOverlay(round: Int, onOpen: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(NnoworkTheme.colors.scrim),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(NnoworkSpacing.xxl),
-        ) {
-            Text("🔥🔥🔥", style = pixelTextStyle(NnoworkTheme.type.hero))
-            Spacer(Modifier.height(NnoworkSpacing.md))
-            // 遮罩固定是深色，字色用固定的淺色／慶祝黃，不跟主題文字色。
-            Text("是個狠人！", style = pixelTextStyle(NnoworkTheme.type.display, FontWeight.Bold, NnoworkTheme.colors.celebrateYellow))
-            Spacer(Modifier.height(NnoworkSpacing.sm))
-            Text("你已經集滿第 $round 張卡了", style = pixelTextStyle(NnoworkTheme.type.subtitle, color = NnoworkTheme.colors.onStrong))
-            Spacer(Modifier.height(NnoworkSpacing.lg))
-            PixelButton(onClick = onOpen, backgroundColor = NnoworkTheme.colors.special) {
-                Text("打開驚喜", style = pixelTextStyle(NnoworkTheme.type.heading, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         }
     }

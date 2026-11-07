@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neilyin.nnowork.data.local.StampDao
 import com.neilyin.nnowork.data.local.StampRecordEntity
+import com.neilyin.nnowork.data.plan.PlanRepository
 import com.neilyin.nnowork.data.settings.AppSettings
 import com.neilyin.nnowork.data.settings.SettingsRepository
 import com.neilyin.nnowork.analytics.Analytics
@@ -24,6 +25,8 @@ data class HomeUiState(
     val settings: AppSettings = AppSettings(),
     val stamps: List<StampRecordEntity> = emptyList(),
     val treeHoleProfile: TreeHoleProfile? = null,
+    /** 離職計畫目前存到的錢（忍耐大師階段總結用）。 */
+    val savedAmount: Double = 0.0,
 ) {
     val theme: CardTheme get() = CardTheme.fromId(settings.cardStyle)
 
@@ -36,8 +39,9 @@ data class HomeUiState(
     val isCurrentCardComplete: Boolean
         get() = currentRoundStamps >= settings.maxStamps
 
+    /** 第 3 張起集滿都是忍耐大師（iOS isMasterLevel：currentRound >= 3，與彩蛋觸發條件一致）。 */
     val isMasterLevel: Boolean
-        get() = settings.currentRound == 3 && isCurrentCardComplete
+        get() = settings.currentRound >= 3 && isCurrentCardComplete
 
     val hasStampedToday: Boolean
         get() {
@@ -88,11 +92,17 @@ class HomeViewModel(
     private val coinLedgerRepository: CoinLedgerRepository = ServiceLocator.coinLedgerRepository,
     private val treeHoleRepository: TreeHoleRepository = ServiceLocator.treeHoleRepository,
     private val runNumberProvider: suspend () -> Int = { ServiceLocator.jobArchiveRepository.currentRunNumber() },
+    private val planRepository: PlanRepository = ServiceLocator.planRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> =
-        combine(settingsRepository.settings, stampDao.observeAll(), treeHoleRepository.profile) { settings, stamps, profile ->
-            HomeUiState(settings = settings, stamps = stamps, treeHoleProfile = profile)
+        combine(
+            settingsRepository.settings,
+            stampDao.observeAll(),
+            treeHoleRepository.profile,
+            planRepository.plan,
+        ) { settings, stamps, profile, plan ->
+            HomeUiState(settings = settings, stamps = stamps, treeHoleProfile = profile, savedAmount = plan.currentSaved)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
