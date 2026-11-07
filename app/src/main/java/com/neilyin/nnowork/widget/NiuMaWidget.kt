@@ -11,7 +11,16 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
+import androidx.glance.LocalContext
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.currentState
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalSize
@@ -62,18 +71,25 @@ class NiuMaWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Responsive(setOf(SmallSize, WideSize))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val plan = PlanRepository(context).current()
-        val settings = SettingsRepository(context).current()
-        val theme = CardTheme.fromId(settings.cardStyle).appWideTheme(settings.unlockedStyles)
-        val now = System.currentTimeMillis()
-        val state = NiuMaWidgetState.select(plan, now)
-        NiuMaRefresh.scheduleNext(context, state, now)
-        val tokens = NiuMaTokens.forTheme(theme)
+        val planRepo = PlanRepository(context)
+        val settingsRepo = SettingsRepository(context)
+        val initialPlan = planRepo.current()
+        val initialSettings = settingsRepo.current()
         val openApp = Intent(context, MainActivity::class.java)
-        val night = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-            Configuration.UI_MODE_NIGHT_YES
 
+        // Glance session 存活期間（約 45 秒）再呼叫 update 不會重跑 provideGlance，只會重組。
+        // 所以資料與「現在時間」都要在組合內讀：設定／計時變動走 Flow，定時重繪靠 glance state 的 tick。
         provideContent {
+            val plan by planRepo.plan.collectAsState(initialPlan)
+            val settings by settingsRepo.settings.collectAsState(initialSettings)
+            val tick = currentState(TickKey)
+            val now = remember(plan, settings, tick) { System.currentTimeMillis() }
+            val state = remember(plan, now) { NiuMaWidgetState.select(plan, now) }
+            LaunchedEffect(state, now) { NiuMaRefresh.scheduleNext(context, state, now) }
+            val theme = CardTheme.fromId(settings.cardStyle).appWideTheme(settings.unlockedStyles)
+            val tokens = NiuMaTokens.forTheme(theme)
+            val night = (LocalContext.current.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
             GlanceTheme {
                 val wide = LocalSize.current.width >= WideThreshold
                 Box(
@@ -91,6 +107,20 @@ class NiuMaWidget : GlanceAppWidget() {
     }
 
     companion object {
+        private val TickKey = longPreferencesKey("niuma_tick")
+
+        /** 寫入新的 tick 再 update：session 還活著時也能逼它用新時間重組。 */
+        suspend fun refreshAll(context: Context) {
+            val widget = NiuMaWidget()
+            val ids = GlanceAppWidgetManager(context).getGlanceIds(NiuMaWidget::class.java)
+            for (id in ids) {
+                runCatching {
+                    updateAppWidgetState(context, id) { it[TickKey] = System.currentTimeMillis() }
+                    widget.update(context, id)
+                }
+            }
+        }
+
         val SmallSize = DpSize(110.dp, 110.dp)
         val WideSize = DpSize(250.dp, 110.dp)
         private val WideThreshold = 200.dp

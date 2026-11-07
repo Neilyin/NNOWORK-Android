@@ -36,7 +36,7 @@ object WidgetScheduler {
     suspend fun refreshNow(context: Context) {
         runCatching { SalaryWidget().updateAll(context) }
         runCatching { QuoteWidget().updateAll(context) }
-        runCatching { NiuMaWidget().updateAll(context) }
+        runCatching { NiuMaWidget.refreshAll(context) }
     }
 }
 
@@ -50,7 +50,7 @@ class NiuMaRefreshWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        runCatching { NiuMaWidget().updateAll(applicationContext) }
+        runCatching { NiuMaWidget.refreshAll(applicationContext) }
         return Result.success()
     }
 }

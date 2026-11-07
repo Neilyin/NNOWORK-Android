@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.home
 
+import androidx.compose.ui.graphics.SolidColor
+import com.neilyin.nnowork.ui.common.FullScreenDialog
 import androidx.compose.ui.platform.LocalContext
 import com.neilyin.nnowork.data.treehole.TreeHoleIndustryCatalog
 import com.neilyin.nnowork.feature.treehole.TreeHoleProgressRow
@@ -178,7 +180,16 @@ fun HomeScreen(
             StampSuccessOverlay(theme)
         }
 
-        if (showMasterOverlay) {
+    }
+
+    if (showMasterOverlay) {
+        // 全螢幕視窗：遮罩連底部導覽一起蓋住（iOS 遮罩蓋整個畫面）；返回鍵不關，只能按「查看階段總結」。
+        FullScreenDialog(
+            onDismissRequest = {},
+            background = SolidColor(NnoworkTheme.colors.scrim),
+            lightSystemBars = false,
+            dismissOnBackPress = false,
+        ) {
             MasterMilestoneOverlay(
                 round = state.settings.currentRound,
                 onOpen = {
@@ -210,6 +221,8 @@ fun HomeScreen(
     if (showResignCongrats) {
         AlertDialog(
             onDismissRequest = { showResignCongrats = false },
+            // iOS alert 只能按按鈕關；點外面不要直接跳過自由畫面（返回鍵仍可取消）。
+            properties = DialogProperties(dismissOnClickOutside = false),
             containerColor = NnoworkDialogDefaults.containerColor,
             shape = NnoworkDialogDefaults.shape,
             title = {
@@ -240,9 +253,10 @@ fun HomeScreen(
 
     if (showFreedom) {
         // 自由畫面全螢幕蓋在首頁上（iOS fullScreenCover）；「重新集點（新公司）」走既有換工作流程。
-        androidx.compose.ui.window.Dialog(
+        FullScreenDialog(
             onDismissRequest = { showFreedom = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+            background = Brush.verticalGradient(listOf(NnoworkTheme.colors.appBG, NnoworkTheme.colors.appBGBottom)),
+            lightSystemBars = NnoworkTheme.colors.appBG.luminance() > 0.5f,
         ) {
             FreedomScreen(
                 stats = computeFreedomStats(state.settings, state.stamps),

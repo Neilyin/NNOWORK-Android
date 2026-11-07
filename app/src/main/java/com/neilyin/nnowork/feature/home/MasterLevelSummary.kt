@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.feature.home
 
+import androidx.compose.ui.graphics.luminance
+import com.neilyin.nnowork.ui.common.FullScreenDialog
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -89,7 +91,7 @@ internal fun MasterMilestoneOverlay(round: Int, onOpen: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(NnoworkTheme.colors.scrim)
+            // 遮罩底色由外層 FullScreenDialog 畫（連狀態列／手勢列一起蓋）。
             // 吃掉點擊：iOS 點背景不做任何事。
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
         contentAlignment = Alignment.Center,
@@ -140,9 +142,10 @@ internal fun MasterLevelSummaryDialog(
     onStartNewCard: (maxStamps: Int) -> Unit,
     onQuit: () -> Unit,
 ) {
-    Dialog(
+    FullScreenDialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        background = Brush.verticalGradient(listOf(NnoworkTheme.colors.appBG, NnoworkTheme.colors.appBGBottom)),
+        lightSystemBars = NnoworkTheme.colors.appBG.luminance() > 0.5f,
     ) {
         MasterLevelSummaryContent(stats, onDismiss, onStartNewCard, onQuit)
     }
