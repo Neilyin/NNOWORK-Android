@@ -115,6 +115,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
+    // 摺疊機摺痕位置（FoldingFeature），供 ui/adaptive/FoldInfo.kt 依 hinge 分欄
+    implementation(libs.androidx.window)
     debugImplementation(libs.androidx.ui.tooling)
 
     // Room

@@ -1,14 +1,24 @@
 package com.neilyin.nnowork.ui.adaptive
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.window.layout.FoldingFeature
+import androidx.window.layout.WindowInfoTracker
 
 /**
  * 視窗裡的直向分隔（摺痕／hinge）。座標以「視窗左緣」為 0 的 dp 表示。
  *
- * 對應 iOS DuoVerticalFold；之後接 androidx.window 的 FoldingFeature 時：
+ * 對應 iOS DuoVerticalFold；由 androidx.window 的 FoldingFeature 換算：
  * `bounds.left / density` → [start]、`bounds.width() / density` → [width]、
  * `isSeparating` → [isSeparating]，`orientation == VERTICAL` 才填。
  */
@@ -29,26 +39,40 @@ data class FoldInfo(
 }
 
 /**
- * 這期的摺痕來源：一律回傳「沒有摺痕」，雙欄走比例分配。
- * 換算規則已在 [foldInfoFromFeature]（含單元測試）；加入 androidx.window 依賴後只要改這個函式：
- * ```
- * val activity = LocalContext.current.findActivity()
- * val layoutInfo by remember(activity) { WindowInfoTracker.getOrCreate(activity).windowLayoutInfo(activity) }
- *     .collectAsState(initial = null)
- * val feature = layoutInfo?.displayFeatures?.filterIsInstance<FoldingFeature>()
- *     ?.firstOrNull { it.orientation == FoldingFeature.Orientation.VERTICAL }
- * return feature?.let {
- *     foldInfoFromFeature(
- *         orientation = FoldOrientation.Vertical, isSeparating = it.isSeparating,
- *         occludes = it.occlusionType == FoldingFeature.OcclusionType.FULL,
- *         featureLeftPx = it.bounds.left, featureWidthPx = it.bounds.width(), density = density,
- *     )
- * } ?: FoldInfo.None
- * ```
- * 各畫面透過 [LocalNnoworkWindowInfo].fold 與 [NnoworkTwoPane] 取用，不需修改。
+ * 目前視窗的摺痕：讀 androidx.window 的 [FoldingFeature]，換算規則在 [foldInfoFromFeature]。
+ * 沒有 Activity（例如 Preview）、沒有摺痕、或摺痕不分隔內容時回 [FoldInfo.None]，雙欄走比例分配。
+ * 各畫面透過 [LocalNnoworkWindowInfo].fold 與 [NnoworkTwoPane] 取用。
  */
 @Composable
-fun rememberFoldInfo(): FoldInfo = FoldInfo.None
+fun rememberFoldInfo(): FoldInfo {
+    val activity = LocalContext.current.findActivity() ?: return FoldInfo.None
+    val density = LocalDensity.current.density
+    val layoutInfoFlow = remember(activity) {
+        WindowInfoTracker.getOrCreate(activity).windowLayoutInfo(activity)
+    }
+    val layoutInfo by layoutInfoFlow.collectAsState(initial = null)
+    val feature = layoutInfo?.displayFeatures
+        ?.filterIsInstance<FoldingFeature>()
+        ?.firstOrNull() ?: return FoldInfo.None
+    return foldInfoFromFeature(
+        orientation = if (feature.orientation == FoldingFeature.Orientation.VERTICAL) {
+            FoldOrientation.Vertical
+        } else {
+            FoldOrientation.Horizontal
+        },
+        isSeparating = feature.isSeparating,
+        occludes = feature.occlusionType == FoldingFeature.OcclusionType.FULL,
+        featureLeftPx = feature.bounds.left,
+        featureWidthPx = feature.bounds.width(),
+        density = density,
+    )
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 /** FoldingFeature.orientation 的對應（不直接依賴 androidx.window，方便單元測試）。 */
 enum class FoldOrientation { Vertical, Horizontal }
