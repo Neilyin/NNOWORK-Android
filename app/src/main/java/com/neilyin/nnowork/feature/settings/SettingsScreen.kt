@@ -764,15 +764,48 @@ private fun SettingsContent(
                 Text(stringResource(com.neilyin.nnowork.R.string.settings_reset_action), style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         }
+        // 彩蛋：點署名紀念 77（為 Android 版打下基底的夥伴）。
+        var showTribute by rememberSaveable { mutableStateOf(false) }
         Text(
-            "離職集點卡 Android ${BuildConfig.VERSION_NAME}\nMade By Neil 尼歐",
+            "離職集點卡 Android ${BuildConfig.VERSION_NAME}\n" + stringResource(com.neilyin.nnowork.R.string.settings_credit),
             style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .settingsColumn(SettingsColumn.Trailing, order = 6)
                 .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null,
+                ) { showTribute = true }
                 .padding(top = NnoworkSpacing.xs, bottom = NnoworkSpacing.md),
         )
+        if (showTribute) {
+            AlertDialog(
+                onDismissRequest = { showTribute = false },
+                containerColor = NnoworkDialogDefaults.containerColor,
+                shape = NnoworkDialogDefaults.shape,
+                title = {
+                    Text(
+                        stringResource(com.neilyin.nnowork.R.string.tribute_77_title),
+                        style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
+                    )
+                },
+                text = {
+                    Text(
+                        stringResource(com.neilyin.nnowork.R.string.tribute_77_message),
+                        style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
+                    )
+                },
+                confirmButton = {
+                    PixelButton(onClick = { showTribute = false }, variant = PixelButtonVariant.Primary) {
+                        Text(
+                            stringResource(com.neilyin.nnowork.R.string.tribute_77_action),
+                            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold),
+                        )
+                    }
+                },
+            )
+        }
     }
 }
 

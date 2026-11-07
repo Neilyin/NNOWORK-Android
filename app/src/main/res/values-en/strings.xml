@@ -677,4 +677,8 @@
         <item quantity="one">Marked as a helpful answer once in total</item>
         <item quantity="other">Marked as a helpful answer %1$d times in total</item>
     </plurals>
+    <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
+    <string name="tribute_77_title">🕊️ 77 has become an angel</string>
+    <string name="tribute_77_message">Thank you, 77, for laying the foundation of the Android version of QuitCard.\nMay you be happy in the other world, free from pain and illness.</string>
+    <string name="tribute_77_action">Send blessings 🙏</string>
 </resources>

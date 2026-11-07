@@ -672,4 +672,8 @@
     <plurals name="yr_helpful_count">
         <item quantity="other">「役に立つ回答」に選ばれた回数（累計）%1$d回</item>
     </plurals>
+    <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
+    <string name="tribute_77_title">🕊️ 77は天使になりました</string>
+    <string name="tribute_77_message">退職スタンプカードのAndroid版の土台を築いてくれて、ありがとう。\n向こうの世界では、病気も痛みもなく、楽しく幸せに過ごせますように。</string>
+    <string name="tribute_77_action">祝福を送る 🙏</string>
 </resources>

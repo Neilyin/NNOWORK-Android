@@ -672,4 +672,8 @@
     <plurals name="yr_helpful_count">
         <item quantity="other">累计被标为有用解答 %1$d 次</item>
     </plurals>
+    <string name="settings_credit">Made By Neil 尼欧 &amp; 77</string>
+    <string name="tribute_77_title">🕊️ 77 去当天使了</string>
+    <string name="tribute_77_message">谢谢他为离职集点卡的安卓版本打下基础。\n愿他在另一个世界可以过得开心快乐，没有病痛。</string>
+    <string name="tribute_77_action">送上祝福 🙏</string>
 </resources>

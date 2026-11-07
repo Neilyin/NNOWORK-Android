@@ -690,4 +690,8 @@
     <string name="yr_debug_reset_invite" translatable="false">重設邀請卡</string>
     <string name="yr_debug_show_invite" translatable="false">立即顯示邀請卡</string>
     <string name="yr_debug_all_off" translatable="false">全部關閉</string>
+    <string name="settings_credit">Made By Neil 尼歐 &amp; 77</string>
+    <string name="tribute_77_title">🕊️ 77 去當天使了</string>
+    <string name="tribute_77_message">謝謝他為離職集點卡的安卓版本打下基底。\n願他在另外一個世界可以過得開心快樂，沒有病痛。</string>
+    <string name="tribute_77_action">給予祝福 🙏</string>
 </resources>
