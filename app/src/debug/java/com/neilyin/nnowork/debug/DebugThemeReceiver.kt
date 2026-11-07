@@ -17,12 +17,14 @@ import kotlinx.coroutines.launch
  *   -n com.chi157.resignationpointscard/com.neilyin.nnowork.debug.DebugThemeReceiver --ei theme 10
  *
  * 加 `--ez skipIntro true` 會順便標記引導／更新說明已看過，方便直接進主畫面。
+ * 加 `--ei lock 10` 會把該付費主題從已解鎖清單移除（截「未購買」狀態用）。
  * 只存在 src/debug，release 建置不包含。
  */
 class DebugThemeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val themeId = intent.getIntExtra("theme", -1)
         val skipIntro = intent.getBooleanExtra("skipIntro", false)
+        val lockId = intent.getIntExtra("lock", -1)
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -33,6 +35,9 @@ class DebugThemeReceiver : BroadcastReceiver() {
                             cardStyle = themeId,
                             unlockedStyles = (next.unlockedStyles + themeId).distinct(),
                         )
+                    }
+                    if (lockId > 0) {
+                        next = next.copy(unlockedStyles = next.unlockedStyles - lockId)
                     }
                     if (skipIntro) {
                         next = next.copy(
