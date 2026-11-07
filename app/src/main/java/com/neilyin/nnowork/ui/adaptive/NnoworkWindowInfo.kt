@@ -10,12 +10,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * 輕量 window size class（不依賴 androidx.window／material3-adaptive，離線快取沒有這些套件）。
+ * 輕量 window size class（不依賴 material3-adaptive；寬高取自 LocalConfiguration，
+ * 摺痕另由 androidx.window 的 FoldingFeature 提供，見 FoldInfo.kt）。
  * 門檻照 Material 3：寬 compact < 600dp ≤ medium < 840dp ≤ expanded；
  * 高 compact < 480dp ≤ medium < 900dp ≤ expanded。
  *
- * 各畫面只透過 [LocalNnoworkWindowInfo] 取得視窗資訊與版面決策，不自己讀 LocalConfiguration，
- * 之後換成 androidx.window 的 WindowMetrics 時只要改 [ProvideNnoworkWindowInfo]。
+ * 各畫面只透過 [LocalNnoworkWindowInfo] 取得視窗資訊與版面決策，不自己讀 LocalConfiguration；
+ * 若之後改用 androidx.window 的 WindowMetricsCalculator 量視窗，只要改 [ProvideNnoworkWindowInfo]。
  */
 enum class NnoworkWidthClass {
     Compact,
@@ -91,7 +92,10 @@ data class NnoworkWindowInfo(
      */
     val usesFeedDetailSplit: Boolean get() = usesFeedDetailSplitFor(widthClass)
 
-    /** 設定：左右兩欄各自捲動（iOS SettingsView regular 分支）。 */
+    /**
+     * 設定：左右兩欄（iOS SettingsView regular 分支）。與 iOS 不同，兩欄放在同一個捲動容器裡一起捲動，
+     * 這樣切換單欄／雙欄時各區塊的狀態不會重建。
+     */
     val usesTwoColumnSettings: Boolean get() = usesTwoColumnSettingsFor(widthClass)
 
     companion object {
