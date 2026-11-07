@@ -145,6 +145,10 @@ dependencies {
     // Image loading (avatars / icons in tree hole)
     implementation(libs.coil.compose)
 
+    // Google Play In-App Updates / In-App Review（Phase 5b）
+    implementation(libs.play.app.update.ktx)
+    implementation(libs.play.review.ktx)
+
     // Firebase（FCM 推播 + Analytics）。需放入 google-services.json 才會實際運作。
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
