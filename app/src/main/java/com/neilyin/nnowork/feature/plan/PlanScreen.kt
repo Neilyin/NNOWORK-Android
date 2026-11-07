@@ -626,11 +626,14 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
             return@Column
         }
 
-        // 上下班時間
-        Text("上下班時間（end ≤ start 視為夜班跨日）", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
-        Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
-            TimeField("上班", plan.workStartMinutes, viewModel::setWorkStart, Modifier.weight(1f))
-            TimeField("下班", plan.workEndMinutes, viewModel::setWorkEnd, Modifier.weight(1f))
+        // 上下班時間：排班制＋多種班別時各班別自有時間，隱藏全域上下班（iOS NiuMaSettingsSheet isShiftScheduleMode）。
+        val usesShiftTemplates = plan.monthlyScheduleMode == 1 && plan.shiftUseTemplates
+        if (!usesShiftTemplates) {
+            Text("上下班時間（end ≤ start 視為夜班跨日）", style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
+            Row(horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
+                TimeField("上班", plan.workStartMinutes, viewModel::setWorkStart, Modifier.weight(1f))
+                TimeField("下班", plan.workEndMinutes, viewModel::setWorkEnd, Modifier.weight(1f))
+            }
         }
 
         // 午休

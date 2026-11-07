@@ -13,6 +13,7 @@ import com.neilyin.nnowork.data.treehole.TreeHoleProfile
 import com.neilyin.nnowork.data.treehole.TreeHoleRepository
 import com.neilyin.nnowork.di.ServiceLocator
 import com.neilyin.nnowork.ui.theme.CardTheme
+import com.neilyin.nnowork.ui.theme.appWideTheme
 import com.neilyin.nnowork.util.DateUtils
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,7 +29,8 @@ data class HomeUiState(
     /** 離職計畫目前存到的錢（忍耐大師階段總結用）。 */
     val savedAmount: Double = 0.0,
 ) {
-    val theme: CardTheme get() = CardTheme.fromId(settings.cardStyle)
+    // 與 App 外觀一致：未解鎖或暫不上架的主題退回預設（見 appWideTheme）。
+    val theme: CardTheme get() = CardTheme.fromId(settings.cardStyle).appWideTheme(settings.unlockedStyles)
 
     /** 當前回合已蓋章數（對應 iOS currentRoundStamps）。 */
     val currentRoundStamps: Int

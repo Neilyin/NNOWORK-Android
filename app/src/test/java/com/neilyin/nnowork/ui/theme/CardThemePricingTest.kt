@@ -39,7 +39,15 @@ class CardThemePricingTest {
         assertEquals(CardTheme.RPG, CardTheme.LAZY_CAT.appWideTheme(owned))
         assertEquals(CardTheme.RPG, CardTheme.SUMMER.appWideTheme(owned))
         assertEquals(CardTheme.RPG, CardTheme.NIGHT.appWideTheme(owned))
-        assertEquals(CardTheme.NIGHT, CardTheme.NIGHT.appWideTheme(owned + CardTheme.NIGHT.id))
+        // 夜空金暫不上架：即使已購買也退回預設主題，且不出現在商店。
+        assertEquals(CardTheme.RPG, CardTheme.NIGHT.appWideTheme(owned + CardTheme.NIGHT.id))
+    }
+
+    @Test
+    fun `unreleased night theme is hidden from the shop`() {
+        assertEquals(false, CardTheme.NIGHT.isReleased)
+        assertEquals(false, CardTheme.NIGHT in CardTheme.shopEntries)
+        assertEquals(CardTheme.entries.size - 1, CardTheme.shopEntries.size)
     }
 
     @Test

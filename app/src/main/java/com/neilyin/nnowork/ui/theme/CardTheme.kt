@@ -36,8 +36,15 @@ enum class CardTheme(val id: Int) {
     SUMMER(7),
     PANDA(8),
     SLOTH(9),
-    /** 第 10 個付費主題：夜空金（色值取自 iOS YearReviewNightStyle）。 */
+    /** 第 10 個付費主題：夜空金（色值取自 iOS YearReviewNightStyle）。暫不上架，見 [isReleased]。 */
     NIGHT(10);
+
+    /**
+     * 是否已上架。夜空金先隱藏（2026-11-07 使用者決定）：商店不列、已套用者退回預設主題；
+     * 已購買紀錄保留在 unlockedStyles，之後改回 true 就會恢復。
+     */
+    val isReleased: Boolean
+        get() = this != NIGHT
 
     @get:StringRes
     val titleRes: Int
@@ -349,6 +356,9 @@ enum class CardTheme(val id: Int) {
 
     companion object {
         fun fromId(id: Int): CardTheme = entries.firstOrNull { it.id == id } ?: RPG
+
+        /** 主題商店要列出的主題（暫不上架的不列）。 */
+        val shopEntries: List<CardTheme> get() = entries.filter { it.isReleased }
     }
 }
 
@@ -357,7 +367,7 @@ fun CardTheme.isUnlocked(unlockedStyles: Collection<Int>): Boolean =
 
 /** 只有未解鎖的付費風格需要安全退回 RPG；免費風格一律可套用到整個 App。 */
 fun CardTheme.appWideTheme(unlockedStyles: Collection<Int>): CardTheme =
-    if (isUnlocked(unlockedStyles)) this else CardTheme.RPG
+    if (isReleased && isUnlocked(unlockedStyles)) this else CardTheme.RPG
 
 /** 固定傾斜角，避免畫面重組後印章抖動。 */
 fun stampTiltDegrees(index: Int): Float {

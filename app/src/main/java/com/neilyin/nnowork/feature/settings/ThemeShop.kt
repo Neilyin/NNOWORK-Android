@@ -98,7 +98,7 @@ internal fun ThemeShopGrid(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                stringResource(R.string.theme_shop_count, CardTheme.entries.size),
+                stringResource(R.string.theme_shop_count, CardTheme.shopEntries.size),
                 style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
                 modifier = Modifier.weight(1f),
             )
@@ -118,7 +118,7 @@ internal fun ThemeShopGrid(
                 stringResource(R.string.theme_shop_hint),
                 style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
-            CardTheme.entries.chunked(THEME_COLUMNS).forEach { rowThemes ->
+            CardTheme.shopEntries.chunked(THEME_COLUMNS).forEach { rowThemes ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.snug),

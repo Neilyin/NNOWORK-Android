@@ -63,7 +63,8 @@ object SalaryCalculator {
             val hasPay = if (salaryPayMode == 0) monthlySalary > 0 else hourlyRate > 0
             val needsScheduledHours = salaryPayMode == 0 ||
                 HourlyTrackingMode.normalize(hourlyTrackingMode) == HourlyTrackingMode.SCHEDULE
-            return hasPay && (!needsScheduledHours || workStartMinutes != workEndMinutes)
+            // 排班＋多班別：各班別自有時間，不需要全域上下班（iOS canSave 的 timeOK）。
+            return hasPay && (!needsScheduledHours || isShiftTemplateMode || workStartMinutes != workEndMinutes)
         }
 
     /** 是否為排班「多班別」模式。 */
