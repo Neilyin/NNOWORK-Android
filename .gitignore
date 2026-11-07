@@ -16,3 +16,6 @@ local.properties
 *.keystore
 keystore.properties
 google-services.json
+
+# Claude Code agent worktrees
+/.claude/
