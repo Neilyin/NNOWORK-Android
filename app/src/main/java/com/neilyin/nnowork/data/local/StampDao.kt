@@ -39,6 +39,10 @@ interface StampDao {
     @Query("DELETE FROM stamp_records")
     suspend fun deleteAll()
 
+    /** 換工作：只刪已收進封存的章（呼叫端負責分批，避免超過 SQLite 變數上限）。 */
+    @Query("DELETE FROM stamp_records WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<String>): Int
+
     /** 備份還原的「全刪全換」語意；中途失敗時 Room 會整筆回滾。 */
     @Transaction
     suspend fun replaceAll(records: List<StampRecordEntity>) {

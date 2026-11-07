@@ -27,27 +27,34 @@ class JobTransitionCoordinatorTest {
         var plan: ResignationPlan,
     ) : JobTransitionLocalStore {
         val archives = mutableListOf<JobArchiveEntity>()
+        lateinit var pendingRef: MemoryPending
+        /** Room transaction 失敗（整個 rollback）。 */
         var failCommit = false
+        /** 模擬 process death：Room 已提交、DataStore 還沒寫。 */
+        var crashAfterRoomPhase = false
         var commits = 0
+        var dataStoreCommits = 0
 
         override suspend fun readCurrentJob() = CurrentJobSnapshot(settings, stamps.toList(), plan)
         override suspend fun archivesForOwner(owner: String) = archives.filter { it.ownerUserId == owner }
-        override suspend fun commitTransition(
-            archive: JobArchiveEntity?,
-            transformSettings: (AppSettings) -> AppSettings,
-            transformPlan: (ResignationPlan) -> ResignationPlan,
-        ) {
-            // 模擬 transaction：先算好全部結果，失敗就一個都不寫。
-            val newSettings = transformSettings(settings)
-            val newPlan = transformPlan(plan)
+        override suspend fun commitRoomPhase(archive: JobArchiveEntity?, stampIds: Set<String>) {
             if (failCommit) throw IOException("disk full")
             archive?.let { candidate ->
                 if (archives.none { it.ownerUserId == candidate.ownerUserId && it.id == candidate.id }) archives += candidate
             }
-            stamps.clear()
+            stamps.removeAll { it.id in stampIds }
+            commits++
+            if (crashAfterRoomPhase) throw ProcessDeath()
+        }
+        override suspend fun resetCurrentJobAndClearPending(
+            pendingKey: String?,
+            transform: (AppSettings, ResignationPlan) -> Pair<AppSettings, ResignationPlan>,
+        ) {
+            val (newSettings, newPlan) = transform(settings, plan)
             settings = newSettings
             plan = newPlan
-            commits++
+            if (pendingKey != null) pendingRef.entries = pendingRef.entries - pendingKey
+            dataStoreCommits++
         }
         override suspend fun insertArchivesIfAbsent(archives: List<JobArchiveEntity>): Int {
             var inserted = 0
@@ -117,8 +124,130 @@ class JobTransitionCoordinatorTest {
         ),
     )
 
-    private fun coordinator(local: FakeLocal, remote: FakeRemote, pending: MemoryPending, ids: MutableList<String>) =
-        JobTransitionCoordinator(local, remote, pending, nowMillis = { now }, newUuid = { ids.removeAt(0) })
+    private class ProcessDeath : Exception("process killed")
+
+    private fun coordinator(local: FakeLocal, remote: FakeRemote, pending: MemoryPending, ids: MutableList<String>): JobTransitionCoordinator {
+        local.pendingRef = pending
+        return JobTransitionCoordinator(local, remote, pending, nowMillis = { now }, newUuid = { ids.removeAt(0) })
+    }
+
+    @Test
+    fun `crash after Room write before DataStore write is rolled forward on recovery`() = runBlocking {
+        val local = fixture().apply { crashAfterRoomPhase = true }
+        val remote = FakeRemote()
+        val pending = MemoryPending()
+        try {
+            coordinator(local, remote, pending, mutableListOf("aaaaaaaa-0000-4000-8000-000000000001"))
+                .archiveAndStartNewJob(owner, "新公司", maxStamps = 20)
+            fail("Expected the simulated crash")
+        } catch (_: JobTransitionException.LocalSaveFailed) {
+        }
+        // 半套狀態：封存已在本機、章已刪，但 settings/plan 還是舊工作、pending 還在。
+        assertEquals(1, local.archives.size)
+        assertTrue(local.stamps.isEmpty())
+        assertEquals("舊公司", local.settings.companyName)
+        assertEquals(12_000.0, local.plan.currentSaved, 0.0)
+        assertEquals(1, pending.entries.size)
+
+        // App 重啟 → 復原前滾。
+        local.crashAfterRoomPhase = false
+        val recovered = coordinator(local, remote, pending, mutableListOf()).recoverPendingTransitions()
+        assertEquals(listOf("aaaaaaaa-0000-4000-8000-000000000001"), recovered.map { it.archive.id })
+        assertEquals(listOf("t1"), recovered.single().clearedReminderTodoIds)
+        assertEquals("新公司", local.settings.companyName)
+        assertEquals(20, local.settings.maxStamps)
+        assertEquals(2, local.settings.currentJobIndex)
+        assertEquals(2, local.settings.currentRunNumber)
+        assertEquals(0.0, local.plan.currentSaved, 0.0)
+        assertTrue(pending.entries.isEmpty())
+        assertEquals("archive keeps every stamp", 3, local.archives.single().payload!!.stamps.size)
+        assertEquals("no second upload during recovery", 1, remote.uploads.size)
+    }
+
+    @Test
+    fun `running recovery twice is a no-op`() = runBlocking {
+        val local = fixture().apply { crashAfterRoomPhase = true }
+        val pending = MemoryPending()
+        val remote = FakeRemote()
+        runCatching {
+            coordinator(local, remote, pending, mutableListOf("aaaaaaaa-0000-4000-8000-000000000001"))
+                .archiveAndStartNewJob(owner, "新公司")
+        }
+        local.crashAfterRoomPhase = false
+        val c = coordinator(local, remote, pending, mutableListOf())
+        assertEquals(1, c.recoverPendingTransitions().size)
+        val after = Triple(local.settings, local.plan, local.archives.toList())
+        val writes = local.dataStoreCommits to local.commits
+        assertTrue(c.recoverPendingTransitions().isEmpty())
+        assertTrue(coordinator(local, remote, pending, mutableListOf()).recoverPendingTransitions().isEmpty())
+        assertEquals(after, Triple(local.settings, local.plan, local.archives.toList()))
+        assertEquals(writes, local.dataStoreCommits to local.commits)
+        assertEquals(2, local.settings.currentJobIndex)
+    }
+
+    @Test
+    fun `retrying after the crash completes the same transition instead of archiving an empty job`() = runBlocking {
+        val local = fixture().apply { crashAfterRoomPhase = true }
+        val pending = MemoryPending()
+        val remote = FakeRemote()
+        runCatching {
+            coordinator(local, remote, pending, mutableListOf("aaaaaaaa-0000-4000-8000-000000000001"))
+                .archiveAndStartNewJob(owner, "新公司")
+        }
+        local.crashAfterRoomPhase = false
+        val result = coordinator(local, remote, pending, mutableListOf("cccccccc-0000-4000-8000-000000000003"))
+            .archiveAndStartNewJob(owner, "新公司")
+        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive.id)
+        assertEquals(1, local.archives.size)
+        assertEquals(1, remote.uploads.size)
+        assertEquals(2, local.settings.currentJobIndex)
+    }
+
+    @Test
+    fun `crash after the pending DataStore write before upload changes nothing and recovery leaves it alone`() = runBlocking {
+        val local = fixture()
+        val before = Triple(local.settings, local.stamps.toList(), local.plan)
+        val remote = FakeRemote().apply { failUpload = ProcessDeath() }
+        val pending = MemoryPending()
+        runCatching {
+            coordinator(local, remote, pending, mutableListOf("aaaaaaaa-0000-4000-8000-000000000001"))
+                .archiveAndStartNewJob(owner, "新公司")
+        }
+        assertEquals(1, pending.entries.size)
+        assertFalse(pending.entries.values.single().uploaded)
+
+        val c = coordinator(local, remote, pending, mutableListOf())
+        assertTrue(c.recoverPendingTransitions().isEmpty())
+        assertTrue(c.recoverPendingTransitions().isEmpty())
+        assertEquals("nothing local was applied, nothing is rolled", before, Triple(local.settings, local.stamps.toList(), local.plan))
+        assertEquals("pending is kept for the next attempt", 1, pending.entries.size)
+        assertEquals(0, local.dataStoreCommits)
+
+        // 使用者下次換工作：沿用同一個 id 與封存編號。
+        remote.failUpload = null
+        val result = coordinator(local, remote, pending, mutableListOf("ffffffff-0000-4000-8000-00000000000f"))
+            .archiveAndStartNewJob(owner, "新公司")
+        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive.id)
+        assertTrue(pending.entries.isEmpty())
+    }
+
+    @Test
+    fun `stamps added during upload are archived and stamps added later are never deleted`() = runBlocking {
+        val local = fixture()
+        val remote = object : JobArchiveRemote {
+            override suspend fun upload(id: String, payload: JobArchivePayload): String {
+                local.stamps += stamp("00000000-0000-4000-8000-000000000004", "2026-10-04T01:00:00Z", "加班沒錢", 3)
+                return id
+            }
+            override suspend fun fetchAll() = emptyList<JobArchiveRemoteRow>()
+        }
+        val pending = MemoryPending()
+        local.pendingRef = pending
+        JobTransitionCoordinator(local, remote, pending, nowMillis = { now }, newUuid = { "aaaaaaaa-0000-4000-8000-000000000001" })
+            .archiveAndStartNewJob(owner, "新公司")
+        assertEquals(4, local.archives.single().payload!!.stamps.size)
+        assertTrue(local.stamps.isEmpty())
+    }
 
     @Test
     fun `upload failure leaves every local record untouched`() = runBlocking {

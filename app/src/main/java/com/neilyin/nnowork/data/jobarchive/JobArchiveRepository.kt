@@ -62,22 +62,31 @@ class JobArchiveRepository internal constructor(
         override suspend fun archivesForOwner(owner: String): List<JobArchiveEntity> =
             dao.getForOwner(owner.lowercase(Locale.ROOT))
 
-        override suspend fun commitTransition(
-            archive: JobArchiveEntity?,
-            transformSettings: (AppSettings) -> AppSettings,
-            transformPlan: (ResignationPlan) -> ResignationPlan,
-        ) {
+        override suspend fun commitRoomPhase(archive: JobArchiveEntity?, stampIds: Set<String>) {
             database.withTransaction {
                 archive?.let { dao.insertIfAbsent(it) }
-                database.stampDao().deleteAll()
-                // 最後一步、且是單次原子 edit；若拋錯，Room transaction 會連同上面兩步一起 rollback。
-                context.appDataStore.edit { prefs ->
-                    val settings = prefs[SETTINGS_KEY]?.let { runCatching { settingsAdapter.fromJson(it) }.getOrNull() }
-                        ?: AppSettings()
-                    val plan = prefs[PLAN_KEY]?.let { runCatching { planAdapter.fromJson(it) }.getOrNull() }
-                        ?: ResignationPlan()
-                    prefs[SETTINGS_KEY] = settingsAdapter.toJson(transformSettings(settings))
-                    prefs[PLAN_KEY] = planAdapter.toJson(transformPlan(plan))
+                // SQLite 變數上限 999：分批刪除。只刪被封存的章。
+                stampIds.chunked(STAMP_DELETE_CHUNK).forEach { database.stampDao().deleteByIds(it) }
+            }
+        }
+
+        override suspend fun resetCurrentJobAndClearPending(
+            pendingKey: String?,
+            transform: (AppSettings, ResignationPlan) -> Pair<AppSettings, ResignationPlan>,
+        ) {
+            // settings、plan、pending 都在同一個 DataStore 檔案：單次 edit 是原子的。
+            context.appDataStore.edit { prefs ->
+                val settings = prefs[SETTINGS_KEY]?.let { runCatching { settingsAdapter.fromJson(it) }.getOrNull() }
+                    ?: AppSettings()
+                val plan = prefs[PLAN_KEY]?.let { runCatching { planAdapter.fromJson(it) }.getOrNull() }
+                    ?: ResignationPlan()
+                val (newSettings, newPlan) = transform(settings, plan)
+                prefs[SETTINGS_KEY] = settingsAdapter.toJson(newSettings)
+                prefs[PLAN_KEY] = planAdapter.toJson(newPlan)
+                if (pendingKey != null) {
+                    val remaining = JobArchivePendingKeys.decode(prefs[PENDING_KEY]) - pendingKey
+                    if (remaining.isEmpty()) prefs.remove(PENDING_KEY)
+                    else prefs[PENDING_KEY] = JobArchivePendingKeys.encode(remaining)
                 }
             }
         }
@@ -131,6 +140,14 @@ class JobArchiveRepository internal constructor(
         maxStamps: Int = JobTransitionPolicy.DEFAULT_MAX_STAMPS,
     ): JobTransitionResult = operationMutex.withLock {
         coordinator.archiveAndStartNewJob(currentOwnerId(), newCompanyName, maxStamps)
+    }
+
+    /**
+     * 前滾停在「Room 已提交、DataStore 未重設」的換工作（§19.6）。App 啟動時呼叫；冪等。
+     * 換工作與拉回之前也會自動先跑一次。
+     */
+    suspend fun recoverPendingTransitions(): List<JobTransitionResult> = operationMutex.withLock {
+        coordinator.recoverPendingTransitions()
     }
 
     /** 使用者明確選「不保存，直接開始」時才可呼叫。 */
@@ -188,6 +205,7 @@ class JobArchiveRepository internal constructor(
         val SETTINGS_KEY = stringPreferencesKey("settings_json")
         val PLAN_KEY = stringPreferencesKey("resignation_plan_json")
         val PENDING_KEY = stringPreferencesKey("job_archive_pending_uploads_v1")
+        const val STAMP_DELETE_CHUNK = 500
         val JSON = "application/json".toMediaType()
 
         fun String.toJsonBody(): RequestBody = toRequestBody(JSON)

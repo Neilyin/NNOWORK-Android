@@ -24,7 +24,8 @@ import com.neilyin.nnowork.data.shop.ShopPurchaseEntity
         JobArchiveEntity::class,
     ],
     version = 5,
-    exportSchema = false,
+    // schema JSON 輸出到 app/schemas（遷移測試用）；4.json 依 v4 的 Room 產生碼重建，identity hash 相同。
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun stampDao(): StampDao

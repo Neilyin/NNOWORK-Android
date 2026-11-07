@@ -26,6 +26,8 @@ class NnoworkApp : Application() {
         runBlocking(Dispatchers.IO) {
             ServiceLocator.backupRepository.recoverPendingImportIfNeeded()
             ServiceLocator.backupRepository.migrateDeferredShopPurchases()
+            // 換工作若停在「Room 已提交、settings 未重設」之間被終止，UI 讀取前先前滾（§19.6，純本機）。
+            runCatching { ServiceLocator.jobArchiveRepository.recoverPendingTransitions() }
         }
 
         // 依設定排程桌面 Widget 定時刷新。

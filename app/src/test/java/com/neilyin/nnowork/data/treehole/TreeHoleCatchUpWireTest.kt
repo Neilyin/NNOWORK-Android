@@ -192,15 +192,24 @@ class TreeHoleCatchUpWireTest {
     // ── 8. 直連 GET 明確列欄位、不含 device_hash（§21） ──
 
     @Test
-    fun `direct table GET lists the iOS twelve columns and never device_hash`() = runBlocking {
+    fun `direct table GET pins its column list, keeps post_type and never device_hash`() = runBlocking {
         val fields = TreeHoleRepository.PUBLIC_AUTHOR_POST_FIELDS
         assertEquals(
-            "id,content,industry,nickname,company_name,role,round_number,stamp_count," +
-                "likes_count,cheer_count,cry_count,created_at",
-            fields,
+            listOf(
+                "id", "content", "industry", "nickname", "company_name", "role", "round_number", "stamp_count",
+                "likes_count", "cheer_count", "cry_count", "status", "created_at", "post_type",
+            ),
+            fields.split(","),
         )
+        val iosColumns = "id,content,industry,nickname,company_name,role,round_number,stamp_count," +
+            "likes_count,cheer_count,cry_count,created_at"
+        assertTrue("every iOS column is selected", fields.split(",").containsAll(iosColumns.split(",")))
         assertFalse(fields.contains("device_hash"))
         assertFalse(fields.contains("*"))
+        // 提問貼文透過舊 fallback 取回時仍是提問。
+        val question = JsonProvider.adapter<TreeHolePost>()
+            .fromJson("""{"id":"q","content":"該忍嗎？","status":"approved","post_type":"question"}""")!!
+        assertTrue(question.isQuestion)
 
         val captured = mutableListOf<Request>()
         testApi(captured).getPostsByNickname(fields = fields, nicknameFilter = "eq.N")

@@ -810,12 +810,13 @@ class TreeHoleRepository(
         val AUTHOR_KEY_PATTERN = Regex("^[0-9a-f]{32}$")
 
         /**
-         * §21.2：直接查 tree_hole_posts 只能用 iOS 同一份固定 12 欄（不含 device_hash、不可 `*`）。
-         * status 只當篩選條件（status=eq.approved），不在 select 內；post_type 缺值時解碼為 stamp。
+         * §21.2：直接查 tree_hole_posts 一律明確列欄位，不含 device_hash、不可 `*`。
+         * 包含 iOS 固定 12 欄全部，另加 status 與 post_type：db/034 的欄位級 GRANT 是「除 device_hash 外全部」，
+         * 兩欄都讀得到；少了 post_type，舊的提問貼文會被解成蓋章貼文。
          */
         const val PUBLIC_AUTHOR_POST_FIELDS =
             "id,content,industry,nickname,company_name,role,round_number,stamp_count," +
-                "likes_count,cheer_count,cry_count,created_at"
+                "likes_count,cheer_count,cry_count,status,created_at,post_type"
     }
 }
 
