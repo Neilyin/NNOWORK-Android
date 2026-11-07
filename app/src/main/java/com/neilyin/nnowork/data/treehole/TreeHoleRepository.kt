@@ -8,10 +8,21 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.neilyin.nnowork.data.JsonProvider
 import com.neilyin.nnowork.data.coin.CoinLedgerRepository
-import com.neilyin.nnowork.data.coin.CoinTransactionType
 import com.neilyin.nnowork.data.datastore.appDataStore
 import com.neilyin.nnowork.data.identity.DeviceIdentityRepository
 import com.neilyin.nnowork.data.local.StampDao
+import com.neilyin.nnowork.data.reward.FileRewardJournalStore
+import com.neilyin.nnowork.data.reward.RewardDelivery
+import com.neilyin.nnowork.data.reward.RewardDeliveryJournal
+import com.neilyin.nnowork.data.reward.RewardDeliveryRemote
+import com.neilyin.nnowork.data.reward.RewardEvent
+import com.neilyin.nnowork.data.reward.RewardEventIds
+import com.neilyin.nnowork.data.reward.RewardIdentity
+import com.neilyin.nnowork.data.reward.RewardJournalStore
+import com.neilyin.nnowork.data.reward.RewardKind
+import com.neilyin.nnowork.data.reward.RewardProtocolException
+import com.neilyin.nnowork.data.reward.RewardRpcMissingException
+import com.neilyin.nnowork.data.reward.RewardSyncSummary
 import com.neilyin.nnowork.data.remote.SUPABASE_ANON_KEY
 import com.neilyin.nnowork.data.remote.SUPABASE_URL
 import com.neilyin.nnowork.data.settings.SettingsRepository
@@ -25,6 +36,8 @@ import okhttp3.Request
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import com.squareup.moshi.Types
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 const val ANDROID_FEEDBACK_SOURCE = "來自於android裝置"
 
@@ -36,6 +49,14 @@ class TreeHoleRepository(
     private val coinLedgerRepository: CoinLedgerRepository,
     private val accessTokenProvider: () -> String? = { null },
     private val claimDeviceData: suspend () -> Boolean = { false },
+    /** 401 時 refresh 一次（§11）；參數是被拒的 token。 */
+    private val refreshAccessToken: suspend (staleToken: String) -> Boolean = { false },
+    /** Supabase auth user id（小寫）；獎勵 journal 依身分分開。 */
+    private val currentUserId: () -> String? = { null },
+    /** 送文 job_index 用的周目（currentRunNumber，不是 currentJobIndex）。 */
+    private val runNumberProvider: suspend () -> Int = { 1 },
+    apiFactory: () -> TreeHoleApi = { createTreeHoleApi() },
+    rewardJournalStore: (() -> RewardJournalStore)? = null,
 ) {
     private val profileKey = stringPreferencesKey("treehole_profile_json")
     private val seenPostsKey = stringSetPreferencesKey("treehole_seen_post_ids")
@@ -55,20 +76,17 @@ class TreeHoleRepository(
     )
     private val submitPostMutex = Mutex()
 
-    private val api: TreeHoleApi by lazy {
-        val client = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                chain.proceed(chain.request().withTreeHoleHeaders(SUPABASE_ANON_KEY))
-            }
-            .build()
+    private val api: TreeHoleApi by lazy(apiFactory)
+    private val tokenCaller = UserTokenCaller(accessTokenProvider, refreshAccessToken)
+    private val v2Router = TreeHoleV2Router(tokenCaller)
 
-        Retrofit.Builder()
-            .baseUrl(SUPABASE_URL)
-            .client(client)
-            .addConverterFactory(treeHoleMoshiConverterFactory())
-            .build()
-            .create(TreeHoleApi::class.java)
+    /** §18：Application Support 對應 filesDir（不放 cache）。損毀時讀取拋錯，停止領取。 */
+    private val rewardDelivery: RewardDelivery by lazy {
+        val store = rewardJournalStore?.invoke()
+            ?: FileRewardJournalStore(File(context.filesDir, "reward_delivery/pending-v1.json"))
+        RewardDelivery(RewardDeliveryJournal(store))
     }
+    private val pendingFeedbackRewardCount = AtomicInteger(0)
 
     val profile: Flow<TreeHoleProfile?> = context.appDataStore.data.map { prefs ->
         prefs[profileKey]?.let { runCatching { profileAdapter.fromJson(it) }.getOrNull() }
@@ -84,6 +102,11 @@ class TreeHoleRepository(
             prefs[acceptedTermsVersionKey] = CURRENT_TREE_HOLE_TERMS_VERSION
         }
         // FCM token 可能在使用者同意前就取得；先留在本機，同意後才上傳。
+        // §5.17 暫停中：不上傳，並清掉 pending，避免每次同意條款都打一個必失敗的請求。
+        if (!PUSH_TOKEN_REGISTRATION_ENABLED) {
+            context.appDataStore.edit { prefs -> prefs.remove(pendingPushTokenKey) }
+            return
+        }
         context.appDataStore.data.first()[pendingPushTokenKey]?.let { token ->
             if (uploadPushToken(token)) {
                 context.appDataStore.edit { prefs ->
@@ -139,7 +162,7 @@ class TreeHoleRepository(
         } ?: false
         return completeProfileSync(
             upsertSucceeded = upsertSucceeded,
-            signedIn = treeHoleAuthorizationHeader(accessTokenProvider()) != null,
+            signedIn = tokenCaller.isSignedIn,
             // upsert_profile is device-scoped. A signed-in account must claim it again so the
             // freshly changed profile is visible through user-scoped v2 RPCs. Returning false
             // on claim failure lets the next screen refresh retry while preserving local data.
@@ -235,13 +258,16 @@ class TreeHoleRepository(
     ): List<TreeHolePost> = withTermsAccess {
         require(offset >= 0) { "Feed offset must not be negative" }
         require(limit > 0) { "Feed limit must be positive" }
-        api.getFeedPosts(
-            FeedRequest(
-                limit = limit,
-                offset = offset,
-                industry = industry?.trim()?.takeIf(String::isNotEmpty),
-                postType = postType?.trim()?.takeIf(String::isNotEmpty),
-            ),
+        val request = FeedRequest(
+            limit = limit,
+            offset = offset,
+            industry = industry?.trim()?.takeIf(String::isNotEmpty),
+            postType = postType?.trim()?.takeIf(String::isNotEmpty),
+        )
+        preferPublicFeedV2(
+            v2Name = "get_feed_posts_v2",
+            v2 = { api.getFeedPostsV2(request) },
+            v1 = { api.getFeedPosts(request) },
         )
     }
 
@@ -249,7 +275,8 @@ class TreeHoleRepository(
         val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
         withV2Fallback(
             v2 = { authorization -> api.getMyPostsV2(authorization, request) },
-            v1 = { api.getMyPosts(request) },
+            v1 = { authorization -> api.getMyPosts(authorization, request) },
+            mode = V2FallbackMode.USER_SCOPED_READ,
         )
     }
 
@@ -257,7 +284,8 @@ class TreeHoleRepository(
         val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
         withV2Fallback(
             v2 = { authorization -> api.getMyCommentsV2(authorization, request) },
-            v1 = { api.getMyComments(request) },
+            v1 = { authorization -> api.getMyComments(authorization, request) },
+            mode = V2FallbackMode.USER_SCOPED_READ,
         )
     }
 
@@ -266,8 +294,13 @@ class TreeHoleRepository(
             val normalizedKey = authorKey.trim().lowercase()
             require(AUTHOR_KEY_PATTERN.matches(normalizedKey)) { "Author key format is invalid" }
             require(limit in 1..200) { "Author post limit must be between 1 and 200" }
+            val request = PostsByAuthorRequest(normalizedKey, limit)
             TreeHoleBlockPolicy.filterPosts(
-                posts = api.getPostsByAuthor(PostsByAuthorRequest(normalizedKey, limit)),
+                posts = preferPublicFeedV2(
+                    v2Name = "get_posts_by_author_v2",
+                    v2 = { api.getPostsByAuthorV2(request) },
+                    v1 = { api.getPostsByAuthor(request) },
+                ),
                 blockedAuthorKeys = blockedAuthorKeysSnapshot(),
             )
         }
@@ -293,10 +326,8 @@ class TreeHoleRepository(
     suspend fun syncMyNickname(): NicknameSyncResponse? {
         ensureCurrentTermsAccepted()
         val response = networkOrNull {
-            api.syncMyNickname(
-                authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-                request = DeviceHashRequest(deviceIdentityRepository.deviceHash()),
-            )
+            val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
+            tokenCaller.call { authorization -> api.syncMyNickname(authorization, request) }
         }
         return response?.takeIf(NicknameSyncResponse::success)
     }
@@ -314,7 +345,11 @@ class TreeHoleRepository(
         )
     }
 
-    suspend fun submitPost(content: String, roundNumber: Int, stampCount: Int) {
+    /**
+     * @param runNumber 蓋章當下的周目（與 roundNumber/stampCount 同時捕捉）。null 時讀取目前周目；
+     *   ≥ 2 才會在 body 帶 job_index（§20.3）。
+     */
+    suspend fun submitPost(content: String, roundNumber: Int, stampCount: Int, runNumber: Int? = null) {
         ensureCurrentTermsAccepted()
         require(roundNumber > 0) { "集點卡回合必須大於 0。" }
         require(stampCount > 0) { "必須在蓋章後才能分享心聲。" }
@@ -327,18 +362,32 @@ class TreeHoleRepository(
             require(profile.isComplete) { "請先完成樹洞身份。" }
             val companyName = profile.companyName.takeIf { profile.showCompany && it.isNotBlank() }
 
-            val response = api.submitPost(
-                SubmitPostRequest(
-                    content = normalizedContent,
-                    deviceHash = deviceIdentityRepository.deviceHash(),
-                    nickname = profile.nickname,
-                    industry = profile.industry,
-                    role = profile.role.takeIf { it.isNotBlank() },
-                    roundNumber = roundNumber,
-                    stampCount = stampCount,
-                    companyName = companyName,
-                ),
+            val effectiveRunNumber = runNumber ?: try {
+                runNumberProvider()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                1
+            }
+            val request = SubmitPostRequest(
+                content = normalizedContent,
+                deviceHash = deviceIdentityRepository.deviceHash(),
+                nickname = profile.nickname,
+                industry = profile.industry,
+                role = profile.role.takeIf { it.isNotBlank() },
+                roundNumber = roundNumber,
+                stampCount = stampCount,
+                companyName = companyName,
+                jobIndex = postJobIndexValue(effectiveRunNumber),
             )
+            var response = api.submitPost(buildSubmitPostBody(request))
+            // 後端還沒有 job_index 欄位（未執行 db/032）：PostgREST 在寫入前就擋下，拿掉重送一次不會變兩則。
+            if (!response.isSuccessful && request.jobIndex != null) {
+                val error = PostgrestError.parse(runCatching { response.errorBody()?.string() }.getOrNull())
+                if (isMissingJobIndexColumn(response.code(), error)) {
+                    response = api.submitPost(buildSubmitPostBody(request, includeJobIndex = false))
+                }
+            }
             if (!response.isSuccessful) {
                 if (response.code() == 403) throw TreeHoleAuthorBannedException()
                 error("送出失敗：HTTP ${response.code()}")
@@ -386,10 +435,7 @@ class TreeHoleRepository(
         ensureCurrentTermsAccepted()
         val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
         return networkOrNull {
-            api.getIndustrySyncStatus(
-                authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-                request = request,
-            )
+            tokenCaller.call { authorization -> api.getIndustrySyncStatus(authorization, request) }
         }
     }
 
@@ -399,22 +445,18 @@ class TreeHoleRepository(
             localProfile = profile.first(),
             syncProfile = { syncProfile(it) },
             mutation = {
-                api.updateMyPostsIndustry(
-                    authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-                    request = UpdatePostsIndustryRequest(
-                        deviceHash = deviceIdentityRepository.deviceHash(),
-                        includeMismatched = includeMismatched,
-                    ),
+                val request = UpdatePostsIndustryRequest(
+                    deviceHash = deviceIdentityRepository.deviceHash(),
+                    includeMismatched = includeMismatched,
                 )
+                tokenCaller.call { authorization -> api.updateMyPostsIndustry(authorization, request) }
             },
         )
     }
 
     suspend fun fetchMyAnswerStats(): TreeHoleAnswerStats = withTermsAccess {
-        val response = api.getMyAnswerStats(
-            authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-            request = DeviceHashRequest(deviceIdentityRepository.deviceHash()),
-        )
+        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
+        val response = tokenCaller.call { authorization -> api.getMyAnswerStats(authorization, request) }
         TreeHoleAnswerStats(
             answerCount = response.answerCount.coerceAtLeast(0),
             helpfulCount = response.helpfulCount.coerceAtLeast(0),
@@ -423,10 +465,8 @@ class TreeHoleRepository(
     }
 
     suspend fun fetchMyQuestionActivity(): List<QuestionActivity> = withTermsAccess {
-        val rows = api.getMyQuestionActivity(
-            authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-            request = DeviceHashRequest(deviceIdentityRepository.deviceHash()),
-        )
+        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
+        val rows = tokenCaller.call { authorization -> api.getMyQuestionActivity(authorization, request) }
         reconcileSeenAnswerCounts(rows)
         rows
     }
@@ -491,20 +531,20 @@ class TreeHoleRepository(
     ): MarkCommentHelpfulResult = withTermsAccess {
         val normalizedId = commentId.trim()
         require(normalizedId.isNotEmpty()) { "Comment id must not be blank" }
-        api.markCommentHelpful(
-            authorization = treeHoleAuthorizationHeader(accessTokenProvider()),
-            request = MarkCommentHelpfulRequest(
-                commentId = normalizedId,
-                deviceHash = deviceIdentityRepository.deviceHash(),
-                helpful = helpful,
-            ),
-        ).toDomainResult(helpful)
+        val request = MarkCommentHelpfulRequest(
+            commentId = normalizedId,
+            deviceHash = deviceIdentityRepository.deviceHash(),
+            helpful = helpful,
+        )
+        tokenCaller.call { authorization -> api.markCommentHelpful(authorization, request) }
+            .toDomainResult(helpful)
     }
 
     suspend fun submitComment(postId: String, content: String): SubmitCommentResult {
         ensureCurrentTermsAccepted()
-        val normalizedContent = content.trim()
-        if (normalizedContent.length !in 1..50) return SubmitCommentResult.InvalidLength
+        // db/033 起不限字數：只擋去頭尾空白／換行後是空的內容（§5.9）。
+        val normalizedContent = TreeHoleCommentPolicy.normalizedContentOrNull(content)
+            ?: return SubmitCommentResult.InvalidLength
         val profile = profile.first() ?: error("請先建立樹洞身份")
         return api.submitComment(
             SubmitCommentRequest(
@@ -561,42 +601,91 @@ class TreeHoleRepository(
 
     suspend fun syncCoinBalance(): Int = coinLedgerRepository.currentBalance()
 
-    suspend fun checkNewApprovals(): Int {
+    /**
+     * 金幣獎勵同步（§18 delivery + ACK）：重播 journal → 能力偵測 → claim → 先落地再以事件 UUID
+     * 冪等入帳 → ACK。後端沒有新協定（404 + PGRST202）才走舊 RPC；確認新協定後永不退回。
+     * iOS 觸發點：進樹洞時、以及每次重新載入「我的貼文」之後。
+     */
+    suspend fun synchronizeRewards(): RewardSyncSummary {
         ensureCurrentTermsAccepted()
-        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
-        val approvals = withV2Fallback(
-            v2 = { authorization -> api.checkNewApprovalsV2(authorization, request) },
-            v1 = { api.checkNewApprovals(request) },
-            mode = V2FallbackMode.REWARD_MUTATION,
-        ).newApprovals
-        if (approvals > 0) {
-            val reward = Math.multiplyExact(approvals, COINS_PER_APPROVED_POST)
-            coinLedgerRepository.credit(
-                amount = reward,
-                type = CoinTransactionType.TREE_HOLE_POST_APPROVED,
-                note = "樹洞貼文審核通過 ×$approvals",
-            )
-        }
-        return approvals
+        val deviceHash = deviceIdentityRepository.deviceHash()
+        val identity = RewardIdentity.of(currentUserId(), deviceHash)
+        val credited = rewardDelivery.synchronize(
+            remote = TreeHoleRewardRemote(deviceHash),
+            identity = identity,
+            credit = { event -> coinLedgerRepository.creditRewardEventIfAbsent(event) },
+        )
+        return RewardSyncSummary.of(credited)
     }
 
+    /**
+     * 相容舊 UI 呼叫順序（checkNewApprovals → checkNewFeedbackRewards）：這裡跑一次完整的
+     * [synchronizeRewards]，回傳貼文通過的則數，回饋獎勵則數留給下一個 [checkNewFeedbackRewards]。
+     */
+    @Deprecated("Use synchronizeRewards()", ReplaceWith("synchronizeRewards()"))
+    suspend fun checkNewApprovals(): Int {
+        pendingFeedbackRewardCount.set(0)
+        val summary = synchronizeRewards()
+        pendingFeedbackRewardCount.set(summary.feedbackRewardCount)
+        return summary.approvedPostCount
+    }
+
+    /** 不再發出網路請求；回傳上一次 [checkNewApprovals] 同步到的回饋獎勵則數。 */
+    @Deprecated("Use synchronizeRewards()", ReplaceWith("synchronizeRewards()"))
     suspend fun checkNewFeedbackRewards(): Int {
         ensureCurrentTermsAccepted()
-        val request = DeviceHashRequest(deviceIdentityRepository.deviceHash())
-        val rewards = withV2Fallback(
-            v2 = { authorization -> api.checkNewFeedbackRewardsV2(authorization, request) },
-            v1 = { api.checkNewFeedbackRewards(request) },
-            mode = V2FallbackMode.REWARD_MUTATION,
-        ).newRewards
-        if (rewards > 0) {
-            val reward = Math.multiplyExact(rewards, COINS_PER_FEEDBACK_REWARD)
-            coinLedgerRepository.credit(
-                amount = reward,
-                type = CoinTransactionType.FEEDBACK_REWARD,
-                note = "意見回饋獲獎 ×$rewards",
-            )
+        return pendingFeedbackRewardCount.getAndSet(0)
+    }
+
+    private inner class TreeHoleRewardRemote(private val deviceHash: String) : RewardDeliveryRemote {
+        override suspend fun supportsRewardEvents(): Boolean = try {
+            val response = rewardRpc("reward_delivery_capabilities") { authorization ->
+                api.rewardDeliveryCapabilities(authorization)
+            }
+            if (response.version != 1) {
+                throw RewardProtocolException("Unsupported reward delivery version ${response.version}")
+            }
+            true
+        } catch (_: RewardRpcMissingException) {
+            false
         }
-        return rewards
+
+        override suspend fun claimRewardEvents(deliveryId: String): List<RewardEvent> {
+            val request = ClaimRewardEventsRequest(deviceHash = deviceHash, deliveryId = deliveryId)
+            return rewardRpc("claim_reward_events") { authorization -> api.claimRewardEvents(authorization, request) }
+                .map { it.toRewardEvent() }
+        }
+
+        override suspend fun acknowledgeRewardEvents(ids: List<String>, deliveryId: String): List<String> {
+            val request = AckRewardEventsRequest(deviceHash = deviceHash, deliveryId = deliveryId, eventIds = ids)
+            return rewardRpc("ack_reward_events") { authorization -> api.ackRewardEvents(authorization, request) }
+                .acknowledgedIds
+        }
+
+        override suspend fun claimLegacyRewardCount(kind: RewardKind): Int {
+            val request = DeviceHashRequest(deviceHash)
+            val count = when (kind) {
+                RewardKind.TREE_HOLE_POST_APPROVED -> withV2Fallback(
+                    v2 = { authorization -> api.checkNewApprovalsV2(authorization, request) },
+                    v1 = { authorization -> api.checkNewApprovals(authorization, request) },
+                    mode = V2FallbackMode.REWARD_MUTATION,
+                ).newApprovals
+                RewardKind.FEEDBACK_REWARD -> withV2Fallback(
+                    v2 = { authorization -> api.checkNewFeedbackRewardsV2(authorization, request) },
+                    v1 = { authorization -> api.checkNewFeedbackRewards(authorization, request) },
+                    mode = V2FallbackMode.REWARD_MUTATION,
+                ).newRewards
+            }
+            return count ?: throw RewardProtocolException("Legacy reward response is missing its count")
+        }
+    }
+
+    /** 只有 404 + PGRST202 會轉成 [RewardRpcMissingException]；其他錯誤原樣拋出（這次先不領）。 */
+    private suspend fun <T> rewardRpc(name: String, block: suspend (authorization: String?) -> T): T = try {
+        tokenCaller.call(block)
+    } catch (error: HttpException) {
+        if (isMissingRpc(error.code(), error.postgrestError())) throw RewardRpcMissingException(name)
+        throw error
     }
 
     /** 分享使用心得（樹洞回饋）。審核通過後後端會 +金幣。 */
@@ -615,14 +704,23 @@ class TreeHoleRepository(
         }
     }
 
-    /** 上傳 FCM token，綁定 device_hash（對應 iOS device_push_tokens）。 */
+    /**
+     * 上傳 FCM token，綁定 device_hash（對應 iOS device_push_tokens）。
+     * ⛔ §5.17 暫停：[PUSH_TOKEN_REGISTRATION_ENABLED] 為 false 時不送出、不留 pending 重試。
+     */
     suspend fun registerPushToken(token: String) {
-        if (!hasAcceptedCurrentTerms()) {
-            context.appDataStore.edit { prefs -> prefs[pendingPushTokenKey] = token }
-            return
-        }
-        if (!uploadPushToken(token)) {
-            context.appDataStore.edit { prefs -> prefs[pendingPushTokenKey] = token }
+        when (PushTokenRegistrationPolicy.decide(PUSH_TOKEN_REGISTRATION_ENABLED, hasAcceptedCurrentTerms())) {
+            PushTokenRegistrationPolicy.Action.DISCARD -> {
+                context.appDataStore.edit { prefs -> prefs.remove(pendingPushTokenKey) }
+            }
+            PushTokenRegistrationPolicy.Action.DEFER_UNTIL_TERMS -> {
+                context.appDataStore.edit { prefs -> prefs[pendingPushTokenKey] = token }
+            }
+            PushTokenRegistrationPolicy.Action.UPLOAD -> {
+                if (!uploadPushToken(token)) {
+                    context.appDataStore.edit { prefs -> prefs[pendingPushTokenKey] = token }
+                }
+            }
         }
     }
 
@@ -674,21 +772,22 @@ class TreeHoleRepository(
         }
     }
 
+    /**
+     * 「我的資料」／舊獎勵協定的 v1/v2 分流（§11）：未登入直接 v1（anon）；已登入先打 v2（401 refresh 一次），
+     * 只有 404 + PGRST202 才改打 v1（仍帶 user token）。其他錯誤照實拋出。
+     */
     private suspend fun <T> withV2Fallback(
         v2: suspend (authorization: String) -> T,
+        v1: suspend (authorization: String?) -> T,
+        mode: V2FallbackMode,
+    ): T = v2Router.userScoped(mode, v2, v1)
+
+    /** 公開 feed（§13.9 例外、§20.2）：v2 任何失敗都改打 v1，只有 404 + PGRST202 才記住。 */
+    private suspend fun <T> preferPublicFeedV2(
+        v2Name: String,
+        v2: suspend () -> T,
         v1: suspend () -> T,
-        mode: V2FallbackMode = V2FallbackMode.READ_ONLY,
-    ): T {
-        val token = accessTokenProvider()?.trim()?.takeIf(String::isNotEmpty) ?: return v1()
-        return try {
-            v2("Bearer $token")
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            val httpStatus = (error as? HttpException)?.code()
-            if (TreeHoleV2FallbackPolicy.shouldFallback(mode, httpStatus)) v1() else throw error
-        }
-    }
+    ): T = v2Router.publicFeed(v2Name, v2, v1)
 
     private suspend fun <T> networkOrNull(block: suspend () -> T): T? = try {
         block()
@@ -707,14 +806,51 @@ class TreeHoleRepository(
         return block()
     }
 
-    private companion object {
+    internal companion object {
         val AUTHOR_KEY_PATTERN = Regex("^[0-9a-f]{32}$")
+
+        /**
+         * §21.2：直接查 tree_hole_posts 只能用 iOS 同一份固定 12 欄（不含 device_hash、不可 `*`）。
+         * status 只當篩選條件（status=eq.approved），不在 select 內；post_type 缺值時解碼為 stamp。
+         */
         const val PUBLIC_AUTHOR_POST_FIELDS =
             "id,content,industry,nickname,company_name,role,round_number,stamp_count," +
-                "likes_count,cheer_count,cry_count,status,created_at,post_type"
-        const val COINS_PER_APPROVED_POST = 5
-        const val COINS_PER_FEEDBACK_REWARD = 10
+                "likes_count,cheer_count,cry_count,created_at"
     }
+}
+
+/** ⛔ §5.17：db/034 刪除 device_push_tokens policy，直接 POST 會被拒。推播大修改 RPC 前保持 false。 */
+const val PUSH_TOKEN_REGISTRATION_ENABLED = false
+
+internal object PushTokenRegistrationPolicy {
+    enum class Action { UPLOAD, DEFER_UNTIL_TERMS, DISCARD }
+
+    fun decide(enabled: Boolean, termsAccepted: Boolean): Action = when {
+        !enabled -> Action.DISCARD
+        !termsAccepted -> Action.DEFER_UNTIL_TERMS
+        else -> Action.UPLOAD
+    }
+}
+
+internal fun RewardEventResponse.toRewardEvent(): RewardEvent = RewardEvent(
+    id = RewardEventIds.normalize(id),
+    kind = RewardKind.fromRaw(kind) ?: throw RewardProtocolException("Unknown reward kind $kind"),
+    amount = amount.takeIf { it > 0 } ?: throw RewardProtocolException("Reward amount must be positive"),
+)
+
+internal fun createTreeHoleApi(
+    baseUrl: String = SUPABASE_URL,
+    anonKey: String = SUPABASE_ANON_KEY,
+): TreeHoleApi {
+    val client = OkHttpClient.Builder()
+        .addInterceptor { chain -> chain.proceed(chain.request().withTreeHoleHeaders(anonKey)) }
+        .build()
+    return Retrofit.Builder()
+        .baseUrl(baseUrl)
+        .client(client)
+        .addConverterFactory(treeHoleMoshiConverterFactory())
+        .build()
+        .create(TreeHoleApi::class.java)
 }
 
 internal fun String.withAndroidDeviceSource(): String {

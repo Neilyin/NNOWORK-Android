@@ -36,6 +36,15 @@ data class AppSettings(
 
     // 常用蓋章原因
     val commonReasons: List<String> = DEFAULT_REASONS,
+
+    // 換工作（android開發.md §19.5，與 iOS AppSettings 同名同語意）
+    /** 封存編號（第幾份工作），只增不減；換工作或全部重來都 +1。 */
+    val currentJobIndex: Int = 1,
+    /**
+     * 周目（顯示用），貼文 job_index 送這個。換工作 +1、全部重來設回 1。
+     * 0 = 舊資料尚未記錄，一律透過 JobTransitionPolicy.runNumber 讀取（會推估）。
+     */
+    val currentRunNumber: Int = 0,
 ) {
     companion object {
         val DEFAULT_REASONS = listOf(

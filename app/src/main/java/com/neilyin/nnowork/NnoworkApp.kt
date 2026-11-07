@@ -38,6 +38,8 @@ class NnoworkApp : Application() {
                 amount = 15,
             )
             ServiceLocator.shopPurchaseRepository.syncPending()
+            // 已登入時拉回雲端過往工作（§19.3；失敗靜默，未登入直接略過）。
+            ServiceLocator.jobArchiveRepository.pullFromServer()
             RemoteQuotesStore.refreshIfNeeded(this@NnoworkApp)
             val settings = ServiceLocator.settingsRepository.settings.first()
             WidgetScheduler.schedule(this@NnoworkApp, settings.widgetRefreshInterval)

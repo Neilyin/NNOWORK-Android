@@ -12,6 +12,8 @@ import com.neilyin.nnowork.data.coin.CoinLedgerEntryEntity
 import com.neilyin.nnowork.data.coin.CoinLedgerPolicy
 import com.neilyin.nnowork.data.coin.CoinLedgerRepository
 import com.neilyin.nnowork.data.datastore.appDataStore
+import com.neilyin.nnowork.data.jobarchive.JobArchiveEntity
+import com.neilyin.nnowork.data.jobarchive.toEntity
 import com.neilyin.nnowork.data.local.AppDatabase
 import com.neilyin.nnowork.data.local.StampRecordEntity
 import com.neilyin.nnowork.data.plan.ManualSalaryTimer
@@ -58,6 +60,7 @@ class BackupRepository(
     private val stampDao = database.stampDao()
     private val coinLedgerDao = database.coinLedgerDao()
     private val shopPurchaseDao = database.shopPurchaseDao()
+    private val jobArchiveDao = database.jobArchiveDao()
     private val settingsAdapter = JsonProvider.adapter<AppSettings>()
     private val planAdapter = JsonProvider.adapter<ResignationPlan>()
     private val deferredAdapter = JsonProvider.adapter<DeferredBackupCollections>()
@@ -67,7 +70,7 @@ class BackupRepository(
     private val importMarkerDao = database.backupImportMarkerDao()
     private val operationMutex = Mutex()
 
-    /** 蒐集完整快照並編碼成 iOS/Android 共用的 v3 JSON。 */
+    /** 蒐集完整快照並編碼成 iOS/Android 共用的 v4 JSON。 */
     suspend fun exportJson(): String = operationMutex.withLock { codec.encode(collectPayloadUnlocked()) }
 
     suspend fun collectPayload(): BackupPayload = operationMutex.withLock { collectPayloadUnlocked() }
@@ -90,6 +93,9 @@ class BackupRepository(
         val (ledgerEntries, stampRecords, shopPurchases) = database.withTransaction {
             Triple(coinLedgerDao.getAll(), stampDao.getAll(), shopPurchaseDao.getAll())
         }
+        // 匯出全部帳號的過往工作（與 iOS 相同）；payload 解不開的那筆無法安全匯出就略過。
+        val jobArchives = database.withTransaction { jobArchiveDao.getAll() }
+            .mapNotNull(JobArchiveEntity::toBackupOrNull)
         val ledgerBalance = CoinLedgerPolicy.balance(ledgerEntries)
         val mirroredSettings = settings.copy(
             coinCount = ledgerBalance,
@@ -108,6 +114,7 @@ class BackupRepository(
                 .associateBy { it.id }
                 .values
                 .sortedBy { it.purchasedAt },
+            jobArchives = jobArchives,
             lastAuthProvider = preferences[LAST_AUTH_PROVIDER_KEY]?.takeIf(String::isNotBlank),
         )
     }
@@ -139,7 +146,8 @@ class BackupRepository(
             shopPurchaseRecords = emptyList(),
             workDays = payload.niuMaConfig.workDays,
         )
-        val newSettingsJson = settingsAdapter.toJson(importedSettings)
+        // v4：過往工作採「合併」（封存是唯讀歷史，本機已有的一律保留）；v1–v3 不動本機封存。
+        val importedArchives = payload.jobArchivesForImport().map(BackupJobArchive::toEntity)
         val newPlanJson = planAdapter.toJson(importedPlan)
         val newDeferredJson = deferredAdapter.toJson(deferredCollections)
         val newDatabaseFingerprint = databaseFingerprint(importedStamps, importedLedgerEntries)
@@ -150,6 +158,19 @@ class BackupRepository(
             recoverPendingImportUnlocked()
 
             val oldPreferences = preferenceSnapshot(appContext.appDataStore.data.first())
+            // currentJobIndex 只增不減：還原較舊的備份時沿用本機較大的值（含本機封存編號 + 1）。
+            val existingArchives = database.withTransaction { jobArchiveDao.getAll() }
+            val localSettings = oldPreferences.settingsJson
+                ?.let { runCatching { settingsAdapter.fromJson(it) }.getOrNull() }
+            val newSettingsJson = settingsAdapter.toJson(
+                importedSettings.copy(
+                    currentJobIndex = BackupJobArchiveMerge.mergedJobIndex(
+                        imported = importedSettings.currentJobIndex,
+                        localSettingsJobIndex = localSettings?.currentJobIndex,
+                        localArchiveJobIndexes = existingArchives.map { it.jobIndex },
+                    ),
+                ),
+            )
             val newPreferences = BackupPreferenceSnapshot(
                 settingsJson = newSettingsJson,
                 planJson = newPlanJson,
@@ -158,6 +179,7 @@ class BackupRepository(
                     ?: oldPreferences.lastAuthProvider,
                 deferredCollectionsJson = newDeferredJson,
             )
+            var mergedArchiveCount = 0
             try {
                 database.withTransaction {
                     val oldDatabaseFingerprint = databaseFingerprint(
@@ -177,6 +199,10 @@ class BackupRepository(
                     stampDao.replaceAll(importedStamps)
                     coinLedgerDao.replaceAllForBackup(importedLedgerEntries)
                     shopPurchaseDao.replaceAllForBackup(importedShopPurchases)
+                    mergedArchiveCount = BackupJobArchiveMerge.newArchives(
+                        imported = importedArchives,
+                        existing = jobArchiveDao.getAll(),
+                    ).count { jobArchiveDao.insertIfAbsent(it) != -1L }
                     appContext.appDataStore.edit { preferences ->
                         preferences.applySnapshot(newPreferences)
                         preferences[IMPORT_TOKEN_KEY] = importToken
@@ -218,6 +244,7 @@ class BackupRepository(
                 planRecordsFound = payload.resignationPlans.size,
                 coinLedgerEntriesPreserved = importedLedgerEntries.size,
                 shopPurchaseRecordsPreserved = importedShopPurchases.size,
+                jobArchivesMerged = mergedArchiveCount,
             )
         }
     }
@@ -403,6 +430,8 @@ data class BackupImportSummary(
     val planRecordsFound: Int,
     val coinLedgerEntriesPreserved: Int,
     val shopPurchaseRecordsPreserved: Int,
+    /** v4：這次新合併進本機的過往工作筆數（已存在的不重複插入）。 */
+    val jobArchivesMerged: Int = 0,
 )
 
 /** 寫入/回滾錯誤不是檔案格式錯誤，因此不繼承 BackupException。 */
@@ -436,6 +465,8 @@ private fun AppSettings.toBackup() = BackupAppSettings(
     lastSeenNoticeVersion = lastSeenNoticeVersion,
     commonReasons = commonReasons,
     hasMigratedToLedger = hasMigratedToLedger,
+    currentJobIndex = currentJobIndex,
+    currentRunNumber = currentRunNumber,
 )
 
 private fun BackupAppSettings.toDomain(schemaVersion: Int) = AppSettings(
@@ -457,6 +488,8 @@ private fun BackupAppSettings.toDomain(schemaVersion: Int) = AppSettings(
     unlockedStyles = unlockedStyles,
     lastSeenNoticeVersion = lastSeenNoticeVersion,
     commonReasons = commonReasons,
+    currentJobIndex = currentJobIndex.coerceAtLeast(1),
+    currentRunNumber = currentRunNumber.coerceAtLeast(0),
 )
 
 private fun StampRecordEntity.toBackup() = BackupStampRecord(
@@ -552,7 +585,7 @@ private fun BackupResignationPlan.toDomain(config: BackupNiuMaConfig): Resignati
         todoItems = activeTodos,
         completedTodoItems = completedTodos,
         salaryPayMode = config.payMode,
-        hourlyTrackingMode = HourlyTrackingMode.normalize(config.hourlyTrackingMode),
+        hourlyTrackingMode = config.effectiveHourlyTrackingMode(),
         monthlySalary = config.monthlySalary,
         hourlyRate = config.hourlyRate,
         currencySymbol = config.currencySymbol,
@@ -602,6 +635,8 @@ private fun ResignationPlan.toNiuMaConfigBackup(
 ) = BackupNiuMaConfig(
     payMode = salaryPayMode,
     hourlyTrackingMode = HourlyTrackingMode.normalize(hourlyTrackingMode),
+    // iOS NiuMaConfigDTO 的 key；兩個都寫，iOS 還原時才不會靜默退回固定工時。
+    hourlyManualMode = HourlyTrackingMode.normalize(hourlyTrackingMode) == HourlyTrackingMode.MANUAL,
     monthlySalary = monthlySalary,
     hourlyRate = hourlyRate,
     startMinutes = workStartMinutes,
@@ -663,6 +698,65 @@ internal fun BackupPayload.ledgerEntriesForImport(): List<BackupCoinLedgerEntry>
 
 private fun BackupPayload.shopPurchaseRecordsForImport(): List<BackupShopPurchaseRecord> =
     if (schemaVersion >= 3) shopPurchaseRecords else emptyList()
+
+internal fun BackupPayload.jobArchivesForImport(): List<BackupJobArchive> =
+    if (schemaVersion >= 4) jobArchives else emptyList()
+
+/** iOS 備份只有 hourlyManualMode；Android 舊匯出只有 hourlyTrackingMode。 */
+internal fun BackupNiuMaConfig.effectiveHourlyTrackingMode(): Int = when (hourlyManualMode) {
+    true -> HourlyTrackingMode.MANUAL
+    false -> HourlyTrackingMode.SCHEDULE
+    null -> HourlyTrackingMode.normalize(hourlyTrackingMode)
+}
+
+internal fun BackupJobArchive.toEntity(): JobArchiveEntity = payload.toEntity(
+    id = id,
+    owner = ownerUserID.orEmpty(),
+    remoteId = remoteID,
+    syncedAt = syncedAt?.let(BackupDateCodec::parse),
+)
+
+internal fun JobArchiveEntity.toBackupOrNull(): BackupJobArchive? {
+    val decoded = payload ?: return null
+    return BackupJobArchive(
+        id = id,
+        remoteID = remoteId,
+        syncedAt = syncedAt?.let(BackupDateCodec::format),
+        payload = decoded,
+        ownerUserID = ownerUserId.takeIf(String::isNotEmpty),
+    )
+}
+
+/** 備份匯入時過往工作的合併規則（iOS DataBackupManager.restore 的 v4 段）。 */
+internal object BackupJobArchiveMerge {
+    fun mergedJobIndex(
+        imported: Int,
+        localSettingsJobIndex: Int?,
+        localArchiveJobIndexes: List<Int>,
+    ): Int {
+        val localMax = (listOfNotNull(localSettingsJobIndex) + localArchiveJobIndexes.map { it + 1 }).maxOrNull() ?: 1
+        return maxOf(imported, localMax, 1)
+    }
+
+    /** 以「擁有者＋id」與「擁有者＋remoteID」去重；不同帳號同 id 互不吃掉。 */
+    fun newArchives(imported: List<JobArchiveEntity>, existing: List<JobArchiveEntity>): List<JobArchiveEntity> {
+        val known = mutableSetOf<String>()
+        existing.forEach { archive ->
+            known += "${archive.ownerUserId}|${archive.id.lowercase()}"
+            known += "${archive.ownerUserId}|${archive.dedupeKey}"
+        }
+        val result = mutableListOf<JobArchiveEntity>()
+        for (archive in imported) {
+            val idKey = "${archive.ownerUserId}|${archive.id.lowercase()}"
+            val remoteKey = archive.remoteId?.let { "${archive.ownerUserId}|${it.lowercase()}" }
+            if (idKey in known || (remoteKey != null && remoteKey in known)) continue
+            result += archive
+            known += idKey
+            remoteKey?.let(known::add)
+        }
+        return result
+    }
+}
 
 private fun stableUuid(seed: String): String = UUID
     .nameUUIDFromBytes(seed.toByteArray(StandardCharsets.UTF_8))

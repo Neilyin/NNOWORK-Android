@@ -10,12 +10,20 @@ import com.neilyin.nnowork.data.coin.CoinLedgerDao
 import com.neilyin.nnowork.data.coin.CoinLedgerEntryEntity
 import com.neilyin.nnowork.data.backup.BackupImportMarkerDao
 import com.neilyin.nnowork.data.backup.BackupImportMarkerEntity
+import com.neilyin.nnowork.data.jobarchive.JobArchiveDao
+import com.neilyin.nnowork.data.jobarchive.JobArchiveEntity
 import com.neilyin.nnowork.data.shop.ShopPurchaseDao
 import com.neilyin.nnowork.data.shop.ShopPurchaseEntity
 
 @Database(
-    entities = [StampRecordEntity::class, CoinLedgerEntryEntity::class, BackupImportMarkerEntity::class, ShopPurchaseEntity::class],
-    version = 4,
+    entities = [
+        StampRecordEntity::class,
+        CoinLedgerEntryEntity::class,
+        BackupImportMarkerEntity::class,
+        ShopPurchaseEntity::class,
+        JobArchiveEntity::class,
+    ],
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun coinLedgerDao(): CoinLedgerDao
     abstract fun backupImportMarkerDao(): BackupImportMarkerDao
     abstract fun shopPurchaseDao(): ShopPurchaseDao
+    abstract fun jobArchiveDao(): JobArchiveDao
 
     companion object {
         @Volatile
@@ -35,7 +44,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "nnowork.db",
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     .also { INSTANCE = it }
             }
@@ -114,5 +123,29 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             }
         }
+
+        /** v5 加入換工作封存（過往工作）；只新增表，不觸碰任何既有資料。 */
+        val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(JOB_ARCHIVES_CREATE_SQL)
+                db.execSQL(JOB_ARCHIVES_END_DATE_INDEX_SQL)
+            }
+        }
+
+        internal const val JOB_ARCHIVES_CREATE_SQL =
+            "CREATE TABLE IF NOT EXISTS `job_archives` (" +
+                "`id` TEXT NOT NULL, " +
+                "`ownerUserId` TEXT NOT NULL, " +
+                "`remoteId` TEXT, " +
+                "`syncedAt` INTEGER, " +
+                "`jobIndex` INTEGER NOT NULL, " +
+                "`companyName` TEXT NOT NULL, " +
+                "`endDate` INTEGER NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`payloadJson` TEXT NOT NULL, " +
+                "PRIMARY KEY(`ownerUserId`, `id`))"
+
+        internal const val JOB_ARCHIVES_END_DATE_INDEX_SQL =
+            "CREATE INDEX IF NOT EXISTS `index_job_archives_endDate` ON `job_archives` (`endDate`)"
     }
 }
