@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.home
 
+import androidx.compose.ui.platform.LocalContext
 import com.neilyin.nnowork.data.treehole.TreeHoleIndustryCatalog
 import com.neilyin.nnowork.feature.treehole.TreeHoleProgressRow
 import com.neilyin.nnowork.feature.treehole.TreeHoleProgressStyle
@@ -108,6 +109,9 @@ import com.neilyin.nnowork.ui.theme.pixelTextStyle
 import com.neilyin.nnowork.ui.theme.stampTiltDegrees
 import com.neilyin.nnowork.util.DateUtils
 import kotlinx.coroutines.delay
+import com.neilyin.nnowork.data.settings.ReviewMoment
+import com.neilyin.nnowork.feature.review.ReviewPrompter
+import com.neilyin.nnowork.util.findActivity
 
 /**
  * @param onMasterCompleted 舊版「忍耐大師 → 歷史頁收據」的出口。iOS 第 3 張起改成在首頁看階段總結、
@@ -123,6 +127,7 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = state.theme
     val haptic = LocalHapticFeedback.current
+    val activity = LocalContext.current.findActivity()
 
     // 對話框開關與彩蛋流程用 rememberSaveable：摺疊／展開、旋轉重建 Activity 後仍開著（輸入中的原因在 StampInputDialog 內）。
     var showStampDialog by rememberSaveable { mutableStateOf(false) }
@@ -191,6 +196,8 @@ fun HomeScreen(
             onStartNewCard = { maxStamps ->
                 showMasterSummary = false
                 viewModel.startNewCard(maxStamps)
+                // iOS CardCompletionSheet：集滿換卡是正向時刻（延遲讓彈窗先關）
+                activity?.let { ReviewPrompter.onPositiveMoment(it, ReviewMoment.CARD_COMPLETE, 900) }
             },
             onQuit = {
                 // 集滿時 addStamp 已記下 cardCompletedDate／roundCompletedDates（iOS 這裡才補記），不用再寫一次。
@@ -299,6 +306,11 @@ fun HomeScreen(
                 if (!isTreeHoleSharing) {
                     pendingTreeHoleShare = null
                     treeHoleShareMessage = null
+                    // iOS StampLogic：未集滿、沒有其他慶祝彈窗時，首次蓋章請求評分。
+                    // Android 蓋章後一定先跳分享彈窗，所以等它關掉才問，避免疊在一起。
+                    if (!stamp.justCompleted) {
+                        activity?.let { ReviewPrompter.onPositiveMoment(it, ReviewMoment.FIRST_STAMP, 600) }
+                    }
                 }
             },
             onShare = {
@@ -321,6 +333,7 @@ fun HomeScreen(
             onNewCard = { newMax ->
                 showCompletionDialog = false
                 viewModel.startNewCard(newMax)
+                activity?.let { ReviewPrompter.onPositiveMoment(it, ReviewMoment.CARD_COMPLETE, 900) }
             },
             onReceipt = {
                 showCompletionDialog = false

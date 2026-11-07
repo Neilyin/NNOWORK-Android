@@ -1,8 +1,7 @@
 package com.neilyin.nnowork.ui.adaptive
 
-import android.app.Activity
+import com.neilyin.nnowork.util.findActivity
 import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
@@ -68,11 +67,6 @@ fun rememberFoldInfo(): FoldInfo {
     )
 }
 
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
 
 /** FoldingFeature.orientation 的對應（不直接依賴 androidx.window，方便單元測試）。 */
 enum class FoldOrientation { Vertical, Horizontal }

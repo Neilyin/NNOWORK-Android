@@ -109,6 +109,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import com.neilyin.nnowork.data.settings.ReviewMoment
+import com.neilyin.nnowork.feature.review.ReviewPrompter
+import com.neilyin.nnowork.util.findActivity
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -600,10 +603,15 @@ private fun SalarySettings(plan: ResignationPlan, viewModel: PlanViewModel, now:
             )
         }
 
+        // iOS NiuMaSettingsSheet：第一次把薪水計時器設定好（金額 > 0）是正向時刻。
+        val activity = LocalContext.current.findActivity()
+        val onSalarySaved: (Double) -> Unit = { value ->
+            if (value > 0) activity?.let { ReviewPrompter.onPositiveMoment(it, ReviewMoment.TIMER_SETUP, 900) }
+        }
         if (plan.salaryPayMode == 0) {
-            MoneyField("月薪", plan.monthlySalary, plan.currencySymbol, viewModel::cycleCurrency, viewModel::setMonthlySalary)
+            MoneyField("月薪", plan.monthlySalary, plan.currencySymbol, viewModel::cycleCurrency) { viewModel.setMonthlySalary(it); onSalarySaved(it) }
         } else {
-            MoneyField("時薪", plan.hourlyRate, plan.currencySymbol, viewModel::cycleCurrency, viewModel::setHourlyRate)
+            MoneyField("時薪", plan.hourlyRate, plan.currencySymbol, viewModel::cycleCurrency) { viewModel.setHourlyRate(it); onSalarySaved(it) }
         }
 
         val usesScheduledHours = plan.salaryPayMode == 0 || hourlyMode == HourlyTrackingMode.SCHEDULE
