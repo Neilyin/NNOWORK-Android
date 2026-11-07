@@ -58,6 +58,11 @@ import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.neilyin.nnowork.ui.theme.NnoworkSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -93,6 +98,8 @@ import com.neilyin.nnowork.data.backup.BackupRepository
 import com.neilyin.nnowork.data.backup.BackupWriteException
 import com.neilyin.nnowork.data.coin.CoinLedgerRepository
 import com.neilyin.nnowork.data.coin.ThemePurchaseResult
+import com.neilyin.nnowork.data.jobarchive.JobArchiveRepository
+import com.neilyin.nnowork.feature.jobarchive.JobTransitionSheet
 import com.neilyin.nnowork.data.local.StampDao
 import com.neilyin.nnowork.data.plan.PlanRepository
 import com.neilyin.nnowork.data.settings.AppSettings
@@ -118,6 +125,22 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.Reader
 
+/**
+ * 刪除雲端帳號（iOS AccountAuthView.performDeleteAccount）：deleteAccount 會清掉 session，
+ * 所以帳號 id 必須在呼叫**前**記下；伺服器確認刪除後才刪這個帳號的本機過往工作。
+ */
+internal suspend fun deleteAccountAndLocalArchives(
+    currentOwnerId: () -> String?,
+    deleteAccount: suspend () -> Boolean,
+    deleteLocalArchives: suspend (ownerId: String?) -> Unit,
+): Boolean {
+    val owner = currentOwnerId()
+    if (!deleteAccount()) return false
+    // 雲端的 job_archives 由 auth.users ON DELETE CASCADE 刪除；本機這份跟著刪，與確認對話框說明一致。
+    runCatching { deleteLocalArchives(owner) }
+    return true
+}
+
 data class PreparedBackupImport(
     val json: String,
     val schemaVersion: Int,
@@ -139,7 +162,12 @@ class SettingsViewModel(
     private val backupRepository: BackupRepository = ServiceLocator.backupRepository,
     private val coinLedgerRepository: CoinLedgerRepository = ServiceLocator.coinLedgerRepository,
     private val authRepository: AuthRepository = ServiceLocator.authRepository,
+    private val jobArchiveRepository: JobArchiveRepository = ServiceLocator.jobArchiveRepository,
 ) : ViewModel() {
+    private val _accountDeleteFailed = MutableStateFlow(false)
+    /** 刪除帳號失敗（iOS「刪除失敗」alert）。 */
+    val accountDeleteFailed: StateFlow<Boolean> = _accountDeleteFailed.asStateFlow()
+
     val settings: StateFlow<AppSettings> = settingsRepository.settings.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
@@ -207,12 +235,21 @@ class SettingsViewModel(
         }
     }
     fun deleteReason(reason: String) = update { it.copy(commonReasons = it.commonReasons.filterNot { item -> item == reason }) }
+    /**
+     * 「全部重來」（iOS resetAllForFreshStart）：清掉目前的章與離職計畫、回到新手設定；
+     * currentJobIndex 照樣 +1、周目設回 1。保留已解鎖主題、金幣流水帳、今天的每日金幣、常用原因、過往工作。
+     */
     fun resetAll() {
         viewModelScope.launch {
-            stampDao.deleteAll()
-            planRepository.reset()
-            settingsRepository.update { AppSettings() }
-            coinLedgerRepository.reset()
+            val context = ServiceLocator.applicationContext
+            val clearedTodoIds = runCatching {
+                jobArchiveRepository.resetAllForFreshStart { styleId, unlocked ->
+                    CardTheme.fromId(styleId).isUnlocked(unlocked)
+                }
+            }.getOrElse { return@launch }
+            runCatching { com.neilyin.nnowork.notify.ReminderScheduler.cancelAll(context, clearedTodoIds) }
+            com.neilyin.nnowork.widget.WidgetScheduler.schedule(context, settingsRepository.current().widgetRefreshInterval)
+            com.neilyin.nnowork.widget.WidgetScheduler.refreshNow(context)
         }
     }
 
@@ -244,7 +281,18 @@ class SettingsViewModel(
     }
 
     fun deleteAuthAccount() {
-        viewModelScope.launch { authRepository.deleteAccount() }
+        viewModelScope.launch {
+            val deleted = deleteAccountAndLocalArchives(
+                currentOwnerId = { authRepository.currentUserId },
+                deleteAccount = { authRepository.deleteAccount() },
+                deleteLocalArchives = { owner -> jobArchiveRepository.deleteAllLocal(owner) },
+            )
+            if (!deleted) _accountDeleteFailed.value = true
+        }
+    }
+
+    fun dismissAccountDeleteFailure() {
+        _accountDeleteFailed.value = false
     }
 
     fun clearAuthMessage() = authRepository.clearMessage()
@@ -392,6 +440,11 @@ fun SettingsScreen(
     val backupUiState by viewModel.backupUiState.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val blockedAuthors by viewModel.blockedAuthors.collectAsStateWithLifecycle()
+    val accountDeleteFailed by viewModel.accountDeleteFailed.collectAsStateWithLifecycle()
+    var showJobTransition by rememberSaveable { mutableStateOf(false) }
+    if (showJobTransition) {
+        JobTransitionSheet(onDismiss = { showJobTransition = false })
+    }
     SettingsContent(
         settings = settings,
         backupUiState = backupUiState,
@@ -417,6 +470,9 @@ fun SettingsScreen(
         onDeleteAuthAccount = viewModel::deleteAuthAccount,
         onClearAuthMessage = viewModel::clearAuthMessage,
         onUnblockTreeHoleAuthor = viewModel::unblockTreeHoleAuthor,
+        onOpenJobTransition = { showJobTransition = true },
+        accountDeleteFailed = accountDeleteFailed,
+        onDismissAccountDeleteFailure = viewModel::dismissAccountDeleteFailure,
     )
 }
 
@@ -446,6 +502,9 @@ private fun SettingsContent(
     onDeleteAuthAccount: () -> Unit,
     onClearAuthMessage: () -> Unit,
     onUnblockTreeHoleAuthor: (String) -> Unit,
+    onOpenJobTransition: () -> Unit = {},
+    accountDeleteFailed: Boolean = false,
+    onDismissAccountDeleteFailure: () -> Unit = {},
 ) {
     var company by remember(settings.companyName) { mutableStateOf(settings.companyName) }
     var newReason by remember { mutableStateOf("") }
@@ -473,8 +532,8 @@ private fun SettingsContent(
             onDismissRequest = { showReset = false },
             containerColor = NnoworkDialogDefaults.containerColor,
             shape = NnoworkDialogDefaults.shape,
-            title = { Text("確定要全部重來？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
-            text = { Text("這會刪除集點紀錄、離職計畫與設定。此操作無法復原。", style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText)) },
+            title = { Text(stringResource(com.neilyin.nnowork.R.string.settings_reset_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = { Text(stringResource(com.neilyin.nnowork.R.string.settings_reset_message), style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText)) },
             confirmButton = {
                 PixelButton(
                     onClick = {
@@ -483,12 +542,12 @@ private fun SettingsContent(
                     },
                     backgroundColor = NnoworkTheme.colors.danger,
                 ) {
-                    Text("確定重置", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                    Text(stringResource(com.neilyin.nnowork.R.string.settings_reset_confirm), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
             dismissButton = {
                 PixelButton(onClick = { showReset = false }, backgroundColor = NnoworkTheme.colors.disabledBG) {
-                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                    Text(stringResource(com.neilyin.nnowork.R.string.jobarchive_cancel), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             },
         )
@@ -513,6 +572,9 @@ private fun SettingsContent(
             onDeleteAccount = onDeleteAuthAccount,
             onClearMessage = onClearAuthMessage,
             googleOAuthUri = googleOAuthUri,
+            onExportBackup = onExportBackup,
+            deleteFailed = accountDeleteFailed,
+            onDismissDeleteFailure = onDismissAccountDeleteFailure,
         )
         CoinSection(settings.coinCount)
         TreeHoleSafetySettingsSection(
@@ -533,6 +595,7 @@ private fun SettingsContent(
                 Text("儲存公司名稱", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         }
+        JobChangeSection(onOpen = onOpenJobTransition)
         SettingsSection(icon = Icons.Filled.Style, title = stringResource(com.neilyin.nnowork.R.string.theme_shop_title)) {
             Text("目標格數：${settings.maxStamps} 格，集滿後可在首頁建立下一張卡時更換。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
             Spacer(Modifier.height(NnoworkSpacing.sm))
@@ -631,7 +694,7 @@ private fun SettingsContent(
             PixelButton(onClick = { showReset = true }, backgroundColor = NnoworkTheme.colors.disabledBG, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.Delete, null, tint = NnoworkTheme.colors.danger)
                 Spacer(Modifier.size(NnoworkSpacing.xs))
-                Text("全部重來", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                Text(stringResource(com.neilyin.nnowork.R.string.settings_reset_action), style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.onElevated))
             }
         }
         Text(
@@ -746,11 +809,23 @@ private fun AccountSection(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onClearMessage: () -> Unit,
+    onExportBackup: (Uri) -> Unit,
+    deleteFailed: Boolean,
+    onDismissDeleteFailure: () -> Unit,
 ) {
     var showAuth by remember { mutableStateOf(false) }
     var registerMode by remember { mutableStateOf(false) }
+    // 兩段式確認（iOS）：第一段講清楚後果（含過往工作會一併刪除）並提供「先匯出備份」，第二段最終確認。
     var confirmDelete by remember { mutableStateOf(false) }
+    var finalConfirmDelete by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val exportBeforeDelete = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) onExportBackup(uri)
+        // 匯出（或取消）後回到刪除確認，讓使用者決定要不要繼續。
+        confirmDelete = true
+    }
 
     if (showAuth && !state.isSignedIn) {
         AuthDialog(
@@ -778,10 +853,55 @@ private fun AccountSection(
             onDismissRequest = { if (!state.isProcessing) confirmDelete = false },
             containerColor = NnoworkDialogDefaults.containerColor,
             shape = NnoworkDialogDefaults.shape,
-            title = { Text("刪除雲端帳號？", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            title = { Text(stringResource(com.neilyin.nnowork.R.string.account_delete_step1_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
             text = {
                 Text(
-                    "Supabase 登入身份會永久刪除。本機集點紀錄會保留，樹洞資料會解除帳號綁定並回到匿名裝置身份。",
+                    stringResource(com.neilyin.nnowork.R.string.account_delete_step1_message),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
+                )
+            },
+            confirmButton = {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+                ) {
+                    PixelButton(
+                        onClick = {
+                            confirmDelete = false
+                            finalConfirmDelete = true
+                        },
+                        enabled = !state.isProcessing,
+                        backgroundColor = NnoworkTheme.colors.danger,
+                    ) {
+                        Text(stringResource(com.neilyin.nnowork.R.string.account_delete_continue), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                    }
+                    PixelButton(
+                        onClick = {
+                            confirmDelete = false
+                            runCatching { exportBeforeDelete.launch(BackupRepository.suggestedFileName()) }
+                        },
+                        enabled = !state.isProcessing,
+                        variant = PixelButtonVariant.Outlined,
+                    ) {
+                        Text(stringResource(com.neilyin.nnowork.R.string.account_delete_export_first), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                    }
+                    PixelButton(onClick = { confirmDelete = false }, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                        Text(stringResource(com.neilyin.nnowork.R.string.jobarchive_cancel), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                    }
+                }
+            },
+        )
+    }
+
+    if (finalConfirmDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isProcessing) finalConfirmDelete = false },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text(stringResource(com.neilyin.nnowork.R.string.account_delete_step2_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = {
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.account_delete_step2_message),
                     style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
                 )
             },
@@ -789,17 +909,37 @@ private fun AccountSection(
                 PixelButton(
                     onClick = {
                         onDeleteAccount()
-                        confirmDelete = false
+                        finalConfirmDelete = false
                     },
                     enabled = !state.isProcessing,
                     backgroundColor = NnoworkTheme.colors.danger,
                 ) {
-                    Text("永久刪除帳號", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                    Text(stringResource(com.neilyin.nnowork.R.string.account_delete_confirm), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
             dismissButton = {
-                PixelButton(onClick = { confirmDelete = false }, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG) {
-                    Text("取消", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                PixelButton(onClick = { finalConfirmDelete = false }, enabled = !state.isProcessing, backgroundColor = NnoworkTheme.colors.disabledBG) {
+                    Text(stringResource(com.neilyin.nnowork.R.string.jobarchive_cancel), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                }
+            },
+        )
+    }
+
+    if (deleteFailed) {
+        AlertDialog(
+            onDismissRequest = onDismissDeleteFailure,
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text(stringResource(com.neilyin.nnowork.R.string.account_delete_failed_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = {
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.account_delete_failed_message),
+                    style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
+                )
+            },
+            confirmButton = {
+                PixelButton(onClick = onDismissDeleteFailure, backgroundColor = NnoworkTheme.colors.buttonBG) {
+                    Text(stringResource(com.neilyin.nnowork.R.string.jobarchive_ok), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
                 }
             },
         )
@@ -860,8 +1000,37 @@ private fun AccountSection(
     }
 }
 
+/** 設定頁「換工作」區塊（iOS jobChangeSection）：點進去開換工作畫面。 */
 @Composable
-private fun AuthDialog(
+private fun JobChangeSection(onOpen: () -> Unit) {
+    SettingsSection(icon = Icons.Filled.Work, title = stringResource(com.neilyin.nnowork.R.string.settings_job_change_title)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(NnoworkRadius.field))
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen)
+                .padding(vertical = NnoworkSpacing.xxs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.Autorenew, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(NnoworkSize.icon))
+            Spacer(Modifier.size(NnoworkSpacing.sm))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.jobarchive_transition_title),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                )
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.settings_job_change_subtitle),
+                    style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
+                )
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = NnoworkTheme.colors.secondaryText)
+        }
+    }
+}
+
+@Composable
+internal fun AuthDialog(
     state: AuthUiState,
     registerMode: Boolean,
     onModeChange: (Boolean) -> Unit,

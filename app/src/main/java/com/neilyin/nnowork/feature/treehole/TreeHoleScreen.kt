@@ -100,6 +100,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neilyin.nnowork.R
 import com.neilyin.nnowork.analytics.Analytics
 import com.neilyin.nnowork.data.treehole.TreeHolePost
+import com.neilyin.nnowork.data.treehole.TreeHoleCommentPolicy
+import com.neilyin.nnowork.data.reward.RewardSyncSummary
 import com.neilyin.nnowork.data.treehole.TreeHoleProfile
 import com.neilyin.nnowork.data.treehole.TreeHoleRepository
 import com.neilyin.nnowork.data.treehole.TreeHoleShareSource
@@ -150,7 +152,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val TREE_HOLE_COMMENT_MAX_LENGTH = 50
+
+/** 留言輸入框最多同時顯示幾行；超過在框內捲動（不限字數）。 */
+private const val TREE_HOLE_COMMENT_VISIBLE_LINES = 6
 
 enum class TreeHoleFeatureOperation {
     ACCEPT_TERMS,
@@ -230,6 +234,8 @@ enum class TreeHoleFeatureSuccessKind {
     INDUSTRY_UPDATED,
     INDUSTRY_UPDATE_DECLINED,
     COINS_AND_APPROVALS_SYNCED,
+    /** 自動同步（進樹洞、重載我的貼文後）有新入帳。 */
+    REWARDS_COLLECTED,
     REPORT_SUBMITTED,
     REPORT_SUBMITTED_AND_BLOCKED,
     AUTHOR_BLOCKED,
@@ -241,9 +247,10 @@ data class TreeHoleFeatureSuccess(
 )
 
 data class TreeHoleRewardSyncResult(
-    val newApprovals: Int,
-    val newFeedbackRewards: Int,
-    val coinBalance: Int,
+    /** 這次新入帳的金幣（依 kind 彙總）。 */
+    val summary: RewardSyncSummary,
+    /** 手動同步時一併顯示目前餘額；自動同步不帶。 */
+    val coinBalance: Int? = null,
 )
 
 data class TreeHoleIndustryUpdateResult(
@@ -435,8 +442,51 @@ class TreeHoleViewModel(
     private val reactionRequests = mutableSetOf<TreeHoleReactionKey>()
     private val helpfulRequests = mutableSetOf<String>()
 
+    private val rewardSync = TreeHoleRewardSync(
+        scope = viewModelScope,
+        canSync = { localState.value.canAccessCommunity },
+        synchronize = { repository.synchronizeRewards() },
+        onCredited = ::publishCollectedRewards,
+    )
+
     init {
         observePersistentRepositoryState()
+    }
+
+    /** 每次進到樹洞分頁（iOS `.task`）：已可進社群就同步一次金幣獎勵。 */
+    fun onScreenEntered() = rewardSync.onScreenEntered()
+
+    /** 重新載入「我的貼文」；成功後觸發金幣獎勵同步（iOS fetchMyPosts → rewardRefreshRevision）。 */
+    private suspend fun fetchMyPostsAndCollectRewards(): List<TreeHolePost> =
+        repository.fetchMyPosts().also { rewardSync.onMyPostsReloaded() }
+
+    private fun publishCollectedRewards(summary: RewardSyncSummary) {
+        logRewardAnalytics(summary)
+        localState.update {
+            it.copy(
+                rewardSyncResult = TreeHoleRewardSyncResult(summary),
+                success = TreeHoleFeatureSuccess(TreeHoleFeatureSuccessKind.REWARDS_COLLECTED),
+                failure = null,
+                message = null,
+            )
+        }
+    }
+
+    private fun logRewardAnalytics(summary: RewardSyncSummary) {
+        if (summary.approvedPostCoins > 0) {
+            com.neilyin.nnowork.analytics.Analytics.log(
+                "coin_reward_claimed",
+                "amount" to summary.approvedPostCoins.toString(),
+                "type" to "treehole_post_approved",
+            )
+        }
+        if (summary.feedbackRewardCoins > 0) {
+            com.neilyin.nnowork.analytics.Analytics.log(
+                "coin_reward_claimed",
+                "amount" to summary.feedbackRewardCoins.toString(),
+                "type" to "feedback_reward",
+            )
+        }
     }
 
     private fun observePersistentRepositoryState() {
@@ -639,7 +689,7 @@ class TreeHoleViewModel(
                 }
 
                 val snapshot = supervisorScope {
-                    val myPosts = async { captureResult { repository.fetchMyPosts() } }
+                    val myPosts = async { captureResult { fetchMyPostsAndCollectRewards() } }
                     val myComments = async { captureResult { repository.fetchMyComments() } }
                     val quota = async { captureResult { repository.fetchQuestionQuota() } }
                     val answerStats = async { captureResult { repository.fetchMyAnswerStats() } }
@@ -875,22 +925,15 @@ class TreeHoleViewModel(
         }
     }
 
-    /** 現行 UI 相容入口；新呼叫點應傳蓋章當下的 round/stamp snapshot。 */
-    fun submit(content: String) {
-        val trimmed = content.trim()
-        if (!validateLength(trimmed, STAMP_MIN_LENGTH, POST_MAX_LENGTH, TreeHoleFeatureOperation.SUBMIT_STAMP_POST)) {
-            return
-        }
-        launchStampSubmission {
-            @Suppress("DEPRECATION")
-            repository.submitPost(trimmed)
-        }
-    }
-
+    /**
+     * 分享蓋章心聲。[roundNumber]／[stampCount]／[runNumber] 都必須是**蓋章當下**擷取的快照
+     * （§5.3、§20.3），不可在送出時才讀目前的回合或周目。
+     */
     fun submitStampPost(
         content: String,
         roundNumber: Int,
         stampCount: Int,
+        runNumber: Int?,
     ) {
         val trimmed = content.trim()
         if (!validateLength(trimmed, STAMP_MIN_LENGTH, POST_MAX_LENGTH, TreeHoleFeatureOperation.SUBMIT_STAMP_POST)) {
@@ -904,7 +947,7 @@ class TreeHoleViewModel(
             return
         }
         launchStampSubmission {
-            repository.submitPost(trimmed, roundNumber, stampCount)
+            repository.submitPost(trimmed, roundNumber, stampCount, runNumber)
         }
     }
 
@@ -914,7 +957,7 @@ class TreeHoleViewModel(
         viewModelScope.launch {
             try {
                 submitCall()
-                val mine = captureResult { repository.fetchMyPosts() }.getOrNull()
+                val mine = captureResult { fetchMyPostsAndCollectRewards() }.getOrNull()
                 val comments = captureResult { repository.fetchMyComments() }.getOrNull()
                 localState.update {
                     it.copy(
@@ -968,7 +1011,7 @@ class TreeHoleViewModel(
                 var refreshedMine: List<TreeHolePost>? = null
                 var refreshedQuota: QuestionQuotaResponse? = null
                 if (result is SubmitQuestionResult.Submitted) {
-                    refreshedMine = captureResult { repository.fetchMyPosts() }.getOrNull()
+                    refreshedMine = captureResult { fetchMyPostsAndCollectRewards() }.getOrNull()
                 } else {
                     refreshedQuota = captureResult { repository.fetchQuestionQuota() }.getOrNull()
                 }
@@ -1293,7 +1336,7 @@ class TreeHoleViewModel(
 
         viewModelScope.launch {
             try {
-                val refreshedMine = repository.fetchMyPosts()
+                val refreshedMine = fetchMyPostsAndCollectRewards()
                 val target = refreshedMine.firstOrNull { it.id == activity.postId }
                 localState.update { it.copy(myPosts = refreshedMine) }
                 if (target == null) {
@@ -1444,14 +1487,14 @@ class TreeHoleViewModel(
             )
             return false
         }
-        val trimmed = content.trim()
-        if (!validateLength(
-                content = trimmed,
-                minLength = COMMENT_MIN_LENGTH,
-                maxLength = TREE_HOLE_COMMENT_MAX_LENGTH,
+        // db/033 起不限字數：只擋去頭尾空白／換行後是空的內容（§5.9）。
+        val trimmed = TreeHoleCommentPolicy.normalizedContentOrNull(content)
+        if (trimmed == null) {
+            publishFailure(
                 operation = TreeHoleFeatureOperation.SUBMIT_COMMENT,
+                reason = TreeHoleFeatureFailureReason.INVALID_CONTENT_LENGTH,
+                minLength = COMMENT_MIN_LENGTH,
             )
-        ) {
             return false
         }
         if (!commentSubmissionGate.compareAndSet(false, true)) return false
@@ -1473,7 +1516,6 @@ class TreeHoleViewModel(
                             operation = TreeHoleFeatureOperation.SUBMIT_COMMENT,
                             reason = TreeHoleFeatureFailureReason.INVALID_CONTENT_LENGTH,
                             minLength = COMMENT_MIN_LENGTH,
-                            maxLength = TREE_HOLE_COMMENT_MAX_LENGTH,
                         )
                         return@launch
                     }
@@ -1728,31 +1770,13 @@ class TreeHoleViewModel(
         }
         viewModelScope.launch {
             try {
-                val approvals = repository.checkNewApprovals()
-                val feedbackRewards = repository.checkNewFeedbackRewards()
+                val summary = repository.synchronizeRewards()
                 val balance = repository.syncCoinBalance()
-                if (approvals > 0) {
-                    com.neilyin.nnowork.analytics.Analytics.log(
-                        "coin_reward_claimed",
-                        "amount" to (approvals * 5).toString(),
-                        "type" to "treehole_post_approved",
-                    )
-                }
-                if (feedbackRewards > 0) {
-                    com.neilyin.nnowork.analytics.Analytics.log(
-                        "coin_reward_claimed",
-                        "amount" to (feedbackRewards * 10).toString(),
-                        "type" to "feedback_reward",
-                    )
-                }
+                logRewardAnalytics(summary)
                 localState.update {
                     it.copy(
                         syncingCoins = false,
-                        rewardSyncResult = TreeHoleRewardSyncResult(
-                            newApprovals = approvals,
-                            newFeedbackRewards = feedbackRewards,
-                            coinBalance = balance,
-                        ),
+                        rewardSyncResult = TreeHoleRewardSyncResult(summary, coinBalance = balance),
                         success = TreeHoleFeatureSuccess(
                             TreeHoleFeatureSuccessKind.COINS_AND_APPROVALS_SYNCED,
                         ),
@@ -1801,7 +1825,7 @@ class TreeHoleViewModel(
                     return@launch
                 }
                 repository.setDeclinedIndustrySyncFor(null)
-                val mine = captureResult { repository.fetchMyPosts() }.getOrNull()
+                val mine = captureResult { fetchMyPostsAndCollectRewards() }.getOrNull()
                 val refreshedStatus = captureResult { repository.fetchIndustrySyncStatus() }.getOrNull()
                 localState.update {
                     it.copy(
@@ -2062,6 +2086,8 @@ fun TreeHoleScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val shareScope = rememberCoroutineScope()
+    // 每次進到樹洞分頁就同步一次金幣獎勵（iOS TreeHoleView .task → collectRewards）。
+    LaunchedEffect(viewModel) { viewModel.onScreenEntered() }
     TreeHoleContent(
         state = state,
         onAcceptTerms = viewModel::acceptCurrentTerms,
@@ -3799,6 +3825,7 @@ private fun PostCard(
             }
         }
         Text(post.content, style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Medium, NnoworkTheme.colors.primaryText))
+        TreeHolePostProgressLabel(post)
         if (post.isQuestion) {
             Text(
                 if (post.commentCount > 0) {
@@ -4013,7 +4040,7 @@ internal fun sameTreeHoleAuthor(
 }
 
 @Composable
-private fun CommentsDialog(
+internal fun CommentsDialog(
     post: TreeHolePost,
     comments: List<TreeHoleComment>,
     loading: Boolean,
@@ -4031,8 +4058,11 @@ private fun CommentsDialog(
     onSafetyActionsPost: (() -> Unit)?,
     onSafetyActionsComment: (TreeHoleComment) -> Unit,
     onShare: (() -> Unit)?,
+    /** debug 截圖用：預先填入的草稿。 */
+    initialDraft: String = "",
 ) {
-    var draft by remember(post.id) { mutableStateOf("") }
+    var draft by remember(post.id) { mutableStateOf(initialDraft) }
+    val canSendComment = TreeHoleCommentPolicy.normalizedContentOrNull(draft) != null
     val badgeStrings = localizedAnswerBadgeStrings()
 
     // 保留草稿直到 server 成功；驗證、gate 或網路失敗都不清空。
@@ -4075,6 +4105,7 @@ private fun CommentsDialog(
                 verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
             ) {
                 Text(post.content, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                TreeHolePostProgressLabel(post)
                 if (loading) {
                     Text(stringResource(R.string.treehole_common_loading), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
                 } else if (comments.isEmpty()) {
@@ -4187,19 +4218,17 @@ private fun CommentsDialog(
                         }
                     }
                 }
+                // 不限字數、不顯示剩餘字數（§5.9）；多行輸入，超過可見行數時在框內捲動。
                 NnoworkField(
                     value = draft,
-                    onValueChange = { draft = it.take(TREE_HOLE_COMMENT_MAX_LENGTH) },
+                    onValueChange = { draft = it },
                     enabled = !submitting,
                     placeholder = stringResource(R.string.treehole_comment_placeholder),
                     singleLine = false,
                     minHeight = 82.dp,
+                    maxLines = TREE_HOLE_COMMENT_VISIBLE_LINES,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    stringResource(R.string.treehole_comment_count, draft.length),
-                    style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText),
                 )
                 feedback?.let { (message, color) ->
                     Text(message, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, color))
@@ -4209,8 +4238,8 @@ private fun CommentsDialog(
         confirmButton = {
             PixelButton(
                 onClick = { onSubmit(draft) },
-                enabled = draft.trim().length in 1..TREE_HOLE_COMMENT_MAX_LENGTH && !loading && !submitting,
-                backgroundColor = if (draft.trim().length in 1..TREE_HOLE_COMMENT_MAX_LENGTH) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
+                enabled = canSendComment && !loading && !submitting,
+                backgroundColor = if (canSendComment) NnoworkTheme.colors.highlight else NnoworkTheme.colors.disabledBG,
             ) {
                 Text(
                     stringResource(
@@ -4496,14 +4525,29 @@ private fun localizedTreeHoleFeedback(state: TreeHoleUiState): Pair<String, Colo
             TreeHoleFeatureSuccessKind.REPORT_SUBMITTED_AND_BLOCKED ->
                 stringResource(R.string.treehole_report_and_block_success)
             TreeHoleFeatureSuccessKind.AUTHOR_BLOCKED -> stringResource(R.string.treehole_blocked_success)
-            TreeHoleFeatureSuccessKind.COINS_AND_APPROVALS_SYNCED -> state.rewardSyncResult?.let {
-                "金幣已同步：${it.coinBalance} 枚。"
+            TreeHoleFeatureSuccessKind.COINS_AND_APPROVALS_SYNCED -> state.rewardSyncResult?.let { result ->
+                rewardMessages(result.summary).ifEmpty { listOf("金幣已同步：${result.coinBalance ?: 0} 枚。") }
+                    .joinToString("\n")
+            }
+            TreeHoleFeatureSuccessKind.REWARDS_COLLECTED -> state.rewardSyncResult?.let { result ->
+                rewardMessages(result.summary).joinToString("\n").takeIf(String::isNotEmpty)
             }
             else -> null
         }
         if (message != null) return message to NnoworkTheme.colors.success
     }
     return null
+}
+
+/** iOS collectRewards()：同一種 kind 合併成一則「🎉 …獲得 N 枚離職金幣」。 */
+@Composable
+private fun rewardMessages(summary: RewardSyncSummary): List<String> = buildList {
+    if (summary.approvedPostCoins > 0) {
+        add(stringResource(R.string.treehole_reward_post_approved, summary.approvedPostCoins))
+    }
+    if (summary.feedbackRewardCoins > 0) {
+        add(stringResource(R.string.treehole_reward_feedback, summary.feedbackRewardCoins))
+    }
 }
 
 /** UI components use platform-neutral %d/%s placeholders; bridge Android positional placeholders here. */

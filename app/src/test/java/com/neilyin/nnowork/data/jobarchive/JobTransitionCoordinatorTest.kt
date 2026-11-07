@@ -486,6 +486,77 @@ class JobTransitionCoordinatorTest {
     }
 
     @Test
+    fun `reset all clears the current job bumps job index and sets the run back to one`() = runBlocking {
+        val local = fixture().apply {
+            settings = settings.copy(
+                currentJobIndex = 2,
+                currentRunNumber = 2,
+                isOnboardingFinished = true,
+                widgetRefreshInterval = 5,
+                lastCoinEarnedDate = 123L,
+                commonReasons = listOf("自訂原因"),
+            )
+            archives += JobArchivePayloadTestData.payload(4).toEntity("old", owner, "old", 0L)
+        }
+        val pending = MemoryPending().apply {
+            entries = mapOf(
+                JobArchivePendingKeys.key(owner, 2) to JobArchivePendingEntry(id = "p", jobIndex = 2, ownerUserId = owner),
+                JobArchivePendingKeys.key(owner, 7) to JobArchivePendingEntry(id = "other", jobIndex = 7, ownerUserId = owner),
+            )
+        }
+        val remote = FakeRemote()
+        val cleared = coordinator(local, remote, pending, mutableListOf())
+            .resetAllForFreshStart(owner) { style, unlocked -> style in unlocked }
+
+        assertEquals(listOf("t1"), cleared)
+        assertTrue(local.stamps.isEmpty())
+        assertEquals("archive number max(2, 4 + 1) + 1", 6, local.settings.currentJobIndex)
+        assertEquals("全部重來不算換工作：周目回到 1", 1, local.settings.currentRunNumber)
+        assertFalse(local.settings.isOnboardingFinished)
+        assertEquals(60, local.settings.widgetRefreshInterval)
+        assertEquals("", local.settings.companyName)
+        assertEquals(1, local.settings.currentRound)
+        assertFalse(local.settings.isCardLocked)
+        // 保留：已解鎖且使用中的主題、金幣鏡像、今天的每日金幣、常用原因、過往工作。
+        assertEquals(7, local.settings.cardStyle)
+        assertEquals(listOf(1, 2, 3, 7), local.settings.unlockedStyles)
+        assertEquals(99, local.settings.coinCount)
+        assertEquals(123L, local.settings.lastCoinEarnedDate)
+        assertEquals(listOf("自訂原因"), local.settings.commonReasons)
+        assertEquals(1, local.archives.size)
+        // 計畫：存款／待辦清掉、目標歸零，薪水設定保留。
+        assertEquals(0.0, local.plan.targetAmount, 0.0)
+        assertEquals(0.0, local.plan.currentSaved, 0.0)
+        assertTrue(local.plan.todoItems.isEmpty() && local.plan.completedTodoItems.isEmpty())
+        assertEquals(45_000.0, local.plan.monthlySalary, 0.0)
+        // 只清這份工作的 pending；不上傳任何東西。
+        assertEquals(setOf(JobArchivePendingKeys.key(owner, 7)), pending.entries.keys)
+        assertTrue(remote.uploads.isEmpty())
+    }
+
+    @Test
+    fun `reset all falls back to the default theme when the current one is no longer unlocked`() = runBlocking {
+        val local = fixture().apply { settings = settings.copy(cardStyle = 9) }
+        coordinator(local, FakeRemote(), MemoryPending(), mutableListOf())
+            .resetAllForFreshStart(null) { style, unlocked -> style in unlocked }
+        assertEquals(JobTransitionPolicy.DEFAULT_CARD_STYLE, local.settings.cardStyle)
+        assertEquals("signed out: current + 1", 2, local.settings.currentJobIndex)
+        assertEquals(1, local.settings.currentRunNumber)
+    }
+
+    @Test
+    fun `unfinished archive hint only for an uploaded archive of this account and job`() {
+        val key = JobArchivePendingKeys.key(owner, 3)
+        val uploaded = mapOf(key to JobArchivePendingEntry(id = "a", jobIndex = 3, ownerUserId = owner, uploaded = true))
+        assertTrue(JobTransitionPolicy.hasUnfinishedUploadedArchive(uploaded, "USER-1", 3))
+        assertFalse(JobTransitionPolicy.hasUnfinishedUploadedArchive(uploaded, owner, 4))
+        assertFalse(JobTransitionPolicy.hasUnfinishedUploadedArchive(uploaded, null, 3))
+        assertFalse(JobTransitionPolicy.hasUnfinishedUploadedArchive(uploaded, "user-2", 3))
+        val notUploaded = mapOf(key to JobArchivePendingEntry(id = "a", jobIndex = 3, ownerUserId = owner))
+        assertFalse(JobTransitionPolicy.hasUnfinishedUploadedArchive(notUploaded, owner, 3))
+    }
+
+    @Test
     fun `run number and archive number follow section 19 5`() {
         assertEquals(3, JobTransitionPolicy.runNumber(AppSettings(currentRunNumber = 3, currentJobIndex = 9), emptyList()))
         assertEquals(1, JobTransitionPolicy.runNumber(AppSettings(currentJobIndex = 1), listOf("a")))

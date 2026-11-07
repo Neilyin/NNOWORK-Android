@@ -156,6 +156,48 @@ object JobTransitionPolicy {
         completedTodoItems = emptyList(),
     )
 
+    /**
+     * 設定頁「全部重來」（iOS `resetAllForFreshStart`）：工作欄位照換工作重設、jobIndex 照樣提升，
+     * 但周目設回 1；回到新手設定、小工具頻率回預設，使用中的主題已不再解鎖時退回預設主題。
+     * 保留：已解鎖主題、金幣、今天已領的每日金幣、常用原因、過往工作。
+     */
+    fun resetSettingsForFreshStart(
+        settings: AppSettings,
+        newJobIndex: Int,
+        isStyleUnlocked: (styleId: Int, unlockedStyles: List<Int>) -> Boolean,
+    ): AppSettings {
+        val reset = resetSettingsForNewJob(
+            settings = settings,
+            newCompanyName = "",
+            maxStamps = DEFAULT_MAX_STAMPS,
+            newJobIndex = newJobIndex,
+            newRunNumber = 1,
+        )
+        return reset.copy(
+            isOnboardingFinished = false,
+            widgetRefreshInterval = DEFAULT_WIDGET_REFRESH_MINUTES,
+            cardStyle = if (isStyleUnlocked(reset.cardStyle, reset.unlockedStyles)) reset.cardStyle else DEFAULT_CARD_STYLE,
+        )
+    }
+
+    /** 「全部重來」的離職計畫：同換工作的重設，另外目標金額歸零（iOS 同）。薪水設定保留。 */
+    fun resetPlanForFreshStart(plan: ResignationPlan): ResignationPlan =
+        resetPlanForNewJob(plan).copy(targetAmount = 0.0)
+
+    /** 上次換工作已上傳雲端、本機還沒完成（換工作畫面要提示「再按一次即可接續」）。 */
+    fun hasUnfinishedUploadedArchive(
+        pending: Map<String, JobArchivePendingEntry>,
+        ownerId: String?,
+        currentJobIndex: Int,
+    ): Boolean {
+        val owner = ownerId?.trim()?.lowercase(java.util.Locale.ROOT)?.takeIf(String::isNotEmpty) ?: return false
+        val entry = pending[JobArchivePendingKeys.key(owner, currentJobIndex)] ?: return false
+        return entry.kind == JobArchivePendingEntry.KIND_ARCHIVE && entry.uploaded
+    }
+
+    const val DEFAULT_WIDGET_REFRESH_MINUTES = 60
+    const val DEFAULT_CARD_STYLE = 1
+
     /** 清除前排過提醒的待辦 id，呼叫端負責取消對應提醒。 */
     fun scheduledTodoIds(plan: ResignationPlan?): List<String> =
         (plan?.todoItems.orEmpty() + plan?.completedTodoItems.orEmpty())

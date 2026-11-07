@@ -27,4 +27,9 @@ object ReminderScheduler {
     fun cancel(context: Context, todoId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(workName(todoId))
     }
+
+    /** 換工作／全部重來／啟動復原清掉的待辦：取消它們的提醒。 */
+    fun cancelAll(context: Context, todoIds: Collection<String>) {
+        todoIds.distinct().forEach { cancel(context, it) }
+    }
 }

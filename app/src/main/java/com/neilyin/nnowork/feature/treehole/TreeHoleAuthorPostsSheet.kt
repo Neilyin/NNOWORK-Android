@@ -293,6 +293,7 @@ private fun AuthorPostCard(
             post.content,
             style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Medium, MaterialTheme.colorScheme.onSurfaceVariant),
         )
+        TreeHolePostProgressLabel(post)
         if (post.isQuestion) {
             Text(
                 if (post.commentCount > 0) strings.replyCountTemplate.withCount(post.commentCount)

@@ -66,6 +66,17 @@ import com.neilyin.nnowork.data.plan.ResignationPlan
 import com.neilyin.nnowork.data.settings.AppSettings
 import com.neilyin.nnowork.data.settings.SettingsRepository
 import com.neilyin.nnowork.di.ServiceLocator
+import com.neilyin.nnowork.data.auth.AuthRepository
+import com.neilyin.nnowork.data.jobarchive.JobArchiveEntity
+import com.neilyin.nnowork.data.jobarchive.JobArchiveRepository
+import com.neilyin.nnowork.feature.jobarchive.JobArchiveDetailScreen
+import com.neilyin.nnowork.feature.jobarchive.JobTransitionSheet
+import com.neilyin.nnowork.feature.jobarchive.PastJobsSection
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import com.neilyin.nnowork.ui.theme.NnoworkTextField
 import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.pixelCard
@@ -85,6 +96,8 @@ data class HistoryUiState(
     val settings: AppSettings = AppSettings(),
     val records: List<StampRecordEntity> = emptyList(),
     val plan: ResignationPlan = ResignationPlan(),
+    /** 目前登入帳號的過往工作（未登入時為空，整區不顯示）。 */
+    val archives: List<JobArchiveEntity> = emptyList(),
 ) {
     val grouped: Map<Int, List<StampRecordEntity>>
         get() = records.sortedByDescending { it.date }.groupBy { it.roundNumber }
@@ -97,14 +110,23 @@ data class HistoryUiState(
             (settings.currentRound > 3 || settings.roundCompletedDates.size >= 3 || (settings.currentRound >= 3 && settings.isCardLocked))
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
     private val stampDao: StampDao = ServiceLocator.stampDao,
     private val settingsRepository: SettingsRepository = ServiceLocator.settingsRepository,
     private val planRepository: PlanRepository = ServiceLocator.planRepository,
+    private val jobArchiveRepository: JobArchiveRepository = ServiceLocator.jobArchiveRepository,
+    private val authRepository: AuthRepository = ServiceLocator.authRepository,
 ) : ViewModel() {
+    /** 只顯示目前帳號的封存；登入／登出／換帳號時跟著切換。 */
+    private val archives = authRepository.state
+        .map { authRepository.currentUserId }
+        .distinctUntilChanged()
+        .flatMapLatest { owner -> jobArchiveRepository.visibleArchives(owner) }
+
     val uiState: StateFlow<HistoryUiState> =
-        combine(settingsRepository.settings, stampDao.observeAll(), planRepository.plan) { settings, records, plan ->
-            HistoryUiState(settings, records, plan)
+        combine(settingsRepository.settings, stampDao.observeAll(), planRepository.plan, archives) { settings, records, plan, archives ->
+            HistoryUiState(settings, records, plan, archives)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState())
 
     fun updateReason(record: StampRecordEntity, reason: String) {
@@ -117,24 +139,6 @@ class HistoryViewModel(
         viewModelScope.launch { stampDao.delete(record) }
     }
 
-    fun startNewCompany() {
-        viewModelScope.launch {
-            stampDao.deleteAll()
-            planRepository.reset()
-            settingsRepository.update { current ->
-                current.copy(
-                    companyName = "",
-                    currentRound = 1,
-                    isOnboardingFinished = false,
-                    firstStampDate = null,
-                    isCardLocked = false,
-                    cardCompletedDate = null,
-                    roundStartDates = emptyList(),
-                    roundCompletedDates = emptyList(),
-                )
-            }
-        }
-    }
 }
 
 @Composable
@@ -148,7 +152,6 @@ fun HistoryScreen(
         receiptRequest = receiptRequest,
         onUpdateReason = viewModel::updateReason,
         onDelete = viewModel::delete,
-        onStartNewCompany = viewModel::startNewCompany,
     )
 }
 
@@ -158,11 +161,13 @@ private fun HistoryContent(
     receiptRequest: Int = 0,
     onUpdateReason: (StampRecordEntity, String) -> Unit,
     onDelete: (StampRecordEntity) -> Unit,
-    onStartNewCompany: () -> Unit,
 ) {
     var editing by remember { mutableStateOf<StampRecordEntity?>(null) }
     var showReceipt by remember { mutableStateOf(false) }
     var showFreedom by remember { mutableStateOf(false) }
+    var showJobTransition by rememberSaveable { mutableStateOf(false) }
+    var selectedArchiveId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedArchive = selectedArchiveId?.let { id -> state.archives.firstOrNull { it.id == id } }
     val context = LocalContext.current
     val shareScope = rememberCoroutineScope()
 
@@ -205,17 +210,30 @@ private fun HistoryContent(
         )
     }
 
+    // 自由畫面「重新集點（新公司）」走換工作流程（封存或明確確認不保存），不再直接清資料。
+    if (showJobTransition) {
+        JobTransitionSheet(
+            onDismiss = { showJobTransition = false },
+            onCompleted = {
+                showJobTransition = false
+                showFreedom = false
+            },
+        )
+    }
+
     if (showFreedom) {
         FreedomScreen(
             companyName = state.settings.companyName,
             completedCards = state.grouped.size,
             totalStamps = state.records.size,
             onViewHistory = { showFreedom = false },
-            onStartNewCompany = {
-                showFreedom = false
-                onStartNewCompany()
-            },
+            onStartNewCompany = { showJobTransition = true },
         )
+        return
+    }
+
+    if (selectedArchive != null) {
+        JobArchiveDetailScreen(archive = selectedArchive, onBack = { selectedArchiveId = null })
         return
     }
 
@@ -229,6 +247,11 @@ private fun HistoryContent(
     ) {
         item {
             NnoworkPageTitle("離職紀錄", modifier = Modifier.padding(top = NnoworkSpacing.md))
+        }
+        if (state.archives.isNotEmpty()) {
+            item(key = "past-jobs") {
+                PastJobsSection(archives = state.archives, onSelect = { selectedArchiveId = it.id })
+            }
         }
         if (state.records.isEmpty()) {
             item { EmptyHistory() }
@@ -623,6 +646,5 @@ private fun HistoryContentPreview() {
         ),
         onUpdateReason = { _, _ -> },
         onDelete = {},
-        onStartNewCompany = {},
     )
 }

@@ -104,6 +104,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // App 回前景（ProcessLifecycleOwner）時補拉過往工作（§19.3）。
+    implementation("androidx.lifecycle:lifecycle-process:${libs.versions.lifecycle.get()}")
     implementation(libs.androidx.activity.compose)
 
     implementation(platform(libs.androidx.compose.bom))

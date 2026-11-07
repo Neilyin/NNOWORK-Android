@@ -13,7 +13,7 @@ class TreeHoleShareCardContentTest {
             .toSet()
 
         assertEquals(
-            setOf("content", "industry", "role", "roundNumber", "stampCount", "postType"),
+            setOf("content", "industry", "role", "roundNumber", "stampCount", "postType", "jobIndex"),
             exposedFields,
         )
     }
@@ -85,6 +85,20 @@ class TreeHoleShareCardContentTest {
         )
 
         assertEquals("第 3 張離職集點卡  ·  第 7 章", shareContent.shareCardFooterText())
+    }
+
+    @Test
+    fun `run two plus footer gets the run prefix and questions never do`() {
+        val post = TreeHolePost(id = "p", content = "換工作後的第一章", roundNumber = 1, stampCount = 2, jobIndex = 2)
+        assertEquals("二周目 · 第 1 張離職集點卡  ·  第 2 章", post.toShareCardContent().shareCardFooterText())
+        // job_index 1（第一份工作）不顯示周目。
+        assertEquals(
+            "第 1 張離職集點卡  ·  第 2 章",
+            post.copy(jobIndex = 1).toShareCardContent().shareCardFooterText(),
+        )
+        val question = post.copy(postType = POST_TYPE_QUESTION)
+        assertEquals(null, question.toShareCardContent().jobIndex)
+        assertEquals(QUESTION_SHARE_CARD_LABEL, question.toShareCardContent().shareCardFooterText())
     }
 
     @Test

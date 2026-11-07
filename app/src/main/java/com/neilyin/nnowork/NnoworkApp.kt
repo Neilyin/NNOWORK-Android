@@ -13,6 +13,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.neilyin.nnowork.feature.jobarchive.JobArchivePullTrigger
+import com.neilyin.nnowork.notify.ReminderScheduler
 
 class NnoworkApp : Application() {
     override fun onCreate() {
@@ -27,8 +36,13 @@ class NnoworkApp : Application() {
             ServiceLocator.backupRepository.recoverPendingImportIfNeeded()
             ServiceLocator.backupRepository.migrateDeferredShopPurchases()
             // 換工作若停在「Room 已提交、settings 未重設」之間被終止，UI 讀取前先前滾（§19.6，純本機）。
+            // 前滾清掉的待辦要一併取消提醒。
             runCatching { ServiceLocator.jobArchiveRepository.recoverPendingTransitions() }
+                .getOrNull()
+                ?.flatMap { it.clearedReminderTodoIds }
+                ?.let { ids -> runCatching { ReminderScheduler.cancelAll(this@NnoworkApp, ids) } }
         }
+        observeJobArchivePullTriggers()
 
         // 依設定排程桌面 Widget 定時刷新。
         CoroutineScope(Dispatchers.IO).launch {
@@ -56,6 +70,25 @@ class NnoworkApp : Application() {
                     }
                 }
             }
+        }
+    }
+
+    /** 回前景（已登入）與登入成功當下補拉過往工作（§19.3）。啟動那次由上面的流程處理。 */
+    private fun observeJobArchivePullTriggers() {
+        val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        val trigger = JobArchivePullTrigger(mainScope) {
+            withContext(Dispatchers.IO) { ServiceLocator.jobArchiveRepository.pullFromServer() }
+        }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                trigger.onForeground(ServiceLocator.authRepository.state.value.isSignedIn)
+            }
+        })
+        mainScope.launch {
+            ServiceLocator.authRepository.state
+                .map { it.isSignedIn }
+                .distinctUntilChanged()
+                .collect(trigger::onSignedInChanged)
         }
     }
 }

@@ -350,6 +350,35 @@ class JobTransitionCoordinator(
         return JobTransitionPolicy.scheduledTodoIds(current.plan)
     }
 
+    /**
+     * 設定頁「全部重來」（iOS `JobTransitionService.resetAllForFreshStart`）：刪除目前的章、
+     * 重設離職計畫，jobIndex 照樣提升（防多裝置合併回彈）但周目設回 1。不建立封存、不碰過往工作。
+     * @return 清除前排過提醒的待辦 id，呼叫端負責取消提醒。
+     */
+    suspend fun resetAllForFreshStart(
+        ownerId: String?,
+        isStyleUnlocked: (styleId: Int, unlockedStyles: List<Int>) -> Boolean,
+    ): List<String> {
+        recoverPendingTransitions()
+        val owner = ownerId?.trim()?.lowercase(Locale.ROOT)?.takeIf(String::isNotEmpty)
+        val current = local.readCurrentJob()
+        val owned = owner?.let { local.archivesForOwner(it) }
+        val previousJobIndex = current.settings.currentJobIndex
+        val newJobIndex = JobTransitionPolicy.nextArchiveNumber(previousJobIndex, owned?.map { it.jobIndex }) + 1
+        // 先刪章再重設設定：中途被殺最壞是「舊設定＋空卡」，可以再按一次；反過來會讓舊章混進新卡。
+        local.commitRoomPhase(archive = null, stampIds = current.stamps.map { it.id }.toSet())
+        // 舊工作的待完成紀錄不再需要（若伺服器其實已收到，下次拉回會正常出現在過往工作）。
+        val keys = listOfNotNull(
+            JobArchivePendingKeys.discardKey(previousJobIndex),
+            owner?.let { JobArchivePendingKeys.key(it, previousJobIndex) },
+        )
+        local.resetCurrentJobAndClearPending(keys) { settings, plan ->
+            JobTransitionPolicy.resetSettingsForFreshStart(settings, newJobIndex, isStyleUnlocked) to
+                JobTransitionPolicy.resetPlanForFreshStart(plan)
+        }
+        return JobTransitionPolicy.scheduledTodoIds(current.plan)
+    }
+
     /** 登入後／回前景拉回過往工作補到本機（以 帳號 + id 去重）。不修改 currentJobIndex。 */
     suspend fun pullFromServer(ownerId: String?, currentOwner: () -> String?): Int {
         recoverPendingTransitions()

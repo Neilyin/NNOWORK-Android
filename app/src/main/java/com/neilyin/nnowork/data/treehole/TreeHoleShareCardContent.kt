@@ -1,5 +1,7 @@
 package com.neilyin.nnowork.data.treehole
 
+import java.util.Locale
+
 /**
  * 樹洞分享圖唯一可用的內容型別。
  *
@@ -14,6 +16,8 @@ data class TreeHoleShareCardContent(
     val roundNumber: Int?,
     val stampCount: Int?,
     val postType: String,
+    /** 周目（[TreeHolePost.displayRunNumber]）；null 或 1 不顯示（§20.1）。 */
+    val jobIndex: Int? = null,
 ) {
     val isQuestion: Boolean
         get() = postType == POST_TYPE_QUESTION
@@ -33,6 +37,7 @@ fun TreeHolePost.toShareCardContent(): TreeHoleShareCardContent =
         roundNumber = roundNumber,
         stampCount = stampCount,
         postType = postType,
+        jobIndex = displayRunNumber,
     )
 
 /**
@@ -43,7 +48,10 @@ internal fun TreeHoleShareCardContent.shareCardFooterText(): String? {
     if (isQuestion) return QUESTION_SHARE_CARD_LABEL
 
     return buildList {
-        roundNumber?.let { add("第 $it 張離職集點卡") }
+        // 分享圖文案目前只有繁中；周目前綴跟著用繁中國字（iOS TreeHolePostShareView 同位置）。
+        roundNumber?.let {
+            add(TreeHoleProgressLabel.applyingRunPrefix("第 $it 張離職集點卡", jobIndex, Locale.TRADITIONAL_CHINESE))
+        }
         stampCount?.let { add("第 $it 章") }
     }.joinToString("  ·  ")
         .takeIf(String::isNotEmpty)

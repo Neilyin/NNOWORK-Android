@@ -133,7 +133,8 @@ class AuthRepository(
         clearSession("已登出，App 會繼續使用匿名裝置身份。")
     }
 
-    suspend fun deleteAccount() = operationMutex.withLock {
+    /** @return true = 伺服器確認刪除且本機 session 已清除。呼叫端要在呼叫**前**記下帳號 id。 */
+    suspend fun deleteAccount(): Boolean = operationMutex.withLock {
         process {
             callAuthedRpc("delete_my_auth_account", emptyMap())
             clearSession()
@@ -247,11 +248,12 @@ class AuthRepository(
     private fun decodeSession(body: String): AuthSessionResponse =
         sessionAdapter.fromJson(body) ?: error("無法解析登入回應。")
 
-    private suspend fun process(block: suspend () -> String) {
+    private suspend fun process(block: suspend () -> String): Boolean {
         _state.value = _state.value.copy(isProcessing = true, message = null, isError = false)
-        runCatching { block() }
+        return runCatching { block() }
             .onSuccess { _state.value = _state.value.copy(isProcessing = false, message = it, isError = false) }
             .onFailure { _state.value = _state.value.copy(isProcessing = false, message = it.message ?: "網路連線失敗，請稍後再試。", isError = true) }
+            .isSuccess
     }
 
     private fun validate(email: String, password: String) {

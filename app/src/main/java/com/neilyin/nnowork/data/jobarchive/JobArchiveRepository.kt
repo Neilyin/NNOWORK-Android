@@ -33,7 +33,7 @@ import java.util.Locale
  * 換工作封存（android開發.md §19）的 Android 實作：Room 存過往工作、DataStore 存待完成封存，
  * RPC `archive_my_job` / `get_my_job_archives`（只能帶 user token）。
  *
- * UI 入口尚未接上（另一期處理）；本類別只提供資料層。
+ * UI：feature/jobarchive（換工作畫面、過往工作、詳情）。
  */
 class JobArchiveRepository internal constructor(
     private val context: Context,
@@ -156,6 +156,25 @@ class JobArchiveRepository internal constructor(
         maxStamps: Int = JobTransitionPolicy.DEFAULT_MAX_STAMPS,
     ): List<String> = operationMutex.withLock {
         coordinator.startNewJobWithoutArchive(currentOwnerId(), newCompanyName, maxStamps)
+    }
+
+    /** 設定頁「全部重來」：見 [JobTransitionCoordinator.resetAllForFreshStart]。回傳要取消提醒的待辦 id。 */
+    suspend fun resetAllForFreshStart(
+        isStyleUnlocked: (styleId: Int, unlockedStyles: List<Int>) -> Boolean,
+    ): List<String> = operationMutex.withLock {
+        coordinator.resetAllForFreshStart(currentOwnerId(), isStyleUnlocked)
+    }
+
+    /** 換工作畫面的提示：目前帳號、目前這份工作有「已上傳但本機未完成」的封存。 */
+    suspend fun hasUnfinishedUploadedArchive(): Boolean {
+        val settings = context.appDataStore.data.first()[SETTINGS_KEY]
+            ?.let { runCatching { settingsAdapter.fromJson(it) }.getOrNull() }
+            ?: AppSettings()
+        return JobTransitionPolicy.hasUnfinishedUploadedArchive(
+            pending = pendingStore.load(),
+            ownerId = currentOwnerId(),
+            currentJobIndex = settings.currentJobIndex,
+        )
     }
 
     /** 登入成功當下、以及每次回前景（已登入）時呼叫。失敗靜默（回 0）。 */

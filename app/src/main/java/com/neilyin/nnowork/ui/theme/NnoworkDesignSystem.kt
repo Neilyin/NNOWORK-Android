@@ -191,6 +191,8 @@ fun NnoworkField(
     singleLine: Boolean = true,
     enabled: Boolean = true,
     minHeight: Dp = NnoworkSize.controlHeight,
+    /** 多行時最多同時顯示幾行；超過就在框內捲動（例如不限字數的留言）。 */
+    maxLines: Int = Int.MAX_VALUE,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
@@ -203,6 +205,7 @@ fun NnoworkField(
         onValueChange = onValueChange,
         enabled = enabled,
         singleLine = singleLine,
+        maxLines = if (singleLine) 1 else maxLines,
         textStyle = textStyle.merge(TextStyle(color = colors.inputText)),
         cursorBrush = SolidColor(colors.accentForeground),
         keyboardOptions = keyboardOptions,

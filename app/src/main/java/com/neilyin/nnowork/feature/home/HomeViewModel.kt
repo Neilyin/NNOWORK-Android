@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 data class HomeUiState(
     val settings: AppSettings = AppSettings(),
@@ -59,13 +60,34 @@ data class StampCreationResult(
     val shareContent: String,
     val roundNumber: Int,
     val stampCount: Int,
+    /**
+     * 蓋章當下的周目（§20.3，貼文 job_index 送這個）。之後換工作周目會 +1，所以不能在送出時才讀。
+     * null = 當下讀取失敗，交給 repository 在送出時讀（與舊行為相同）。
+     */
+    val runNumber: Int? = null,
 )
+
+/** 蓋章當下擷取周目（與 round/stamp 同時），失敗回 null、不擋蓋章。 */
+internal suspend fun captureRunNumber(provider: suspend () -> Int): Int? = try {
+    provider()
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (_: Exception) {
+    null
+}
+
+/** 分享到樹洞：一律送快照裡的 round／stamp／周目，不讀目前值。 */
+internal suspend fun submitStampShare(
+    stamp: StampCreationResult,
+    submit: suspend (content: String, roundNumber: Int, stampCount: Int, runNumber: Int?) -> Unit,
+) = submit(stamp.shareContent.trim(), stamp.roundNumber, stamp.stampCount, stamp.runNumber)
 
 class HomeViewModel(
     private val stampDao: StampDao = ServiceLocator.stampDao,
     private val settingsRepository: SettingsRepository = ServiceLocator.settingsRepository,
     private val coinLedgerRepository: CoinLedgerRepository = ServiceLocator.coinLedgerRepository,
     private val treeHoleRepository: TreeHoleRepository = ServiceLocator.treeHoleRepository,
+    private val runNumberProvider: suspend () -> Int = { ServiceLocator.jobArchiveRepository.currentRunNumber() },
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> =
@@ -83,6 +105,7 @@ class HomeViewModel(
         if (trimmed.isEmpty()) return
         viewModelScope.launch {
             val settings = settingsRepository.current()
+            val runNumber = captureRunNumber(runNumberProvider)
             val record = StampRecordEntity(
                 date = System.currentTimeMillis(),
                 reason = trimmed,
@@ -123,6 +146,7 @@ class HomeViewModel(
                     shareContent = trimmed,
                     roundNumber = record.roundNumber,
                     stampCount = roundCount,
+                    runNumber = runNumber,
                 ),
             )
         }
@@ -136,11 +160,9 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             runCatching {
-                treeHoleRepository.submitPost(
-                    content = trimmed,
-                    roundNumber = stamp.roundNumber,
-                    stampCount = stamp.stampCount,
-                )
+                submitStampShare(stamp) { content, round, count, run ->
+                    treeHoleRepository.submitPost(content, round, count, run)
+                }
             }.onSuccess {
                 Analytics.log("treehole_post_created")
                 onResult("已分享到樹洞，審核通過後會公開並發放金幣。")
@@ -155,6 +177,7 @@ class HomeViewModel(
         val trimmed = reason.trim().ifEmpty { "隱藏彩蛋" }
         viewModelScope.launch {
             val settings = settingsRepository.current()
+            val runNumber = captureRunNumber(runNumberProvider)
             val record = StampRecordEntity(
                 date = System.currentTimeMillis(),
                 reason = trimmed,
@@ -177,6 +200,7 @@ class HomeViewModel(
                     shareContent = trimmed,
                     roundNumber = record.roundNumber,
                     stampCount = roundCount,
+                    runNumber = runNumber,
                 ),
             )
         }
