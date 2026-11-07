@@ -24,6 +24,8 @@ import com.neilyin.nnowork.di.ServiceLocator
 import com.neilyin.nnowork.feature.onboarding.OnboardingScreen
 import com.neilyin.nnowork.feature.onboarding.ReturningUserScreen
 import com.neilyin.nnowork.feature.onboarding.WelcomeBackScreen
+import androidx.compose.ui.Alignment
+import com.neilyin.nnowork.feature.update.UpdateBannerHost
 import com.neilyin.nnowork.feature.update.UPDATE_NOTICE_VERSION
 import com.neilyin.nnowork.feature.update.AuthBindingGuideScreen
 import com.neilyin.nnowork.feature.update.UpdateNoticeScreen
@@ -180,10 +182,14 @@ fun AppRoot(viewModel: RootViewModel = viewModel()) {
                         },
                         onLater = viewModel::markAuthGuideSeen,
                     )
-                    else -> MainScaffold(
-                        initialSelected = initialMainTab,
-                        onShowUpdateNotice = { manualNotice = true },
-                    )
+                    else -> Box(Modifier.fillMaxSize()) {
+                        MainScaffold(
+                            initialSelected = initialMainTab,
+                            onShowUpdateNotice = { manualNotice = true },
+                        )
+                        // 非強制更新提示（iOS RootView 頂部滑入的 UpdateBanner）
+                        UpdateBannerHost(Modifier.align(Alignment.TopCenter))
+                    }
                 }
             }
         }

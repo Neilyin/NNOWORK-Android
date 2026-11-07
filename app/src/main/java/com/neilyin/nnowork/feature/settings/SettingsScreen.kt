@@ -17,6 +17,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import com.neilyin.nnowork.util.PlayStore
+import com.neilyin.nnowork.feature.manual.UserManualSheet
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -724,6 +728,7 @@ private fun SettingsContent(
             Text("注意：Android 小工具實際刷新可能受系統省電策略影響。", style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
         }
         FeedbackSection(onSubmit = onSubmitFeedback, modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 2))
+        RateSection(modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 2))
         BackupSection(
             modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 3),
             state = backupUiState,
@@ -1158,59 +1163,51 @@ private fun maskEmail(email: String): String {
     return email.take(1) + "***" + email.substring(at)
 }
 
-private val manualChapters = listOf(
-    "集點卡" to "每天蓋一個章，記下想離職的原因。一張卡有 N 格（可在下方設定），集滿後可選擇「我要離職」產生離職收據，或「再來一張」。當天蓋章後會出現隱藏彩蛋，可額外多蓋（不計每日上限）。每天蓋章 +1 金幣。",
-    "離職計畫" to "設定自由預備金目標與目前已存，追蹤進度；標記履歷是否就緒；新增待辦事項並可設定提醒（到時間會發本機通知）。內含薪水計時器。",
-    "薪水計時器（BETA）" to "設定月薪／時薪、上下班時間、午休、發薪日（可多選）。排休方式可選「見紅休」或「排班制」；排班制可用固定工時或多種班別，並在月曆上逐日指派。即時顯示今日已賺、下班倒數與本期累積。",
-    "離職紀錄" to "查看總蓋章數、使用卡片數與最常見原因，並依每張卡片列出蓋章日期與原因。",
-    "取暖樹洞" to "匿名職場心情社群。先建立樹洞身份（暱稱、產業、職稱）。蓋章後可選擇把原因分享到樹洞，審核通過後公開並 +5 金幣。每天可玩「今日心聲」翻卡：右滑讚、左滑加油、上滑哭、下滑跳過。",
-    "金幣與主題" to "金幣可在「集點卡設定」的卡片風格商店解鎖付費主題。賺金幣：每天蓋章、樹洞貼文通過審核、分享使用心得通過審核。",
-    "桌面小工具" to "可在桌面加入薪水計時器與離職語錄小工具。語錄刷新頻率可於「小工具設定」調整（實際刷新受系統省電策略影響）。",
-)
-
 @Composable
 private fun ManualSection() {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    var openChapter by rememberSaveable { mutableStateOf(-1) }
-    Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.size(NnoworkSpacing.xs))
-            Text("使用手冊", style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-        }
-        Column(
-            modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs),
+    var showManual by rememberSaveable { mutableStateOf(false) }
+    if (showManual) UserManualSheet(onDismiss = { showManual = false })
+    SettingsSection(icon = Icons.AutoMirrored.Filled.MenuBook, title = stringResource(com.neilyin.nnowork.R.string.manual_title)) {
+        val openDesc = stringResource(com.neilyin.nnowork.R.string.manual_open)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = openDesc, role = Role.Button) { showManual = true },
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("第一次用？點開看看每個功能怎麼玩", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
-                Icon(if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = NnoworkTheme.colors.primaryText)
+            Text(
+                stringResource(com.neilyin.nnowork.R.string.manual_entry_hint),
+                style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                modifier = Modifier.weight(1f),
+            )
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = NnoworkTheme.colors.secondaryText)
+        }
+    }
+}
+
+/** 給評分：開 Google Play 商店頁（iOS rateSection → App Store 評分頁）。 */
+@Composable
+private fun RateSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val openDesc = stringResource(com.neilyin.nnowork.R.string.settings_rate_open_desc)
+    SettingsSection(icon = Icons.Filled.Star, title = stringResource(com.neilyin.nnowork.R.string.review_title), modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = openDesc, role = Role.Button) { PlayStore.openListing(context) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs)) {
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.review_action),
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),
+                )
+                Text(
+                    stringResource(com.neilyin.nnowork.R.string.review_message),
+                    style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
+                )
             }
-            if (expanded) {
-                manualChapters.forEachIndexed { index, (title, body) ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .pixelCard(backgroundColor = NnoworkTheme.colors.appBG, elevation = 0.dp)
-                            .padding(NnoworkSpacing.sm),
-                        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clickable { openChapter = if (openChapter == index) -1 else index },
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(title, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
-                            Icon(if (openChapter == index) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null, tint = NnoworkTheme.colors.secondaryText, modifier = Modifier.size(18.dp))
-                        }
-                        if (openChapter == index) {
-                            Text(body, style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.mutedText))
-                        }
-                    }
-                }
-            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = NnoworkTheme.colors.secondaryText)
         }
     }
 }
