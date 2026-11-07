@@ -3,6 +3,8 @@ package com.neilyin.nnowork.data.coin
 import androidx.room.withTransaction
 import com.neilyin.nnowork.data.local.AppDatabase
 import com.neilyin.nnowork.data.local.StampRecordEntity
+import com.neilyin.nnowork.data.reward.RewardEvent
+import com.neilyin.nnowork.data.reward.RewardKind
 import com.neilyin.nnowork.data.settings.SettingsRepository
 import com.neilyin.nnowork.data.shop.ShopPurchaseEntity
 import com.neilyin.nnowork.util.DateUtils
@@ -79,6 +81,23 @@ class CoinLedgerRepository(
             // Ledger 已提交就是事實；鏡像失敗不能讓呼叫端重試而重複入帳。
             mirrorBestEffort(newBalance)
             newBalance
+        }
+    }
+
+    /**
+     * 獎勵事件入帳（§18.3）：流水帳 id = 事件 UUID，Room `INSERT OR IGNORE`。
+     * 重播同一事件只會入帳一次；回傳 true 代表這次真的新增。
+     */
+    suspend fun creditRewardEventIfAbsent(event: RewardEvent): Boolean {
+        val entry = RewardLedgerEntries.entryFor(event, nowMillis())
+        return operationMutex.withLock {
+            migrateAndMirrorLocked()
+            val (inserted, newBalance) = database.withTransaction {
+                val wasInserted = dao.appendIfAbsent(entry) != -1L
+                wasInserted to CoinLedgerPolicy.balance(dao.getAll())
+            }
+            mirrorBestEffort(newBalance)
+            inserted
         }
     }
 
@@ -292,6 +311,23 @@ class CoinLedgerRepository(
 
     private companion object {
         const val ANDROID_THEME_NOTE_PREFIX = "androidTheme:"
+    }
+}
+
+/** 獎勵事件 → 流水帳 entry 的唯一對照（純函式，供測試鎖定冪等鍵）。 */
+object RewardLedgerEntries {
+    fun entryFor(event: RewardEvent, createdAt: Long): CoinLedgerEntryEntity {
+        require(event.amount > 0) { "Reward amount must be positive" }
+        return CoinLedgerEntryEntity(
+            id = event.id,
+            amount = event.amount,
+            type = event.kind.transactionType.rawValue,
+            note = when (event.kind) {
+                RewardKind.TREE_HOLE_POST_APPROVED -> "樹洞貼文審核通過"
+                RewardKind.FEEDBACK_REWARD -> "意見回饋獲獎"
+            },
+            createdAt = createdAt,
+        )
     }
 }
 

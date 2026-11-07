@@ -39,9 +39,18 @@ data class TreeHolePost(
     @Json(name = "author_answer_count") val authorExp: Int = 0,
     /** 不可逆的作者識別碼；絕對不可以 device_hash 取代。 */
     @Json(name = "author_key") val authorKey: String? = null,
+    /**
+     * 周目快照（db/032，只有 *_v2 feed RPC 會回）。null 或 1 = 第一份工作；≥ 2 顯示「二周目」。
+     * v1 RPC／舊資料沒有這欄，解碼為 null，向後相容。
+     */
+    @Json(name = "job_index") val jobIndex: Int? = null,
 ) {
     val isQuestion: Boolean
         get() = postType == POST_TYPE_QUESTION
+
+    /** UI 用：要顯示的周目（≥ 2 才有值；提問沒有卡片資訊所以不顯示）。 */
+    val displayRunNumber: Int?
+        get() = jobIndex?.takeIf { it >= 2 && !isQuestion }
 }
 
 @JsonClass(generateAdapter = false)
@@ -98,14 +107,15 @@ data class UpsertProfileRequest(
     @Json(name = "p_role") val role: String,
 )
 
+/** 舊協定回應；缺 key 視為格式錯誤（null），不當成 0。 */
 @JsonClass(generateAdapter = false)
 data class NewApprovalsResponse(
-    @Json(name = "new_approvals") val newApprovals: Int = 0,
+    @Json(name = "new_approvals") val newApprovals: Int? = null,
 )
 
 @JsonClass(generateAdapter = false)
 data class NewFeedbackRewardsResponse(
-    @Json(name = "new_rewards") val newRewards: Int = 0,
+    @Json(name = "new_rewards") val newRewards: Int? = null,
 )
 
 @JsonClass(generateAdapter = false)
@@ -141,18 +151,42 @@ data class ReactPostRequest(
     @Json(name = "p_reaction_type") val reactionType: String,
 )
 
-@JsonClass(generateAdapter = false)
 data class SubmitPostRequest(
     val content: String,
-    @Json(name = "device_hash") val deviceHash: String,
+    val deviceHash: String,
     val nickname: String,
     val industry: String,
     val role: String? = null,
-    @Json(name = "round_number") val roundNumber: Int,
-    @Json(name = "stamp_count") val stampCount: Int,
-    @Json(name = "company_name") val companyName: String? = null,
-    @Json(name = "post_type") val postType: String = POST_TYPE_STAMP,
+    val roundNumber: Int,
+    val stampCount: Int,
+    val companyName: String? = null,
+    val postType: String = POST_TYPE_STAMP,
+    /** 周目（currentRunNumber），**不是**封存編號 currentJobIndex。 */
+    val jobIndex: Int? = null,
 )
+
+/** 送文要不要帶 job_index：第一份工作（≤ 1 或未知）不帶，伺服器存 NULL＝第一份（§20.3）。 */
+internal fun postJobIndexValue(runNumber: Int?): Int? = runNumber?.takeIf { it >= 2 }
+
+/**
+ * tree_hole_posts insert 的 wire body。舊欄位（含 role/company_name 的明確 null）與既有行為相同；
+ * job_index 只在周目 ≥ 2 才出現，第一份工作的 body 與舊版一模一樣。
+ */
+internal fun buildSubmitPostBody(
+    request: SubmitPostRequest,
+    includeJobIndex: Boolean = true,
+): Map<String, Any?> = buildMap {
+    put("content", request.content)
+    put("device_hash", request.deviceHash)
+    put("nickname", request.nickname)
+    put("industry", request.industry)
+    put("role", request.role)
+    put("round_number", request.roundNumber)
+    put("stamp_count", request.stampCount)
+    put("company_name", request.companyName)
+    put("post_type", request.postType)
+    if (includeJobIndex) postJobIndexValue(request.jobIndex)?.let { put("job_index", it) }
+}
 
 @JsonClass(generateAdapter = false)
 data class SubmitQuestionRequest(
@@ -309,6 +343,42 @@ data class FeedbackResponse(
 )
 
 @JsonClass(generateAdapter = false)
+data class RewardCapabilitiesResponse(
+    val version: Int? = null,
+)
+
+@JsonClass(generateAdapter = false)
+data class ClaimRewardEventsRequest(
+    @Json(name = "p_device_hash") val deviceHash: String,
+    @Json(name = "p_delivery_id") val deliveryId: String,
+)
+
+@JsonClass(generateAdapter = false)
+data class RewardEventResponse(
+    val id: String = "",
+    val kind: String = "",
+    val amount: Int = 0,
+)
+
+@JsonClass(generateAdapter = false)
+data class AckRewardEventsRequest(
+    @Json(name = "p_device_hash") val deviceHash: String,
+    @Json(name = "p_delivery_id") val deliveryId: String,
+    @Json(name = "p_event_ids") val eventIds: List<String>,
+)
+
+@JsonClass(generateAdapter = false)
+data class AckRewardEventsResponse(
+    val acknowledged: Boolean = false,
+    @Json(name = "acknowledged_ids") val acknowledgedIds: List<String> = emptyList(),
+)
+
+@JsonClass(generateAdapter = false)
+data class ArchiveMyJobResponse(
+    val id: String? = null,
+)
+
+@JsonClass(generateAdapter = false)
 data class DevicePushTokenRequest(
     @Json(name = "device_hash") val deviceHash: String,
     @Json(name = "fcm_token") val fcmToken: String,
@@ -321,6 +391,17 @@ data class BasicSuccessResponse(
     val reason: String? = null,
     val action: String? = null,
 )
+
+/**
+ * 留言內容規則（db/033 起不限字數，§5.9）：去頭尾空白／tab／換行後至少 1 字，沒有上限。
+ * 回傳要送出的內容；空白回 null。
+ */
+object TreeHoleCommentPolicy {
+    const val MIN_LENGTH = 1
+
+    fun normalizedContentOrNull(content: String): String? =
+        content.trim().takeIf { it.length >= MIN_LENGTH }
+}
 
 sealed interface SubmitCommentResult {
     data object Submitted : SubmitCommentResult

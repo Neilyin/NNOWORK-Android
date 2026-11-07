@@ -11,7 +11,11 @@ import com.neilyin.nnowork.data.local.StampDao
 import com.neilyin.nnowork.data.plan.PlanRepository
 import com.neilyin.nnowork.data.settings.SettingsRepository
 import com.neilyin.nnowork.data.shop.ShopPurchaseRepository
+import com.neilyin.nnowork.data.jobarchive.JobArchiveRepository
+import com.neilyin.nnowork.data.treehole.TreeHoleApi
 import com.neilyin.nnowork.data.treehole.TreeHoleRepository
+import com.neilyin.nnowork.data.treehole.UserTokenCaller
+import com.neilyin.nnowork.data.treehole.createTreeHoleApi
 
 /**
  * 輕量級依賴提供者（取代 Hilt）。在 Application 初始化。
@@ -48,6 +52,22 @@ object ServiceLocator {
     val backupRepository: BackupRepository by lazy {
         BackupRepository(appContext, database, coinLedgerRepository)
     }
+    /** 樹洞、獎勵、封存共用同一個 Retrofit/OkHttp。 */
+    private val treeHoleApi: TreeHoleApi by lazy { createTreeHoleApi() }
+
+    val jobArchiveRepository: JobArchiveRepository by lazy {
+        JobArchiveRepository(
+            context = appContext,
+            database = database,
+            api = { treeHoleApi },
+            tokenCaller = UserTokenCaller(
+                accessToken = { authRepository.currentAccessToken },
+                refreshAccessToken = { stale -> authRepository.refreshAccessToken(stale) },
+            ),
+            currentOwnerId = { authRepository.currentUserId },
+        )
+    }
+
     val treeHoleRepository: TreeHoleRepository by lazy {
         TreeHoleRepository(
             appContext,
@@ -57,6 +77,10 @@ object ServiceLocator {
             coinLedgerRepository,
             accessTokenProvider = { authRepository.currentAccessToken },
             claimDeviceData = { authRepository.claimDeviceData() },
+            refreshAccessToken = { stale -> authRepository.refreshAccessToken(stale) },
+            currentUserId = { authRepository.currentUserId },
+            runNumberProvider = { jobArchiveRepository.currentRunNumber() },
+            apiFactory = { treeHoleApi },
         )
     }
 }

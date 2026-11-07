@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.data.backup
 
+import com.neilyin.nnowork.data.jobarchive.JobArchivePayload
 import com.squareup.moshi.JsonClass
 
 /**
@@ -18,13 +19,27 @@ data class BackupPayload(
     val niuMaConfig: BackupNiuMaConfig = BackupNiuMaConfig(),
     val coinLedgerEntries: List<BackupCoinLedgerEntry> = emptyList(),
     val shopPurchaseRecords: List<BackupShopPurchaseRecord> = emptyList(),
+    /** v4 新增：換工作封存的過往工作。v1–v3 缺席時為空陣列；匯入採「合併」而非覆蓋。 */
+    val jobArchives: List<BackupJobArchive> = emptyList(),
     /** 只是 UX 提示，不是身份憑證；舊備份缺少時為 null。 */
     val lastAuthProvider: String? = null,
 ) {
     companion object {
-        const val CURRENT_SCHEMA_VERSION = 3
+        /** 與 iOS DataBackup.swift `currentSchemaVersion = 4` 一致；仍可讀 v1–v3。 */
+        const val CURRENT_SCHEMA_VERSION = 4
     }
 }
+
+/** iOS `JobArchiveDTO`：封存內容整份以 payload 保存（§19.4 欄位）。 */
+@JsonClass(generateAdapter = false)
+data class BackupJobArchive(
+    val id: String = "",
+    val remoteID: String? = null,
+    val syncedAt: String? = null,
+    val payload: JobArchivePayload,
+    /** 擁有者帳號（可選）；缺席時為 null，登入時歸給目前帳號（僅限伺服器確認屬於本帳號者）。 */
+    val ownerUserID: String? = null,
+)
 
 @JsonClass(generateAdapter = false)
 data class BackupStampRecord(
@@ -56,6 +71,10 @@ data class BackupAppSettings(
     val commonReasons: List<String> = DEFAULT_REASONS,
     /** v2 新增；v1 缺少時必須解碼為 false。 */
     val hasMigratedToLedger: Boolean = false,
+    /** v4 新增：封存編號；v1–v3 缺少時視為第 1 份工作。 */
+    val currentJobIndex: Int = 1,
+    /** v4 內 additive：周目；缺少時 0（＝未記錄，讀取時推估）。 */
+    val currentRunNumber: Int = 0,
 ) {
     companion object {
         val DEFAULT_REASONS = listOf(
@@ -121,6 +140,11 @@ data class BackupNiuMaConfig(
     val shifts: List<BackupShift> = emptyList(),
     val dayShifts: Map<String, String> = emptyMap(),
     val shiftUseTemplates: Boolean = false,
+    /**
+     * iOS NiuMaConfigDTO 的時薪子模式（true = 手動計時）。舊 Android 匯出沒有這個 key（null），
+     * 匯入時以 [hourlyTrackingMode] 為準；iOS 備份只有這個 key，匯入時以它為準。
+     */
+    val hourlyManualMode: Boolean? = null,
     /** Android 手動純計時器的可選擴充；iOS 會安全忽略未知欄位。 */
     val manualTimerStatus: Int = 0,
     val manualTimerElapsedMillis: Long = 0L,

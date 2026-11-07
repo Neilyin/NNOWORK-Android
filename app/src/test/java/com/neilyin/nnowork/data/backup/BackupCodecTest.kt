@@ -11,9 +11,9 @@ class BackupCodecTest {
     private val codec = BackupCodec()
 
     @Test
-    fun `v3 payload round trips every cross-platform section`() {
+    fun `current v4 payload round trips every cross-platform section`() {
         val payload = BackupPayload(
-            schemaVersion = 3,
+            schemaVersion = BackupPayload.CURRENT_SCHEMA_VERSION,
             exportDate = "2026-07-19T08:30:00Z",
             appSettings = listOf(
                 BackupAppSettings(
@@ -177,7 +177,7 @@ class BackupCodecTest {
     fun `future schema is rejected before import`() {
         val exception = expectThrows<BackupValidationException> {
             codec.decodeAndValidate(
-                """{"schemaVersion":4,"exportDate":"2026-07-19T00:00:00Z"}""",
+                """{"schemaVersion":5,"exportDate":"2026-07-19T00:00:00Z"}""",
             )
         }
 

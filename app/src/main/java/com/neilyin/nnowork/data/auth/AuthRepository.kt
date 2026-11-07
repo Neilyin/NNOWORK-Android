@@ -55,6 +55,21 @@ class AuthRepository(
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
     val currentAccessToken: String? get() = session?.accessToken
 
+    /** Supabase auth user id（JWT `sub`，小寫）；未登入為 null。獎勵 journal 與過往工作以此分帳號。 */
+    val currentUserId: String? get() = session?.accessToken?.let(JwtClaims::subject)
+
+    private val refreshMutex = Mutex()
+
+    /**
+     * RPC 回 401 時 refresh 一次（android開發.md §11）。並發的 401 只會 refresh 一次：
+     * 若 token 已被別人換掉，直接回 true 讓呼叫端用新 token 重打。refresh 失敗不登出。
+     */
+    suspend fun refreshAccessToken(staleToken: String): Boolean = refreshMutex.withLock {
+        val current = session?.accessToken ?: return@withLock false
+        if (current != staleToken) return@withLock true
+        refreshSession()
+    }
+
     val googleOAuthUri: Uri
         get() = Uri.parse("${SUPABASE_URL}auth/v1/authorize")
             .buildUpon()

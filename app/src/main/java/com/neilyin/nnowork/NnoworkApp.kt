@@ -26,6 +26,8 @@ class NnoworkApp : Application() {
         runBlocking(Dispatchers.IO) {
             ServiceLocator.backupRepository.recoverPendingImportIfNeeded()
             ServiceLocator.backupRepository.migrateDeferredShopPurchases()
+            // 換工作若停在「Room 已提交、settings 未重設」之間被終止，UI 讀取前先前滾（§19.6，純本機）。
+            runCatching { ServiceLocator.jobArchiveRepository.recoverPendingTransitions() }
         }
 
         // 依設定排程桌面 Widget 定時刷新。
@@ -38,6 +40,8 @@ class NnoworkApp : Application() {
                 amount = 15,
             )
             ServiceLocator.shopPurchaseRepository.syncPending()
+            // 已登入時拉回雲端過往工作（§19.3；失敗靜默，未登入直接略過）。
+            ServiceLocator.jobArchiveRepository.pullFromServer()
             RemoteQuotesStore.refreshIfNeeded(this@NnoworkApp)
             val settings = ServiceLocator.settingsRepository.settings.first()
             WidgetScheduler.schedule(this@NnoworkApp, settings.widgetRefreshInterval)

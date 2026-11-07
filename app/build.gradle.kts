@@ -88,6 +88,15 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // Room 匯出的 schema JSON 供 MigrationTestHelper（androidTest）與 JVM 遷移測試讀取。
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -138,4 +147,12 @@ dependencies {
     implementation(libs.firebase.analytics)
 
     testImplementation("junit:junit:4.13.2")
+    // JVM 端以真的 SQLite 執行 v4 → v5 遷移 SQL（不需模擬器）。
+    testImplementation("org.xerial:sqlite-jdbc:3.41.2.2")
+
+    // Room 遷移的 instrumented test（MigrationTestHelper）。
+    androidTestImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.room:room-testing:${libs.versions.room.get()}")
 }

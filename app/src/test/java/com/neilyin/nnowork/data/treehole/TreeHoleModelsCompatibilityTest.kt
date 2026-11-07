@@ -52,16 +52,14 @@ class TreeHoleModelsCompatibilityTest {
                 FeedRequest(offset = 300, industry = "科技業", postType = POST_TYPE_QUESTION),
             ),
         )
-        val post = asMap(
-            JsonProvider.adapter<SubmitPostRequest>().toJson(
-                SubmitPostRequest(
-                    content = "今天又加班了",
-                    deviceHash = "device",
-                    nickname = "N",
-                    industry = "科技業",
-                    roundNumber = 2,
-                    stampCount = 3,
-                ),
+        val post = buildSubmitPostBody(
+            SubmitPostRequest(
+                content = "今天又加班了",
+                deviceHash = "device",
+                nickname = "N",
+                industry = "科技業",
+                roundNumber = 2,
+                stampCount = 3,
             ),
         )
 

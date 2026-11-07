@@ -1,6 +1,7 @@
 package com.neilyin.nnowork.data.backup
 
 import com.neilyin.nnowork.data.JsonProvider
+import com.neilyin.nnowork.data.jobarchive.JobArchiveCoding
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.Moshi
 import java.io.IOException
@@ -211,6 +212,23 @@ class BackupCodec(moshi: Moshi = JsonProvider.moshi) {
             validDate("$path.syncedAt", purchase.syncedAt)
         }
 
+        // v4：過往工作。重複 id 不拒絕（匯入時以 擁有者＋id 去重合併，與 iOS 一致）。
+        if (payload.jobArchives.size > MAX_COLLECTION_RECORDS) {
+            issue("jobArchives", "contains too many records")
+        }
+        payload.jobArchives.forEachIndexed { index, archive ->
+            val path = "jobArchives[$index]"
+            if (archive.id.isBlank()) issue("$path.id", "must not be blank")
+            else validUuid("$path.id", archive.id)
+            archive.remoteID?.let { validText("$path.remoteID", it, MAX_AUTH_PROVIDER_LENGTH * 4) }
+            archive.ownerUserID?.let { validText("$path.ownerUserID", it, MAX_AUTH_PROVIDER_LENGTH * 4) }
+            validDate("$path.syncedAt", archive.syncedAt)
+            if (JobArchiveCoding.validOrNull(archive.payload) == null) {
+                issue("$path.payload", "contains an invalid ISO-8601 date")
+            }
+            validText("$path.payload.companyName", archive.payload.companyName)
+        }
+
         payload.lastAuthProvider?.let { provider ->
             if (provider.isBlank()) issue("lastAuthProvider", "must not be blank")
             validText("lastAuthProvider", provider, MAX_AUTH_PROVIDER_LENGTH)
@@ -288,6 +306,13 @@ class BackupCodec(moshi: Moshi = JsonProvider.moshi) {
         },
         shopPurchaseRecords = payload.shopPurchaseRecords.mapIndexed { index, purchase ->
             purchase.copy(id = normalizedUuid(purchase.id, "purchase|$index|${purchase.purchasedAt}|${purchase.productID}"))
+        },
+        jobArchives = payload.jobArchives.map { archive ->
+            archive.copy(
+                payload = JobArchiveCoding.normalize(archive.payload),
+                remoteID = archive.remoteID?.trim()?.takeIf(String::isNotEmpty),
+                ownerUserID = archive.ownerUserID?.trim()?.lowercase()?.takeIf(String::isNotEmpty),
+            )
         },
         lastAuthProvider = payload.lastAuthProvider?.trim()?.takeIf { it.isNotEmpty() },
     )
