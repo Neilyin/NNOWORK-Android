@@ -121,20 +121,21 @@ object PixelColors {
     val catControlBorderSoft = colorHex("#C8B9AE")
     val notionControlBorderSoft = colorHex("#BCBCBA")
     val notionAccentSoft = colorHex("#EFEFED")
-    /** iOS #5C8A96 在頁底只有 3.5:1，Android 加深到 AA。 */
-    val summerSecondary = colorHex("#4D747E")
+    /** iOS #5C8A96 在頁底只有 3.5:1，Android 加深到 AA（含 accentSoft 底）。 */
+    val summerSecondary = colorHex("#4A6F79")
     val summerDivider = colorHex("#D5EDF2")
     val summerControlBorder = colorHex("#A8DAE4")
     val summerAccentSoft = colorHex("#D6F1F7")
     val summerOnAccent = colorHex("#04323C")
     val summerDanger = colorHex("#B4453A")
-    val pandaSecondary = colorHex("#6E6E6E")
+    /** iOS #6E6E6E 在 accentSoft 上只有 4.15:1，略加深。 */
+    val pandaSecondary = colorHex("#676767")
     val pandaDivider = colorHex("#E4E4E1")
     val pandaControlBorder = colorHex("#C9C9C4")
     val pandaAccentSoft = colorHex("#E8E8E5")
     val pandaDanger = colorHex("#B42318")
-    /** iOS #8A7A63 在頁底只有 3.6:1，Android 加深到 AA。 */
-    val slothSecondary = colorHex("#776955")
+    /** iOS #8A7A63 在頁底只有 3.6:1，Android 加深到 AA（含 accentSoft 底）。 */
+    val slothSecondary = colorHex("#756753")
     val slothDivider = colorHex("#E6DCC8")
     val slothControlBorder = colorHex("#CFC0A5")
     val slothAccentSoft = colorHex("#E7EEDF")

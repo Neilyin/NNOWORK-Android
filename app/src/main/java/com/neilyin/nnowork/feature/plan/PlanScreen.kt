@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.plan
 
+import com.neilyin.nnowork.ui.theme.contrastRatio
 import com.neilyin.nnowork.ui.theme.fieldSurface
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
@@ -34,7 +35,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
@@ -385,22 +385,20 @@ private fun ManualHourlyTimerBoard(
     val earnings = ManualSalaryTimer.earned(plan, now)
     val (statusLabel, statusColor) = when (plan.manualTimerStatus) {
         ManualSalaryTimer.RUNNING -> "計時中" to NnoworkTheme.colors.success
-        ManualSalaryTimer.PAUSED -> "已暫停" to NnoworkTheme.colors.highlight
-        else -> if (elapsed > 0L) "已停止" to NnoworkTheme.colors.secondaryText else "尚未開始" to NnoworkTheme.colors.secondaryText
+        ManualSalaryTimer.PAUSED -> "已暫停" to NnoworkTheme.colors.disabledBG
+        else -> if (elapsed > 0L) "已停止" to NnoworkTheme.colors.disabledBG else "尚未開始" to NnoworkTheme.colors.disabledBG
     }
 
+    // 計時卡：頁底色的內嵌面＋accent＋一個狀態色（計時中＝success），不再用彩色底配多種原色字。
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard(
-                backgroundColor = MaterialTheme.colorScheme.tertiary,
-                borderColor = MaterialTheme.colorScheme.outline,
-            )
+            .pixelCard(backgroundColor = NnoworkTheme.colors.appBG, borderColor = NnoworkTheme.colors.border, elevation = 0.dp)
             .padding(NnoworkSpacing.cozy),
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Timer, contentDescription = null, tint = NnoworkTheme.colors.info, modifier = Modifier.size(22.dp))
+            Icon(Icons.Filled.Timer, contentDescription = null, tint = NnoworkTheme.colors.accentForeground, modifier = Modifier.size(22.dp))
             Spacer(Modifier.size(NnoworkSpacing.xs))
             Text("手動計時", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText), modifier = Modifier.weight(1f))
             PixelBadge(backgroundColor = statusColor) {
@@ -416,7 +414,7 @@ private fun ManualHourlyTimerBoard(
         )
         Text(
             "本次累積 ${SalaryCalculator.formatMoney(plan, earnings)}",
-            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.success),
+            style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
@@ -456,11 +454,11 @@ private fun ManualHourlyTimerBoard(
                 onClick = onStop,
                 enabled = plan.manualTimerStatus == ManualSalaryTimer.RUNNING ||
                     plan.manualTimerStatus == ManualSalaryTimer.PAUSED,
-                backgroundColor = NnoworkTheme.colors.danger,
+                backgroundColor = NnoworkTheme.colors.disabledBG,
                 modifier = Modifier.weight(1f),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = NnoworkSpacing.xs, vertical = NnoworkSpacing.snug),
             ) {
-                Icon(Icons.Filled.Stop, contentDescription = null, tint = NnoworkTheme.colors.onElevated, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Stop, contentDescription = null, tint = NnoworkTheme.colors.danger, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(NnoworkSpacing.xxs))
                 Text("停止", style = pixelTextStyle(NnoworkTheme.type.caption, FontWeight.Bold, NnoworkTheme.colors.onElevated), maxLines = 1)
             }
@@ -508,7 +506,7 @@ private fun SalaryStat(label: String, value: String, color: Color, modifier: Mod
         verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs),
     ) {
         Text(label, style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText))
-        Text(value, style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, color))
+        Text(value, style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, color.takeIf { contrastRatio(it, NnoworkTheme.colors.accentSoft) >= 4.5f } ?: NnoworkTheme.colors.primaryText, monospace = true))
     }
 }
 

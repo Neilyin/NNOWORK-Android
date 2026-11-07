@@ -195,6 +195,8 @@ fun NnoworkField(
     maxLines: Int = Int.MAX_VALUE,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    /** true 時外框改成 danger（例如字數超過）。 */
+    isError: Boolean = false,
 ) {
     val colors = NnoworkTheme.colors
     val interaction = remember { MutableInteractionSource() }
@@ -215,7 +217,15 @@ fun NnoworkField(
             .alpha(if (enabled) 1f else 0.6f)
             .clip(shape)
             .background(colors.inputBG, shape)
-            .border(NnoworkLine.control, if (focused) colors.accentForeground else colors.inputBorder, shape)
+            .border(
+                NnoworkLine.control,
+                when {
+                    isError -> colors.danger
+                    focused -> colors.accentForeground
+                    else -> colors.inputBorder
+                },
+                shape,
+            )
             .padding(horizontal = NnoworkSpacing.sm, vertical = NnoworkSpacing.sm),
         decorationBox = { inner ->
             Box(contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {

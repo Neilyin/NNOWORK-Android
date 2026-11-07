@@ -92,6 +92,7 @@ class NnoworkTokensTest {
             check("primaryText/disabledBG (tonal button)", c.disabledText, c.disabledBG)
             check("accentForeground/accentSoft (badge)", c.accentForeground, c.accentSoft)
             check("primaryText/accentSoft", c.primaryText, c.accentSoft)
+            check("secondaryText/accentSoft (selected tile, timer hint)", c.secondaryText, c.accentSoft)
             check("inputText/inputBG", c.inputText, c.inputBG)
             check("danger/surface", c.danger, c.surface)
             check("success/surface", c.success, c.surface)
@@ -104,7 +105,8 @@ class NnoworkTokensTest {
             check("errorText/errorSoft", c.treeHole.errorText, c.treeHole.errorSoft)
             // 導覽列 icon＋文字：大字／icon 門檻 3:1
             check("tabSelected/tabBarBG", c.tabSelected, c.tabBarBG, 3.0)
-            check("tabUnselected/tabBarBG", c.tabUnselected, c.tabBarBG, 3.0)
+            // 未選取分頁的文字標籤是 13sp，屬一般字級：4.5:1。
+            check("tabUnselected/tabBarBG", c.tabUnselected, c.tabBarBG)
             check("navBarText/navBarBG", c.navBarText, c.navBarBG)
         }
         assertTrue("WCAG contrast failures:\n" + failures.joinToString("\n"), failures.isEmpty())

@@ -171,8 +171,8 @@ private class ThemeBase(
 )
 
 private val DarkSurface = Color(red = 0.16f, green = 0.19f, blue = 0.24f)
-/** iOS rgb(0.62,0.64,0.68) 在 darkGray 頁底只有 4.3:1，略提亮到 AA。 */
-private val DarkSecondary = colorHex("#A4A9B2")
+/** iOS rgb(0.62,0.64,0.68) 在 darkGray 頁底只有 4.3:1；提亮到在頁底與 accentSoft 上都達 AA。 */
+private val DarkSecondary = colorHex("#ADB2BA")
 private val White = Color(0xFFFFFFFF)
 
 private fun darkBase(accent: Color, cardBorder: Color) = ThemeBase(
@@ -186,7 +186,8 @@ private fun darkBase(accent: Color, cardBorder: Color) = ThemeBase(
     border = colorHex("#5A6475"),
     cardBorder = cardBorder,
     accent = accent,
-    accentSoft = accent.over(DarkSurface, 0.18f),
+    // 12%：再高的話 secondaryText 在 accentSoft（選取卡、計時卡）上會掉到 AA 以下。
+    accentSoft = accent.over(DarkSurface, 0.12f),
     onAccent = PixelColors.black,
     /** 8-bit 紅在深底當文字只有 3.5:1，改用淺一階的紅。 */
     danger = colorHex("#F28B82"),

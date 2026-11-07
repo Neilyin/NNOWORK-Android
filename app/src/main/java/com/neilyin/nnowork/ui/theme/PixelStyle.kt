@@ -281,7 +281,8 @@ fun PixelButton(
         PixelButtonVariant.Tonal, PixelButtonVariant.Outlined -> colors.primaryText
         else -> contentColorFor(fill)
     }
-    val outlined = when (role) {
+    // 停用的按鈕一律留一圈 hairline：tonal 鈕停用後淡掉，不然會跟所在的卡片底色融成一片。
+    val outlined = !enabled || when (role) {
         PixelButtonVariant.Outlined -> true
         PixelButtonVariant.Tonal -> !colors.disabledBG.standsAlone() && colors.disabledBG.luminance() > 0.9f
         PixelButtonVariant.Custom -> !fill.standsAlone()

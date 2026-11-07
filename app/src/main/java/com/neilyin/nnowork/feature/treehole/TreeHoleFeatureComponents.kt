@@ -1,5 +1,6 @@
 package com.neilyin.nnowork.feature.treehole
 
+import com.neilyin.nnowork.ui.theme.NnoworkField
 import com.neilyin.nnowork.ui.theme.NnoworkRadius
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -840,67 +841,46 @@ fun TreeHoleQuestionSheet(
 
             QuestionIdentityCard(identity = identity, avatarSuffix = strings.avatarSuffix)
 
-            OutlinedTextField(
-                value = content,
-                onValueChange = { content = it.take(MAX_QUESTION_LENGTH) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = strings.editorLabel },
-                enabled = !busy,
-                label = { Text(strings.editorLabel) },
-                placeholder = { Text(strings.editorPlaceholder) },
-                supportingText = {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        if (trimmed.isNotEmpty() && !validLength) {
-                            Text(
-                                strings.lengthHint,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.weight(1f),
-                            )
-                        } else {
-                            Spacer(Modifier.weight(1f))
-                        }
-                        Text("${content.length} / $MAX_QUESTION_LENGTH")
+            // 共用 NnoworkField（input* token、field 圓角）；標籤與字數放在框外，跟 sheet 底色對比。
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.tight)) {
+                Text(
+                    strings.editorLabel,
+                    style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.secondaryText),
+                )
+                NnoworkField(
+                    value = content,
+                    onValueChange = { content = it.take(MAX_QUESTION_LENGTH) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = strings.editorLabel },
+                    enabled = !busy,
+                    placeholder = strings.editorPlaceholder,
+                    singleLine = false,
+                    maxLines = 8,
+                    minHeight = 128.dp,
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    isError = (trimmed.isNotEmpty() && !validLength) || errorMessage != null,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Default,
+                    ),
+                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    if (trimmed.isNotEmpty() && !validLength) {
+                        Text(
+                            strings.lengthHint,
+                            style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.danger),
+                            modifier = Modifier.weight(1f),
+                        )
+                    } else {
+                        Spacer(Modifier.weight(1f))
                     }
-                },
-                isError = (trimmed.isNotEmpty() && !validLength) || errorMessage != null,
-                minLines = 5,
-                maxLines = 8,
-                shape = RoundedCornerShape(NnoworkRadius.field),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
-                    focusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                    cursorColor = NnoworkTheme.colors.treeHole.questionAccentDark,
-                    focusedBorderColor = NnoworkTheme.colors.treeHole.questionAccent,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
-                    focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
-                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                    // supporting text 畫在輸入框容器外，必須對應 sheet 背景，不能沿用淺色輸入面的深色文字。
-                    focusedSupportingTextColor = MaterialTheme.colorScheme.onBackground,
-                    unfocusedSupportingTextColor = MaterialTheme.colorScheme.onBackground,
-                    disabledSupportingTextColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
-                    errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    errorTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    errorCursorColor = MaterialTheme.colorScheme.error,
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                    errorLabelColor = MaterialTheme.colorScheme.error,
-                    errorPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
-                    errorSupportingTextColor = MaterialTheme.colorScheme.error,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    imeAction = ImeAction.Default,
-                ),
-            )
+                    Text(
+                        "${content.length} / $MAX_QUESTION_LENGTH",
+                        style = pixelTextStyle(NnoworkTheme.type.caption, color = NnoworkTheme.colors.secondaryText, monospace = true),
+                    )
+                }
+            }
 
             errorMessage?.takeIf { it.isNotBlank() }?.let { message ->
                 Text(

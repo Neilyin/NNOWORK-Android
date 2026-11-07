@@ -491,7 +491,7 @@ private fun RoundHeader(round: Int, count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelCard(backgroundColor = NnoworkTheme.colors.surface, borderColor = roundColor(round))
+            .pixelCard(backgroundColor = NnoworkTheme.colors.surface, borderColor = NnoworkTheme.colors.accent)
             .padding(NnoworkSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -500,10 +500,10 @@ private fun RoundHeader(round: Int, count: Int) {
             style = pixelTextStyle(NnoworkTheme.type.subtitle, FontWeight.Bold, NnoworkTheme.colors.primaryText),
         )
         Spacer(Modifier.weight(1f))
-        Text(roundSubtitle(round), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, roundColor(round)))
+        Text(roundSubtitle(round), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.accentForeground))
         Spacer(Modifier.size(NnoworkSpacing.sm))
-        PixelBadge(backgroundColor = roundColor(round)) {
-            Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true))
+        PixelBadge(backgroundColor = NnoworkTheme.colors.accent) {
+            Text(count.toString(), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onAccent, monospace = true))
         }
     }
 }
@@ -517,9 +517,20 @@ private fun RecordRow(record: StampRecordEntity, onEdit: () -> Unit) {
             .padding(NnoworkSpacing.cozy),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(0.35f)) {
-            Text(dateFormat.format(Date(record.date)), style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText))
-            Text(timeFormat.format(Date(record.date)), style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText))
+        // 日期欄依內容寬度排（不用固定比例），單行不換行；字級放大 1.3 倍時由右側原因欄讓位。
+        Column {
+            Text(
+                dateFormat.format(Date(record.date)),
+                style = pixelTextStyle(NnoworkTheme.type.small, FontWeight.Bold, NnoworkTheme.colors.primaryText, monospace = true),
+                maxLines = 1,
+                softWrap = false,
+            )
+            Text(
+                timeFormat.format(Date(record.date)),
+                style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText, monospace = true),
+                maxLines = 1,
+                softWrap = false,
+            )
         }
         Spacer(
             Modifier
@@ -618,13 +629,6 @@ private fun roundSubtitle(round: Int): String = when (round) {
     else -> "忍耐仙人"
 }
 
-@Composable
-private fun roundColor(round: Int) = when (round) {
-    1 -> NnoworkTheme.colors.info
-    2 -> NnoworkTheme.colors.warning
-    3 -> NnoworkTheme.colors.special
-    else -> NnoworkTheme.colors.secondaryText
-}
 
 private val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.TAIWAN)
 private val timeFormat = SimpleDateFormat("HH:mm", Locale.TAIWAN)
