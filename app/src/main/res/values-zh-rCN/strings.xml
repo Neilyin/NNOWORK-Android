@@ -357,4 +357,12 @@
     <string name="treehole_reward_post_approved">🎉 帖子通过审核！获得 %1$d 枚离职金币</string>
     <string name="treehole_reward_feedback">🎉 感谢你的意见反馈！获得 %1$d 枚离职金币</string>
     <string name="treehole_progress_compact">第 %1$d 张 · 第 %2$d 个印章</string>
+
+    <!-- Phase 1b follow-ups -->
+    <string name="treehole_progress_card">第 %1$d 张卡 · 第 %2$d 个印章</string>
+    <string name="treehole_progress_sheet">· 第 %1$d 张卡 · 第 %2$d 个印章</string>
+    <string name="settings_save_failed_title">保存失败</string>
+    <string name="settings_save_failed_message">数据保存失败，请再试一次</string>
+    <string name="jobarchive_verify_email_title">请先完成 Email 验证</string>
+    <string name="jobarchive_verify_email_message">请到邮箱点开验证信，回到这里登录后，再按一次「绑定账号并保存这段记录」。目前的集点卡都还在。</string>
 </resources>

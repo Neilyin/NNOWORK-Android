@@ -160,7 +160,7 @@ class JobTransitionCoordinatorTest {
         // App 重啟 → 復原前滾。
         local.crashAfterRoomPhase = false
         val recovered = coordinator(local, remote, pending, mutableListOf()).recoverPendingTransitions()
-        assertEquals(listOf("aaaaaaaa-0000-4000-8000-000000000001"), recovered.map { it.archive.id })
+        assertEquals(listOf("aaaaaaaa-0000-4000-8000-000000000001"), recovered.map { it.archive?.id })
         assertEquals(listOf("t1"), recovered.single().clearedReminderTodoIds)
         assertEquals("新公司", local.settings.companyName)
         assertEquals(20, local.settings.maxStamps)
@@ -192,7 +192,10 @@ class JobTransitionCoordinatorTest {
         local.crashAfterRoomPhase = false
         local.stamps += stamp("00000000-0000-4000-8000-0000000000aa", "2026-10-06T01:00:00Z", "新章", 1)
         val c = coordinator(local, remote, pending, mutableListOf())
-        assertTrue("discard recovery has no archive result", c.recoverPendingTransitions().isEmpty())
+        // 復原完成「不保存」：沒有封存，但要回報被清掉、排過提醒的待辦，讓呼叫端取消提醒。
+        val discardRecovery = c.recoverPendingTransitions().single()
+        assertNull("discard recovery has no archive", discardRecovery.archive)
+        assertEquals(listOf("t1"), discardRecovery.clearedReminderTodoIds)
         assertEquals("新公司", local.settings.companyName)
         assertEquals(30, local.settings.maxStamps)
         assertEquals(2, local.settings.currentJobIndex)
@@ -277,7 +280,7 @@ class JobTransitionCoordinatorTest {
         local.crashAfterRoomPhase = false
         val result = coordinator(local, remote, pending, mutableListOf("cccccccc-0000-4000-8000-000000000003"))
             .archiveAndStartNewJob(owner, "新公司")
-        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive.id)
+        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive?.id)
         assertEquals(1, local.archives.size)
         assertEquals(1, remote.uploads.size)
         assertEquals(2, local.settings.currentJobIndex)
@@ -307,7 +310,7 @@ class JobTransitionCoordinatorTest {
         remote.failUpload = null
         val result = coordinator(local, remote, pending, mutableListOf("ffffffff-0000-4000-8000-00000000000f"))
             .archiveAndStartNewJob(owner, "新公司")
-        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive.id)
+        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive?.id)
         assertTrue(pending.entries.isEmpty())
     }
 
@@ -382,7 +385,7 @@ class JobTransitionCoordinatorTest {
         val result = coordinator(local, remote, pending, ids).archiveAndStartNewJob(owner, "新公司")
         assertEquals(listOf("aaaaaaaa-0000-4000-8000-000000000001", "aaaaaaaa-0000-4000-8000-000000000001"), remote.uploads.map { it.first })
         assertEquals(remote.uploads[0].second.jobIndex, remote.uploads[1].second.jobIndex)
-        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive.id)
+        assertEquals("aaaaaaaa-0000-4000-8000-000000000001", result.archive?.id)
         assertTrue(pending.entries.isEmpty())
     }
 
@@ -532,6 +535,23 @@ class JobTransitionCoordinatorTest {
         // 只清這份工作的 pending；不上傳任何東西。
         assertEquals(setOf(JobArchivePendingKeys.key(owner, 7)), pending.entries.keys)
         assertTrue(remote.uploads.isEmpty())
+    }
+
+    @Test
+    fun `a later reset also reports the todo ids of a discard it had to finish first`() = runBlocking {
+        val local = fixture().apply { crashAfterRoomPhase = true }
+        val pending = MemoryPending()
+        try {
+            coordinator(local, FakeRemote(), pending, mutableListOf("dddddddd-0000-4000-8000-00000000000e"))
+                .startNewJobWithoutArchive(null, "新公司")
+            fail("Expected the simulated crash")
+        } catch (_: ProcessDeath) {
+        }
+        local.crashAfterRoomPhase = false
+        val cleared = coordinator(local, FakeRemote(), pending, mutableListOf())
+            .resetAllForFreshStart(null) { style, unlocked -> style in unlocked }
+        assertEquals("recovered discard's reminder is reported once", listOf("t1"), cleared)
+        assertTrue(pending.entries.isEmpty())
     }
 
     @Test

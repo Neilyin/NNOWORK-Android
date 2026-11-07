@@ -357,4 +357,12 @@
     <string name="treehole_reward_post_approved">🎉 Post approved! Earned %1$d coins</string>
     <string name="treehole_reward_feedback">🎉 Thanks for your feedback! You earned %1$d coins</string>
     <string name="treehole_progress_compact">Card %1$d · Stamp %2$d</string>
+
+    <!-- Phase 1b follow-ups -->
+    <string name="treehole_progress_card">Card %1$d · Stamp %2$d</string>
+    <string name="treehole_progress_sheet">· Card %1$d · Stamp %2$d</string>
+    <string name="settings_save_failed_title">Save Failed</string>
+    <string name="settings_save_failed_message">Failed to save your data. Please try again.</string>
+    <string name="jobarchive_verify_email_title">Please Verify Your Email First</string>
+    <string name="jobarchive_verify_email_message">Open the verification email, come back and sign in, then tap \"Link Account &amp; Save This Record\" again. Your current stamp card is untouched.</string>
 </resources>

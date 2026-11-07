@@ -117,7 +117,8 @@ object JobArchivePendingKeys {
 }
 
 data class JobTransitionResult(
-    val archive: JobArchiveEntity,
+    /** 封存結果；null = 復原完成的是一次「不保存，直接開始」（沒有封存）。 */
+    val archive: JobArchiveEntity?,
     /** 已清除、排過提醒的待辦 id；呼叫端負責取消提醒。 */
     val clearedReminderTodoIds: List<String>,
 )
@@ -190,10 +191,17 @@ class JobTransitionCoordinator(
             if (entry.kind == JobArchivePendingEntry.KIND_DISCARD) {
                 // 使用者已明確選擇放棄：完成那次「不保存」（只刪當時記下的章；冪等）。
                 local.commitRoomPhase(archive = null, stampIds = entry.archivedStampIds.orEmpty().toSet())
+                var discardedTodoIds: List<String> = emptyList()
                 local.resetCurrentJobAndClearPending(listOf(key)) { settings, plan ->
-                    if (settings.currentJobIndex > entry.jobIndex) settings to plan
-                    else resetFor(entry, entry.jobIndex, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
+                    if (settings.currentJobIndex > entry.jobIndex) {
+                        settings to plan
+                    } else {
+                        // 計畫還沒被重設：這些就是這次「不保存」要清掉的待辦，呼叫端要取消它們的提醒。
+                        discardedTodoIds = JobTransitionPolicy.scheduledTodoIds(plan)
+                        resetFor(entry, entry.jobIndex, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
+                    }
                 }
+                results += JobTransitionResult(archive = null, clearedReminderTodoIds = discardedTodoIds)
                 continue
             }
             val owner = entry.ownerUserId.lowercase(Locale.ROOT)
@@ -224,7 +232,11 @@ class JobTransitionCoordinator(
         val owner = ownerId?.trim()?.lowercase(Locale.ROOT)?.takeIf(String::isNotEmpty)
             ?: throw JobTransitionException.NotSignedIn()
         // 上一次換工作若停在 Room 階段之後，先把它完成；那就是使用者要的這次換工作，不再封存一份空的。
-        recoverPendingTransitions().firstOrNull { it.archive.ownerUserId == owner }?.let { return it }
+        val recovered = recoverPendingTransitions()
+        val recoveredTodoIds = recovered.flatMap { it.clearedReminderTodoIds }
+        recovered.firstOrNull { it.archive?.ownerUserId == owner }?.let {
+            return it.copy(clearedReminderTodoIds = recoveredTodoIds.distinct())
+        }
 
         val now = nowMillis()
         val current = local.readCurrentJob()
@@ -302,7 +314,7 @@ class JobTransitionCoordinator(
             if (error is CancellationException) throw error
             throw JobTransitionException.LocalSaveFailed(error)
         }
-        return JobTransitionResult(archive, JobTransitionPolicy.scheduledTodoIds(fresh.plan))
+        return JobTransitionResult(archive, (recoveredTodoIds + JobTransitionPolicy.scheduledTodoIds(fresh.plan)).distinct())
     }
 
     /**
@@ -314,7 +326,7 @@ class JobTransitionCoordinator(
         newCompanyName: String,
         maxStamps: Int = JobTransitionPolicy.DEFAULT_MAX_STAMPS,
     ): List<String> {
-        recoverPendingTransitions()
+        val recoveredTodoIds = recoverPendingTransitions().flatMap { it.clearedReminderTodoIds }
         val owner = ownerId?.trim()?.lowercase(Locale.ROOT)?.takeIf(String::isNotEmpty)
         val current = local.readCurrentJob()
         val owned = owner?.let { local.archivesForOwner(it) }
@@ -347,7 +359,7 @@ class JobTransitionCoordinator(
         local.resetCurrentJobAndClearPending(keys) { settings, plan ->
             resetFor(entry, jobIndex, settings) to JobTransitionPolicy.resetPlanForNewJob(plan)
         }
-        return JobTransitionPolicy.scheduledTodoIds(current.plan)
+        return (recoveredTodoIds + JobTransitionPolicy.scheduledTodoIds(current.plan)).distinct()
     }
 
     /**
@@ -359,7 +371,7 @@ class JobTransitionCoordinator(
         ownerId: String?,
         isStyleUnlocked: (styleId: Int, unlockedStyles: List<Int>) -> Boolean,
     ): List<String> {
-        recoverPendingTransitions()
+        val recoveredTodoIds = recoverPendingTransitions().flatMap { it.clearedReminderTodoIds }
         val owner = ownerId?.trim()?.lowercase(Locale.ROOT)?.takeIf(String::isNotEmpty)
         val current = local.readCurrentJob()
         val owned = owner?.let { local.archivesForOwner(it) }
@@ -376,7 +388,7 @@ class JobTransitionCoordinator(
             JobTransitionPolicy.resetSettingsForFreshStart(settings, newJobIndex, isStyleUnlocked) to
                 JobTransitionPolicy.resetPlanForFreshStart(plan)
         }
-        return JobTransitionPolicy.scheduledTodoIds(current.plan)
+        return (recoveredTodoIds + JobTransitionPolicy.scheduledTodoIds(current.plan)).distinct()
     }
 
     /** 登入後／回前景拉回過往工作補到本機（以 帳號 + id 去重）。不修改 currentJobIndex。 */

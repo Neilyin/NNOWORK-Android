@@ -167,6 +167,13 @@ class SettingsViewModel(
     private val _accountDeleteFailed = MutableStateFlow(false)
     /** 刪除帳號失敗（iOS「刪除失敗」alert）。 */
     val accountDeleteFailed: StateFlow<Boolean> = _accountDeleteFailed.asStateFlow()
+    private val _resetFailed = MutableStateFlow(false)
+    /** 「全部重來」寫入失敗（iOS showingSaveErrorAlert「存檔失敗」）。 */
+    val resetFailed: StateFlow<Boolean> = _resetFailed.asStateFlow()
+
+    fun dismissResetFailure() {
+        _resetFailed.value = false
+    }
 
     val settings: StateFlow<AppSettings> = settingsRepository.settings.stateIn(
         viewModelScope,
@@ -246,7 +253,10 @@ class SettingsViewModel(
                 jobArchiveRepository.resetAllForFreshStart { styleId, unlocked ->
                     CardTheme.fromId(styleId).isUnlocked(unlocked)
                 }
-            }.getOrElse { return@launch }
+            }.getOrElse {
+                _resetFailed.value = true
+                return@launch
+            }
             runCatching { com.neilyin.nnowork.notify.ReminderScheduler.cancelAll(context, clearedTodoIds) }
             com.neilyin.nnowork.widget.WidgetScheduler.schedule(context, settingsRepository.current().widgetRefreshInterval)
             com.neilyin.nnowork.widget.WidgetScheduler.refreshNow(context)
@@ -441,6 +451,21 @@ fun SettingsScreen(
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val blockedAuthors by viewModel.blockedAuthors.collectAsStateWithLifecycle()
     val accountDeleteFailed by viewModel.accountDeleteFailed.collectAsStateWithLifecycle()
+    val resetFailed by viewModel.resetFailed.collectAsStateWithLifecycle()
+    if (resetFailed) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissResetFailure,
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text(stringResource(com.neilyin.nnowork.R.string.settings_save_failed_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = { Text(stringResource(com.neilyin.nnowork.R.string.settings_save_failed_message), style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated)) },
+            confirmButton = {
+                PixelButton(onClick = viewModel::dismissResetFailure, backgroundColor = NnoworkTheme.colors.buttonBG) {
+                    Text(stringResource(com.neilyin.nnowork.R.string.jobarchive_ok), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+                }
+            },
+        )
+    }
     var showJobTransition by rememberSaveable { mutableStateOf(false) }
     if (showJobTransition) {
         JobTransitionSheet(onDismiss = { showJobTransition = false })
@@ -1014,7 +1039,7 @@ private fun JobChangeSection(onOpen: () -> Unit) {
         ) {
             Icon(Icons.Filled.Autorenew, null, tint = NnoworkTheme.colors.primaryText, modifier = Modifier.size(NnoworkSize.icon))
             Spacer(Modifier.size(NnoworkSpacing.sm))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs)) {
                 Text(
                     stringResource(com.neilyin.nnowork.R.string.jobarchive_transition_title),
                     style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText),

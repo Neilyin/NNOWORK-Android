@@ -38,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -132,7 +131,17 @@ class JobTransitionViewModel(
                 }
             }
         }
+    }
+
+    /** 每次打開畫面：重新讀「上次換工作未完成」提示。 */
+    fun onOpened() {
         viewModelScope.launch { controller.load() }
+    }
+
+    /** 畫面關閉（取消或完成）：清掉輸入與待接續的登入，下次打開是全新的畫面。 */
+    fun reset() {
+        archiveAfterSignIn = false
+        controller.reset()
     }
 
     fun updateCompanyName(name: String) = controller.updateCompanyName(name)
@@ -189,8 +198,17 @@ class JobTransitionViewModel(
 fun JobTransitionSheet(
     onDismiss: () -> Unit,
     onCompleted: () -> Unit = onDismiss,
-    viewModel: JobTransitionViewModel = viewModel(key = "job-transition-" + rememberSaveable { java.util.UUID.randomUUID().toString() }),
+    // 固定 key：Activity 只會留一個實例，關閉時 reset()；旋轉螢幕時輸入仍保留。
+    viewModel: JobTransitionViewModel = viewModel(key = JOB_TRANSITION_VIEW_MODEL_KEY),
 ) {
+    val close: () -> Unit = {
+        viewModel.reset()
+        onDismiss()
+    }
+    val complete: () -> Unit = {
+        viewModel.reset()
+        onCompleted()
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val currentJob by viewModel.currentJob.collectAsStateWithLifecycle()
@@ -203,15 +221,17 @@ fun JobTransitionSheet(
         confirmValueChange = { it != SheetValue.Hidden || !processing },
     )
 
+    var showVerifyHint by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { viewModel.onOpened() }
     LaunchedEffect(state.completed) {
-        if (state.completed) onCompleted()
+        if (state.completed) complete()
     }
     LaunchedEffect(authState.isSignedIn) {
         if (authState.isSignedIn) showAuth = false
     }
 
     ModalBottomSheet(
-        onDismissRequest = { if (!state.processing) onDismiss() },
+        onDismissRequest = { if (!state.processing) close() },
         sheetState = sheetState,
         shape = NnoworkSheetDefaults.shape,
         containerColor = NnoworkSheetDefaults.containerColor,
@@ -231,7 +251,7 @@ fun JobTransitionSheet(
                 showAuth = true
             },
             onRequestDiscard = viewModel::requestDiscard,
-            onCancel = onDismiss,
+            onCancel = close,
             modifier = Modifier.fillMaxHeight(0.92f),
         )
     }
@@ -244,6 +264,20 @@ fun JobTransitionSheet(
             onDismiss = viewModel::dismissDiscard,
         )
     }
+    if (showVerifyHint) {
+        AlertDialog(
+            onDismissRequest = { showVerifyHint = false },
+            containerColor = NnoworkDialogDefaults.containerColor,
+            shape = NnoworkDialogDefaults.shape,
+            title = { Text(stringResource(R.string.jobarchive_verify_email_title), style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated)) },
+            text = { Text(stringResource(R.string.jobarchive_verify_email_message), style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated)) },
+            confirmButton = {
+                PixelButton(onClick = { showVerifyHint = false }, variant = PixelButtonVariant.Primary) {
+                    Text(stringResource(R.string.jobarchive_ok), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                }
+            },
+        )
+    }
     state.error?.let { error ->
         JobTransitionErrorDialog(error = error, serverMessage = state.serverMessage, onDismiss = viewModel::dismissError)
     }
@@ -254,6 +288,8 @@ fun JobTransitionSheet(
             onModeChange = { registerMode = it },
             onDismiss = {
                 showAuth = false
+                // iOS handleAuthSheetDismissed：Email 註冊後還沒驗證 → 提示驗證完再按一次（目前的卡都還在）。
+                if (authState.awaitingEmailVerification) showVerifyHint = true
                 viewModel.cancelSignIn()
             },
             onSubmit = { email, password ->
@@ -522,3 +558,5 @@ private fun JobTransitionErrorDialog(error: JobTransitionError, serverMessage: S
         },
     )
 }
+
+private const val JOB_TRANSITION_VIEW_MODEL_KEY = "job-transition"

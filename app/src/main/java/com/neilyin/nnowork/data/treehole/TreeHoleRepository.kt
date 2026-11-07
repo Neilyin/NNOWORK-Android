@@ -38,7 +38,6 @@ import retrofit2.HttpException
 import retrofit2.Retrofit
 import com.squareup.moshi.Types
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 
 const val ANDROID_FEEDBACK_SOURCE = "來自於android裝置"
 
@@ -87,7 +86,6 @@ class TreeHoleRepository(
             ?: FileRewardJournalStore(File(context.filesDir, "reward_delivery/pending-v1.json"))
         RewardDelivery(RewardDeliveryJournal(store))
     }
-    private val pendingFeedbackRewardCount = AtomicInteger(0)
 
     val profile: Flow<TreeHoleProfile?> = context.appDataStore.data.map { prefs ->
         prefs[profileKey]?.let { runCatching { profileAdapter.fromJson(it) }.getOrNull() }
@@ -331,19 +329,6 @@ class TreeHoleRepository(
             tokenCaller.call { authorization -> api.syncMyNickname(authorization, request) }
         }
         return response?.takeIf(NicknameSyncResponse::success)
-    }
-
-    @Deprecated(
-        message = "Pass the stamp-time round and count snapshot to avoid stale metadata.",
-        replaceWith = ReplaceWith("submitPost(content, roundNumber, stampCount)"),
-    )
-    suspend fun submitPost(content: String) {
-        val settings = settingsRepository.current()
-        submitPost(
-            content = content,
-            roundNumber = settings.currentRound,
-            stampCount = stampDao.countForRound(settings.currentRound),
-        )
     }
 
     /**
@@ -619,25 +604,6 @@ class TreeHoleRepository(
             credit = { event -> coinLedgerRepository.creditRewardEventIfAbsent(event) },
         )
         return RewardSyncSummary.of(credited)
-    }
-
-    /**
-     * 相容舊 UI 呼叫順序（checkNewApprovals → checkNewFeedbackRewards）：這裡跑一次完整的
-     * [synchronizeRewards]，回傳貼文通過的則數，回饋獎勵則數留給下一個 [checkNewFeedbackRewards]。
-     */
-    @Deprecated("Use synchronizeRewards()", ReplaceWith("synchronizeRewards()"))
-    suspend fun checkNewApprovals(): Int {
-        pendingFeedbackRewardCount.set(0)
-        val summary = synchronizeRewards()
-        pendingFeedbackRewardCount.set(summary.feedbackRewardCount)
-        return summary.approvedPostCount
-    }
-
-    /** 不再發出網路請求；回傳上一次 [checkNewApprovals] 同步到的回饋獎勵則數。 */
-    @Deprecated("Use synchronizeRewards()", ReplaceWith("synchronizeRewards()"))
-    suspend fun checkNewFeedbackRewards(): Int {
-        ensureCurrentTermsAccepted()
-        return pendingFeedbackRewardCount.getAndSet(0)
     }
 
     private inner class TreeHoleRewardRemote(

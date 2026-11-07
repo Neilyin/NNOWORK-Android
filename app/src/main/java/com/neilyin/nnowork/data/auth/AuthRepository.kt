@@ -35,6 +35,8 @@ data class AuthUiState(
     val isProcessing: Boolean = false,
     val message: String? = null,
     val isError: Boolean = false,
+    /** Email 註冊成功但伺服器要求先收信驗證（尚未登入）。換工作畫面據此提示「請先完成 Email 驗證」。 */
+    val awaitingEmailVerification: Boolean = false,
 )
 
 class AuthRepository(
@@ -86,7 +88,8 @@ class AuthRepository(
     }
 
     suspend fun signUp(email: String, password: String) = operationMutex.withLock {
-        process {
+        var needsVerification = false
+        val ok = process {
             validate(email, password)
             val response = postAuth("auth/v1/signup", mapOf("email" to email.trim(), "password" to password))
             val auth = decodeSession(response.body)
@@ -95,9 +98,12 @@ class AuthRepository(
                 finishSignIn(auth, email.trim(), "email")
                 "註冊完成，已登入並認領這台裝置的資料。"
             } else {
+                needsVerification = true
                 "註冊成功，請到信箱完成驗證後再登入。"
             }
         }
+        if (ok && needsVerification) _state.value = _state.value.copy(awaitingEmailVerification = true)
+        ok
     }
 
     suspend fun signIn(email: String, password: String) = operationMutex.withLock {
@@ -178,6 +184,7 @@ class AuthRepository(
             email = session?.email,
             lastProvider = provider,
             isError = false,
+            awaitingEmailVerification = false,
         )
         // 登入完成時先認領一次；之後 profile upsert 也會透過公開方法重試。
         claimDeviceData()

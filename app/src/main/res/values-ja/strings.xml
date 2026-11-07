@@ -357,4 +357,12 @@
     <string name="treehole_reward_post_approved">🎉 投稿が承認されました！退職コインを%1$d枚獲得</string>
     <string name="treehole_reward_feedback">🎉 フィードバックありがとうございます！退職コインを%1$d枚獲得</string>
     <string name="treehole_progress_compact">%1$d枚目 · %2$d個目のスタンプ</string>
+
+    <!-- Phase 1b follow-ups -->
+    <string name="treehole_progress_card">%1$d枚目のカード · %2$d個目のスタンプ</string>
+    <string name="treehole_progress_sheet">· %1$d枚目のカード · %2$d個目のスタンプ</string>
+    <string name="settings_save_failed_title">保存できませんでした</string>
+    <string name="settings_save_failed_message">データを保存できませんでした。もう一度お試しください</string>
+    <string name="jobarchive_verify_email_title">まずメール認証を完了してください</string>
+    <string name="jobarchive_verify_email_message">メールの認証リンクを開いてからここでログインし、もう一度「アカウントを連携してこの記録を保存」をタップしてください。現在のスタンプカードはそのまま残っています。</string>
 </resources>
