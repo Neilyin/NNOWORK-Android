@@ -189,6 +189,8 @@ fun AppRoot(viewModel: RootViewModel = viewModel()) {
                         )
                         // 非強制更新提示（iOS RootView 頂部滑入的 UpdateBanner）
                         UpdateBannerHost(Modifier.align(Alignment.TopCenter))
+                        // 年度回顧一次性邀請卡（§22.12）：只在主畫面、畫面空著時才跳
+                        com.neilyin.nnowork.feature.yearreview.YearReviewInviteHost(cardTheme = appTheme)
                     }
                 }
             }
