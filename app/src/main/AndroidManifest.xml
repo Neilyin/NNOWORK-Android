@@ -54,6 +54,19 @@
                 android:resource="@xml/salary_widget_info" />
         </receiver>
 
+        <!-- 牛馬／薪水計時器桌面 Widget（對應 iOS NiuMaWidget；小與寬兩種尺寸） -->
+        <receiver
+            android:name=".widget.NiuMaWidgetReceiver"
+            android:exported="false"
+            android:label="@string/niuma_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/niuma_widget_info" />
+        </receiver>
+
         <!-- 離職語錄桌面 Widget -->
         <receiver
             android:name=".widget.QuoteWidgetReceiver"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glance 沒有 Chronometer；以 AndroidRemoteViews 嵌入，倒數／計時由系統每秒自走，不需喚醒 App。 -->
+<Chronometer xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/niuma_chronometer"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:includeFontPadding="false"
+    android:singleLine="true"
+    android:textStyle="bold"
+    android:typeface="monospace" />

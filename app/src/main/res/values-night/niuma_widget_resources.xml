@@ -1,0 +1,7 @@
+<resources>
+    <!-- 夜間預覽（取自夜空 token）。 -->
+    <color name="niuma_preview_bg">#0F1626</color>
+    <color name="niuma_preview_text">#F4F1E8</color>
+    <color name="niuma_preview_secondary">#B8B5AC</color>
+    <color name="niuma_preview_money">#7FD6A0</color>
+</resources>

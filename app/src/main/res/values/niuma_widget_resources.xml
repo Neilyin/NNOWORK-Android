@@ -1,0 +1,9 @@
+<resources>
+    <!-- 牛馬 Widget 選擇器預覽用（取自 Notion 淺色 token）。 -->
+    <color name="niuma_preview_bg">#FFFFFF</color>
+    <color name="niuma_preview_text">#1F1F1F</color>
+    <color name="niuma_preview_secondary">#5F5F5F</color>
+    <color name="niuma_preview_money">#1E7A4C</color>
+    <string name="niuma_preview_amount" translatable="false">NT$888</string>
+    <string name="niuma_preview_countdown" translatable="false">03:12:45</string>
+</resources>
