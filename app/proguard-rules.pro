@@ -10,3 +10,10 @@
 -keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations
 -keepattributes AnnotationDefault
 -keep class kotlin.Metadata { *; }
+
+# Play review-ktx 參照的 gms 編譯期註解（執行時不需要）。
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite
+
+# Moshi 用 KotlinJsonAdapterFactory（反射）：data 層有不少沒標 @JsonClass 的模型（例如 JobArchiveRemoteRow、RewardEvent），
+# 被 R8 改名會讓 JSON 欄位對不上。整個 data 層保留類別與欄位名稱。
+-keep class com.neilyin.nnowork.data.** { *; }
