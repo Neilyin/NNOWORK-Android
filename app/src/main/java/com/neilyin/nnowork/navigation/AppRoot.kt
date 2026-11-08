@@ -169,6 +169,8 @@ fun AppRoot(viewModel: RootViewModel = viewModel()) {
                     manualNotice || (!dismissedInSession && current.lastSeenNoticeVersion != UPDATE_NOTICE_VERSION) -> {
                         UpdateNoticeScreen(
                             onFinished = {
+                                // 從設定頁打開的，關掉後回到設定頁（主畫面整個重建，分頁會回到 initialMainTab）
+                                if (manualNotice) initialMainTab = 4
                                 manualNotice = false
                                 dismissedInSession = true
                                 viewModel.markUpdateNoticeSeen()

@@ -46,8 +46,8 @@ android {
         applicationId = "com.chi157.resignationpointscard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1279
-        versionName = "3.0"
+        versionCode = 1280
+        versionName = "3.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

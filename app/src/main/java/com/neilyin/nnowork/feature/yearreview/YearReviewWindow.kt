@@ -96,9 +96,12 @@ data class YearReviewTestFlags(
 /**
  * 本機（不同步、不進備份）的年度回顧偏好：測試開關與邀請卡「看過」紀錄。
  *
- * DEBUG build 的「提前開放」預設開著（使用者要能在期間外先看）；Release 預設全關，只照 §22.1 開放。
+ * 測試工具目前關閉（[TEST_TOOLS_ENABLED]）：不論 DEBUG／Release，開關一律視為關，只照 §22.1 在 12/10～1/31 開放。
  */
 object YearReviewPrefs {
+    /** 開發測試用：改成 true 才會讀測試開關、在設定頁顯示 DEBUG 測試卡。上架前保持 false。 */
+    const val TEST_TOOLS_ENABLED = false
+
     private const val FILE = "year_review_prefs"
     private lateinit var prefs: SharedPreferences
     private val _flags = MutableStateFlow(YearReviewTestFlags())
@@ -116,6 +119,10 @@ object YearReviewPrefs {
     }
 
     private fun refresh() {
+        if (!TEST_TOOLS_ENABLED) {
+            _flags.value = YearReviewTestFlags()
+            return
+        }
         _flags.value = YearReviewTestFlags(
             earlyAccess = prefs.getBoolean(YearReviewTestFlags.EARLY_ACCESS_KEY, BuildConfig.DEBUG),
             simulateInviteWindow = prefs.getBoolean(YearReviewTestFlags.SIMULATE_INVITE_WINDOW_KEY, false),

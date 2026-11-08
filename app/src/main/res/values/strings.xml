@@ -270,7 +270,7 @@
     <string name="treehole_blocked_users_notice">解除封鎖後，內容會在下次重新載入時出現。</string>
     <string name="treehole_unblock">解除封鎖</string>
     <string name="treehole_support_title">聯絡我們</string>
-    <string name="treehole_support_body">如果你遇到檳急的安全問題，可以直接寄信聯絡我們。</string>
+    <string name="treehole_support_body">如果你遇到緊急的安全問題，可以直接寄信聯絡我們。</string>
     <string name="treehole_support_email" translatable="false">hi.iamneil.yin@gmail.com</string>
     <string name="treehole_support_email_action">寄信給客服</string>
 

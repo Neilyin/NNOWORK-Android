@@ -142,6 +142,8 @@ fun OnboardingScreen(
                             cardStyle = styleId,
                             currentRound = 1,
                             isOnboardingFinished = true,
+                            // 新用戶不需要看「這次更新了什麼」
+                            lastSeenNoticeVersion = com.neilyin.nnowork.feature.update.UPDATE_NOTICE_VERSION,
                         )
                     }
                     onFinished()

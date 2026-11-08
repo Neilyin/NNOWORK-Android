@@ -46,7 +46,7 @@ import com.neilyin.nnowork.ui.theme.pixelTextStyle
 /**
  * 設定頁最上方的年度回顧入口（§22.13）：開放期間（或「提前開放」）才出現。
  * 任一測試開關開著時標「測試中」。點了先記邀請卡看過再打開回顧。
- * DEBUG build 另有測試開關卡（文字只有繁中）；DEBUG 的「提前開放」預設開著，所以期間外也看得到入口。
+ * 測試開關卡只在 [YearReviewPrefs.TEST_TOOLS_ENABLED] 且 DEBUG build 時出現（文字只有繁中）。
  */
 @Composable
 fun YearReviewSettingsSection(cardTheme: CardTheme, modifier: Modifier = Modifier) {
@@ -55,7 +55,8 @@ fun YearReviewSettingsSection(cardTheme: CardTheme, modifier: Modifier = Modifie
     val today = YearReviewWindow.today()
     val year = YearReviewWindow.availableYear(today, flags.earlyAccess)
     var openYear by rememberSaveable { mutableStateOf<Int?>(null) }
-    if (year == null && !BuildConfig.DEBUG) return
+    val showTestTools = YearReviewPrefs.TEST_TOOLS_ENABLED && BuildConfig.DEBUG
+    if (year == null && !showTestTools) return
 
     openYear?.let { YearReviewDialog(year = it, cardTheme = cardTheme, onDismiss = { openYear = null }) }
 
@@ -92,7 +93,7 @@ fun YearReviewSettingsSection(cardTheme: CardTheme, modifier: Modifier = Modifie
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colors.secondaryText)
             }
         }
-        if (BuildConfig.DEBUG) DebugToggles()
+        if (showTestTools) DebugToggles()
     }
 }
 

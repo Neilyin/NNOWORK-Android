@@ -28,13 +28,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.ImportExport
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RocketLaunch
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,7 +63,7 @@ import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
-const val UPDATE_NOTICE_VERSION = "android-2.0-theme-351"
+const val UPDATE_NOTICE_VERSION = "android-3.7"
 
 private data class UpdatePage(
     val icon: ImageVector,
@@ -70,68 +72,120 @@ private data class UpdatePage(
     val title: String,
     val body: String,
     val location: String? = null,
+    /** 最後一頁：附上 3.0～3.7 的版本紀錄。 */
+    val showHistory: Boolean = false,
+)
+
+private data class VersionEntry(val version: String, val items: List<String>)
+
+/** 3.0～3.7 版本紀錄（只列 Android 也有的功能；新到舊）。 */
+private val versionHistory = listOf(
+    VersionEntry("3.7", listOf(
+        "集滿第 3 張起成為「忍耐大師」，先看階段性總結",
+        "離職結算改成 RPG 破關風格",
+        "摺疊機、平板支援左右雙欄",
+        "樹洞留言不再限制字數",
+        "全新介面：柔和框線、卡片陰影、深色主題文字更清楚",
+        "牛馬桌面小工具、使用說明書、App 內更新提示",
+    )),
+    VersionEntry("3.6", listOf(
+        "換工作可以開新卡，舊卡收進「過往工作」",
+        "過往工作可回顧期間、章數、最常見原因與蓋章時間軸",
+        "樹洞貼文標示「二周目」「三周目」",
+        "備份檔包含過往工作",
+    )),
+    VersionEntry("3.5", listOf(
+        "職場解惑區：可以直接發問，回答累積解答者獎牌",
+        "職業類別可多選篩選",
+        "新主題：夏日海風、厭世熊貓、樹懶模式，買之前可預覽試蓋",
+        "樹洞貼文與留言可檢舉、封鎖",
+    )),
+    VersionEntry("3.4", listOf(
+        "Google／Email 帳號綁定，金幣與記錄可跨裝置",
+        "資料備份：JSON 匯出與匯入",
+        "樹洞貼文分享卡",
+        "薪水計時器手動計時、新增 14 個行業別",
+    )),
+    VersionEntry("3.3", listOf("薪水計時器：上班時看著薪水一秒一秒累積")),
+    VersionEntry("3.2", listOf("今日心聲卡片改版、新手教學更新")),
+    VersionEntry("3.1", listOf("取暖樹洞新增留言與「我的樹洞」")),
+    VersionEntry("3.0", listOf("Android 版全面重構，與 iOS 版同步")),
 )
 
 private val updatePages = listOf(
     UpdatePage(
         icon = Icons.Filled.Campaign,
         accent = { it.highlight },
-        eyebrow = "給 Android 使用者的一封信",
-        title = "我們想先向你道歉",
-        body = "Android 版本原負責工程師因身體因素需長期住院。事發突然，原始碼未能完成交接。上一版為了讓更新繼續，我們參照 iOS 版本重構了 Android App。\n\n如果更新後曾造成你的資料遺失，我們真的很抱歉，這不是我們想看到的結果。\n\n所以我們做了以下的改變來維持你們的資料安全。",
+        eyebrow = "V3.7 更新說明",
+        title = "Android 版追上 iOS 了",
+        body = "這次一口氣把 3.6 到 3.7 的功能帶到 Android，並重新整理了整個介面。\n\n接下來幾頁帶你快速看一遍；最後一頁有 3.0～3.7 的完整版本紀錄。",
     ),
     UpdatePage(
-        icon = Icons.Filled.Shield,
-        accent = { it.success },
-        eyebrow = "資料安全",
-        title = "把重要記錄留在自己手上",
-        body = "這個版本加入版本化 JSON 備份。你可以隨時把集點記錄、離職計畫與 App 設定匯出成檔案，妥善保存在自己的裝置或雲端空間。",
-        location = "設定 → 資料備份與移轉 → 匯出備份",
-    ),
-    UpdatePage(
-        icon = Icons.Filled.ImportExport,
+        icon = Icons.Filled.Work,
         accent = { it.info },
-        eyebrow = "匯入與還原",
-        title = "換裝置也能把資料帶回來",
-        body = "選擇先前匯出的 JSON 檔即可還原。App 會先檢查檔案內容，並在取代現有資料前再次請你確認，降低誤操作風險。",
-        location = "設定 → 資料備份與移轉 → 匯入備份",
+        eyebrow = "換工作也能留下回憶",
+        title = "開新卡，舊卡收進「過往工作」",
+        body = "選「我要離職」看完收據，就能直接開始新工作。主題、金幣、常用原因都會保留。\n\n過往工作可以回顧期間、章數、最常見原因、自由預備金與蓋章時間軸。封存需要綁定帳號，資料存在雲端。",
+        location = "離職紀錄 → 過往工作",
     ),
     UpdatePage(
-        icon = Icons.Filled.Favorite,
-        accent = { it.danger },
-        eyebrow = "再次向你說聲抱歉",
-        title = "送你 15 枚離職金幣",
-        body = "為了表達歉意，我們準備了 15 枚離職金幣，你可以到主題商店兌換一個自己喜歡的主題。\n\n這次的更新把主題全面優化，整個 App 的配色都會一起調整。\n\n謝謝大家喜歡離職集點卡，我們會持續進步與努力。",
-    ),
-    UpdatePage(
-        icon = Icons.Filled.Share,
+        icon = Icons.Filled.EmojiEvents,
         accent = { it.warning },
-        eyebrow = "分享新功能",
-        title = "取暖樹洞現在也可以\n分享給朋友了",
-        body = "把有共鳴的心聲分享出去，讓朋友也能一起取暖。分享卡不會包含暱稱與公司名稱。",
+        eyebrow = "離職結算升級",
+        title = "成為「忍耐大師」",
+        body = "集滿第 3 張起，會先看到一份階段性總結，再決定要繼續忍耐還是勇敢離職。\n\n結算畫面也改成 RPG 破關風格：星空、跳躍的像素小牛、打字機對話框與冒險成果。",
+    ),
+    UpdatePage(
+        icon = Icons.Filled.Devices,
+        accent = { it.teal },
+        eyebrow = "摺疊機與平板",
+        title = "大螢幕自動變雙欄",
+        body = "打開摺疊機內螢幕或使用平板時，離職紀錄、離職計畫、設定、取暖樹洞會變成左右兩欄。半折時內容會避開摺痕。",
+    ),
+    UpdatePage(
+        icon = Icons.Filled.Forum,
+        accent = { it.success },
+        eyebrow = "取暖樹洞",
+        title = "留言不再限制字數",
+        body = "想說的可以完整說完。樹洞貼文也會標示「二周目」「三周目」，看得出大家已經換過幾份工作。",
     ),
     UpdatePage(
         icon = Icons.Filled.Palette,
-        accent = { it.teal },
-        eyebrow = "主題商店",
-        title = "新增三款主題",
-        body = "夏日海風的水藍、厭世熊貓的黑白灰、樹懶模式的大地色。熊貓與樹懶還有三種專屬印章，會依格子固定輪替。",
-        location = "設定 → 主題商店",
+        accent = { it.highlight },
+        eyebrow = "全新介面",
+        title = "更柔和、更好讀",
+        body = "框線更柔和，卡片改用陰影分出層次，深色主題的次要文字更清楚。整個 App 的配色仍會跟著你選的主題一起變。",
     ),
     UpdatePage(
-        icon = Icons.Filled.Visibility,
+        icon = Icons.Filled.Widgets,
+        accent = { it.warning },
+        eyebrow = "Android 限定",
+        title = "牛馬桌面小工具",
+        body = "把牛馬放到桌面，不用打開 App 就能看到今天又賺了多少、離下班還有多久。",
+        location = "長按桌面 → 小工具 → 離職集點卡",
+    ),
+    UpdatePage(
+        icon = Icons.AutoMirrored.Filled.MenuBook,
         accent = { it.info },
-        eyebrow = "購買前先看看",
-        title = "主題現在可以互動預覽",
-        body = "點選尚未解鎖的主題，就能先看完整配色、卡片與印章，也可以試著蓋幾個章。預覽不會改掉目前使用中的主題。",
-        location = "設定 → 主題商店 → 選擇未解鎖主題",
+        eyebrow = "更多貼心小功能",
+        title = "說明書與更新提示",
+        body = "不知道某個功能怎麼用？設定裡新增了使用說明書。\n\n有新版本時，App 上方也會出現提示，點一下就能更新。",
+        location = "設定 → 使用說明書",
+    ),
+    UpdatePage(
+        icon = Icons.Filled.AutoAwesome,
+        accent = { it.highlight },
+        eyebrow = "年底見",
+        title = "年度回顧 12/10 開放",
+        body = "今年你忍了幾次、最常因為什麼想離職？每年 12/10～1/31，App 會為你整理一份專屬的年度回顧。",
     ),
     UpdatePage(
         icon = Icons.Filled.RocketLaunch,
         accent = { it.success },
-        eyebrow = "準備好了嗎？",
-        title = "進入離職集點卡",
-        body = "我們一起規劃職涯，一起線上取暖！",
+        eyebrow = "版本紀錄",
+        title = "3.0～3.7 更新了什麼",
+        body = "謝謝大家喜歡離職集點卡，我們會持續進步與努力。",
+        showHistory = true,
     ),
 )
 
@@ -242,6 +296,10 @@ fun UpdateNoticeScreen(onFinished: () -> Unit) {
                     Text(location, style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
+            if (page.showHistory) {
+                Spacer(Modifier.height(NnoworkSpacing.md))
+                VersionHistory()
+            }
         }
 
         Row(
@@ -273,7 +331,32 @@ fun UpdateNoticeScreen(onFinished: () -> Unit) {
     }
 }
 
-@Preview(name = "更新與道歉啟事", showBackground = true, widthDp = 390, heightDp = 844)
+@Composable
+private fun VersionHistory() {
+    val colors = NnoworkTheme.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().pixelCard().padding(NnoworkSpacing.roomy),
+        verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.md),
+    ) {
+        versionHistory.forEach { entry ->
+            Column(verticalArrangement = Arrangement.spacedBy(NnoworkSpacing.xxs)) {
+                Text(
+                    "V${entry.version}",
+                    style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, colors.highlight),
+                    modifier = Modifier.semantics { heading() },
+                )
+                entry.items.forEach { item ->
+                    Row {
+                        Text("・", style = pixelTextStyle(NnoworkTheme.type.small, color = colors.mutedText))
+                        Text(item, style = pixelTextStyle(NnoworkTheme.type.small, color = colors.mutedText))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(name = "V3.7 更新說明", showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun UpdateNoticePreview() {
     UpdateNoticeScreen(onFinished = {})

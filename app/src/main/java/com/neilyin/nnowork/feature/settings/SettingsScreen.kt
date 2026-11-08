@@ -742,9 +742,9 @@ private fun SettingsContent(
             onImport = onImportBackup,
             onDismissPreparedImport = onDismissPreparedBackupImport,
         )
-        SettingsSection(icon = Icons.Filled.Campaign, title = "更新與公告", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 4)) {
+        SettingsSection(icon = Icons.Filled.Campaign, title = "更新說明", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 4)) {
             Text(
-                "查看這次的資料保護更新、道歉啟事與後續說明。",
+                "看看 V3.7 新增了什麼，以及 3.0～3.7 的版本紀錄。",
                 style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
             Spacer(Modifier.height(NnoworkSpacing.snug))
@@ -753,7 +753,7 @@ private fun SettingsContent(
                 backgroundColor = NnoworkTheme.colors.disabledBG,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("查看本次更新", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
+                Text("查看更新說明", style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.primaryText))
             }
         }
         SettingsSection(icon = Icons.Filled.RestartAlt, title = "重置", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 5)) {
