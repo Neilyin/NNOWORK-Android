@@ -12,16 +12,7 @@ import java.util.Locale
 object SalaryCalculator {
 
     /** 月曆可設定範圍上限；超出此日預設休六日。 */
-    const val CALENDAR_END_KEY = "2026-12-31"
-
-    /** 2026 國定假日（寫死，對應 iOS）。 */
-    val HOLIDAYS_2026: Set<String> = setOf(
-        "2026-09-25", // 中秋
-        "2026-09-28", // 教師節
-        "2026-10-09", // 雙十補
-        "2026-10-26", // 光復補
-        "2026-12-25", // 行憲
-    )
+    const val CALENDAR_END_KEY = "2027-12-31"
 
     enum class Phase { NOT_CONFIGURED, REST_DAY, HOLIDAY, BEFORE_WORK, WORKING, AFTER_WORK }
 
@@ -53,7 +44,40 @@ object SalaryCalculator {
         return dow == Calendar.SATURDAY || dow == Calendar.SUNDAY
     }
 
-    fun isHoliday(dayMillis: Long): Boolean = dateKey(dayMillis) in HOLIDAYS_2026
+    /** 手機地區的國定假日（見 [HolidayCalendar]；不支援的地區一律 false）。 */
+    fun isHoliday(dayMillis: Long): Boolean = dateKey(dayMillis) in HolidayCalendar.holidays()
+
+    /** 中國大陸調休補班（原為週末、要上班）。 */
+    fun isMakeupWorkday(dayMillis: Long): Boolean = dateKey(dayMillis) in HolidayCalendar.makeupWorkdays()
+
+    /** 見紅休的預設休假：國定假日，或週末（調休補班的週末除外）。 */
+    fun isDefaultRedRestDay(dayMillis: Long): Boolean =
+        isHoliday(dayMillis) || (isWeekend(dayMillis) && !isMakeupWorkday(dayMillis))
+
+    /**
+     * customRestDays 有沒有涵蓋這一年：舊資料只預選到 2026 年底，2027 年還沒有任何 key 時，
+     * 這一年用預設規則（見紅休：週末＋國定假日；排班固定工時：週末），不會整年變成上班日。
+     */
+    fun restDaysCoverYear(plan: ResignationPlan, key: String): Boolean {
+        val year = key.take(4)
+        return plan.customRestDays.any { it.startsWith(year) }
+    }
+
+    /** 這一年的預設休假日（月曆上限內）。 */
+    fun defaultRestDaysForYear(plan: ResignationPlan, year: Int): Set<String> {
+        val out = mutableSetOf<String>()
+        var cursor = Calendar.getInstance().apply {
+            clear(); set(year, Calendar.JANUARY, 1)
+        }.timeInMillis
+        while (true) {
+            val key = dateKey(cursor)
+            if (!key.startsWith(year.toString()) || key > CALENDAR_END_KEY) break
+            val rest = if (plan.monthlyScheduleMode == 0) isDefaultRedRestDay(cursor) else isWeekend(cursor)
+            if (rest) out.add(key)
+            cursor = Calendar.getInstance().apply { timeInMillis = cursor; add(Calendar.DAY_OF_MONTH, 1) }.timeInMillis
+        }
+        return out
+    }
 
     private fun daysInMonth(dayMillis: Long): Int =
         Calendar.getInstance().apply { timeInMillis = dayMillis }.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -74,15 +98,19 @@ object SalaryCalculator {
     /**
      * isRestDay：
      *  - 排班 + 多班別 → 沒指派班表 = 休
-     *  - 排班固定工時 / 見紅休 → 在 customRestDays 內 = 休（超出月曆範圍：週末 = 休）
+     *  - 排班固定工時 / 見紅休 → 在 customRestDays 內 = 休；這一年還沒任何設定 → 預設規則；超出月曆範圍：週末 = 休
      */
     fun isRestDay(plan: ResignationPlan, dayMillis: Long): Boolean {
         val key = dateKey(dayMillis)
         return if (plan.isShiftTemplateMode) {
             plan.dayShifts[key] == null
         } else {
-            if (key <= CALENDAR_END_KEY) key in plan.customRestDays
-            else isWeekend(dayMillis)
+            when {
+                key > CALENDAR_END_KEY -> isWeekend(dayMillis)
+                restDaysCoverYear(plan, key) -> key in plan.customRestDays
+                plan.monthlyScheduleMode == 0 -> isDefaultRedRestDay(dayMillis)
+                else -> isWeekend(dayMillis)
+            }
         }
     }
 
@@ -224,7 +252,7 @@ object SalaryCalculator {
         )
     }
 
-    /** 見紅休模式：產生本月起至月曆上限的「週末 + 國定假日」預選休假日。 */
+    /** 見紅休模式：產生本月起至月曆上限的「週末 + 國定假日」預選休假日（調休補班的週末不休）。 */
     fun defaultRedRestDays(now: Long): Set<String> {
         val out = mutableSetOf<String>()
         var cursor = Calendar.getInstance().apply {
@@ -232,7 +260,7 @@ object SalaryCalculator {
             set(Calendar.DAY_OF_MONTH, 1)
         }.timeInMillis
         while (dateKey(cursor) <= CALENDAR_END_KEY) {
-            if (isWeekend(cursor) || isHoliday(cursor)) out.add(dateKey(cursor))
+            if (isDefaultRedRestDay(cursor)) out.add(dateKey(cursor))
             cursor = Calendar.getInstance().apply {
                 timeInMillis = cursor
                 add(Calendar.DAY_OF_MONTH, 1)

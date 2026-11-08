@@ -685,4 +685,9 @@
     <string name="tribute_77_p4">This time, it\'s your turn to rest well.</string>
     <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
     <string name="tribute_77_action">Send a blessing ❤️</string>
+    <string name="holiday_prompt_title">Your region: %1$s</string>
+    <string name="holiday_prompt_message">Import public holidays for %1$s (through the end of 2027) into the salary timer\'s \"weekends &amp; holidays off\" schedule?\nPublic holidays become days off. This replaces your current days-off settings.</string>
+    <string name="holiday_prompt_message_makeup">Import public holidays for %1$s, including make-up workdays (through the end of 2027), into the salary timer\'s \"weekends &amp; holidays off\" schedule?\nPublic holidays become days off and make-up weekends become workdays. This replaces your current days-off settings.</string>
+    <string name="holiday_prompt_import">Import</string>
+    <string name="holiday_prompt_later">Not now</string>
 </resources>

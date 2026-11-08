@@ -680,4 +680,9 @@
     <string name="tribute_77_p4">今度は、あなたがゆっくり休む番です。</string>
     <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
     <string name="tribute_77_action">祝福を送る ❤️</string>
+    <string name="holiday_prompt_title">お住まいの地域：%1$s</string>
+    <string name="holiday_prompt_message">%1$sの祝日（2027年末まで）を給料タイマーの「カレンダー通り」の休日に取り込みますか？\n取り込むと祝日が休みになります（現在の休日設定は上書きされます）。</string>
+    <string name="holiday_prompt_message_makeup">%1$sの祝日と振替出勤日（2027年末まで）を給料タイマーの「カレンダー通り」の休日に取り込みますか？\n取り込むと祝日が休みになり、振替出勤の週末は出勤日になります（現在の休日設定は上書きされます）。</string>
+    <string name="holiday_prompt_import">取り込む</string>
+    <string name="holiday_prompt_later">今はしない</string>
 </resources>

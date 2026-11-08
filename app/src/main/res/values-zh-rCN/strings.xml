@@ -680,4 +680,9 @@
     <string name="tribute_77_p4">这次，换你好好休息了。</string>
     <string name="tribute_77_signoff">Forever in our hearts, 77.</string>
     <string name="tribute_77_action">送上一份祝福❤️</string>
+    <string name="holiday_prompt_title">检测到你的地区为%1$s</string>
+    <string name="holiday_prompt_message">是否将%1$s的法定节假日（至 2027 年底）导入薪水计时器的「见红休」排休？\n导入后：节假日自动放假（会覆盖目前的见红休休假设置）。</string>
+    <string name="holiday_prompt_message_makeup">是否将%1$s的法定节假日（含调休补班，至 2027 年底）导入薪水计时器的「见红休」排休？\n导入后：节假日自动放假、调休的周末自动上班（会覆盖目前的见红休休假设置）。</string>
+    <string name="holiday_prompt_import">导入</string>
+    <string name="holiday_prompt_later">暂不</string>
 </resources>

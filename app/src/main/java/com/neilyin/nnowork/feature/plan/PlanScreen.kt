@@ -67,6 +67,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -207,8 +210,19 @@ class PlanViewModel(
     }
 
     fun toggleRestDay(key: String) = update {
-        val next = if (it.customRestDays.contains(key)) it.customRestDays - key else it.customRestDays + key
+        // 這一年還沒有任何設定（舊資料只預選到 2026）：先把這一年的預設休假補進來，再切換這一天
+        val base = if (SalaryCalculator.restDaysCoverYear(it, key)) it.customRestDays
+        else it.customRestDays + SalaryCalculator.defaultRestDaysForYear(it, key.take(4).toInt())
+        val next = if (base.contains(key)) base - key else base + key
         it.copy(customRestDays = next)
+    }
+
+    /** 匯入手機地區的國定假日：切到見紅休，休假日改成「週末＋國定假日」（覆蓋目前的見紅休設定）。 */
+    fun importRegionHolidays() = update {
+        it.copy(
+            monthlyScheduleMode = 0,
+            customRestDays = SalaryCalculator.defaultRedRestDays(System.currentTimeMillis()),
+        )
     }
 
     fun cycleDayShift(key: String) = update { plan ->
@@ -329,6 +343,66 @@ fun PlanScreen(viewModel: PlanViewModel = viewModel()) {
             item { Spacer(Modifier.height(NnoworkSpacing.sm)) }
         }
     }
+    HolidayImportPrompt(onImport = viewModel::importRegionHolidays)
+}
+
+/**
+ * 一次性詢問：手機地區有支援國定假日時，問要不要匯入「見紅休」（對應 iOS NiuMaTimer 的 holiday prompt）。
+ * 按「匯入」或「暫不」都記下「地區-資料版本」；換地區或假日資料更新會再問。按返回鍵不記，下次進來再問。
+ */
+@Composable
+private fun HolidayImportPrompt(onImport: () -> Unit) {
+    val region = remember { com.neilyin.nnowork.data.plan.HolidayCalendar.currentRegion() } ?: return
+    val tag = "$region-${com.neilyin.nnowork.data.plan.HolidayCalendar.DATA_VERSION}"
+    val prefs = com.neilyin.nnowork.data.settings.PromptPrefsRepository.instance
+    val prompted by prefs.holidayPromptedTag.collectAsStateWithLifecycle(initialValue = null)
+    var show by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(prompted) {
+        if (prompted != null && prompted != tag) {
+            delay(800) // 等分頁切換完成再跳
+            show = true
+        }
+    }
+    if (!show || prompted == tag) return
+    val name = com.neilyin.nnowork.data.plan.HolidayCalendar.displayName(region)
+    val makeup = com.neilyin.nnowork.data.plan.HolidayCalendar.hasMakeupWorkdays(region)
+    fun answer(import: Boolean) {
+        show = false
+        scope.launch { prefs.markHolidayPrompted(tag) }
+        if (import) onImport()
+    }
+    AlertDialog(
+        onDismissRequest = { show = false },
+        properties = androidx.compose.ui.window.DialogProperties(dismissOnClickOutside = false),
+        containerColor = NnoworkDialogDefaults.containerColor,
+        shape = NnoworkDialogDefaults.shape,
+        title = {
+            Text(
+                stringResource(com.neilyin.nnowork.R.string.holiday_prompt_title, name),
+                style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.onElevated),
+            )
+        },
+        text = {
+            Text(
+                stringResource(
+                    if (makeup) com.neilyin.nnowork.R.string.holiday_prompt_message_makeup else com.neilyin.nnowork.R.string.holiday_prompt_message,
+                    name,
+                ),
+                style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.onElevated),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { answer(true) }) {
+                Text(stringResource(com.neilyin.nnowork.R.string.holiday_prompt_import), style = pixelTextStyle(NnoworkTheme.type.body, FontWeight.Bold, NnoworkTheme.colors.onElevated))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { answer(false) }) {
+                Text(stringResource(com.neilyin.nnowork.R.string.holiday_prompt_later), style = pixelTextStyle(NnoworkTheme.type.body, color = NnoworkTheme.colors.secondaryText))
+            }
+        },
+    )
 }
 
 /** [Shift] 的 rememberSaveable saver。 */
@@ -1190,7 +1264,7 @@ private fun parseColor(hex: String): Color {
 
 private fun minToHHmm(minutes: Int): String = "%02d:%02d".format(minutes / 60, minutes % 60)
 
-/** 從本月起到月曆上限（2026-12）的每月起始毫秒。 */
+/** 從本月起到月曆上限（2027-12）的每月起始毫秒。 */
 private fun monthsFrom(now: Long): List<Long> {
     val out = mutableListOf<Long>()
     val cal = Calendar.getInstance().apply {

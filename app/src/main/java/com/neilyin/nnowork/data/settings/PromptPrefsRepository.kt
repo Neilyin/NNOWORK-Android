@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.neilyin.nnowork.data.datastore.appDataStore
 import com.neilyin.nnowork.di.ServiceLocator
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.map
 class PromptPrefsRepository(private val context: Context) {
 
     private val dismissedUpdateKey = intPreferencesKey("update_banner_dismissed_version_code")
+    /** 已問過「匯入國定假日」的「地區-資料版本」（例如 TW-2027）；換地區或資料更新會再問。iOS key 同名。 */
+    private val holidayPromptedKey = stringPreferencesKey("niuma_holiday_prompted_region")
     private fun milestoneKey(name: String): Preferences.Key<Boolean> = booleanPreferencesKey(name)
 
     /** 使用者已關閉 banner 的 Play 版本碼；0 = 從未關閉。 */
@@ -36,6 +39,12 @@ class PromptPrefsRepository(private val context: Context) {
 
     suspend fun markReviewMomentUsed(moment: ReviewMoment) {
         context.appDataStore.edit { it[milestoneKey(moment.prefKey)] = true }
+    }
+
+    val holidayPromptedTag: Flow<String> = context.appDataStore.data.map { it[holidayPromptedKey].orEmpty() }
+
+    suspend fun markHolidayPrompted(tag: String) {
+        context.appDataStore.edit { it[holidayPromptedKey] = tag }
     }
 
     companion object {
