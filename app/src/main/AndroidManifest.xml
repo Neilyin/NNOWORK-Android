@@ -6,10 +6,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 忍耐大師總結存相簿：API 29+ 走 MediaStore 不需權限；26–28 需要寫入外部儲存。 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <application
         android:name=".NnoworkApp"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -22,10 +26,21 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.NNOWORK"
+            android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize">
+            <!-- 大螢幕／摺疊機：允許分割畫面、自由縮放，不鎖方向（Android 大螢幕品質指南）。
+                 不宣告 configChanges：摺疊／展開走一般重建，狀態由 rememberSaveable／ViewModel 保留。 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="tw.neil.nnowork"
+                    android:host="auth-callback" />
             </intent-filter>
         </activity>
 
@@ -40,6 +55,51 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/salary_widget_info" />
         </receiver>
+
+        <!-- 牛馬／薪水計時器桌面 Widget（對應 iOS NiuMaWidget；小與寬兩種尺寸） -->
+        <receiver
+            android:name=".widget.NiuMaWidgetReceiver"
+            android:exported="false"
+            android:label="@string/niuma_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/niuma_widget_info" />
+        </receiver>
+
+        <!-- 離職語錄桌面 Widget -->
+        <receiver
+            android:name=".widget.QuoteWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quote_widget_info" />
+        </receiver>
+
+        <!-- FCM 推播（樹洞審核通過等通知） -->
+        <service
+            android:name=".notify.AppFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- 樹洞分享圖只暴露專用 cache 子目錄，交由 Android Sharesheet 暫時讀取。 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
 
     </application>
 

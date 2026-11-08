@@ -1,0 +1,4 @@
+package com.neilyin.nnowork.data.remote
+
+internal const val SUPABASE_URL = "https://tcgncqgbmlenwrghkzvv.supabase.co/"
+internal const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZ25jcWdibWxlbndyZ2hrenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDcxMzYsImV4cCI6MjA5MjUyMzEzNn0.pGWaDUyZDKVJSZ_BmXp137BVkK4GqG2dQtCODWPZ1_s"

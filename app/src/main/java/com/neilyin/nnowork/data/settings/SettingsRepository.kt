@@ -21,6 +21,9 @@ class SettingsRepository(private val context: Context) {
         prefs[key]?.let { runCatching { adapter.fromJson(it) }.getOrNull() } ?: AppSettings()
     }
 
+    /** 用來區分真正的全新安裝與已存在但尚未完成 onboarding 的資料。 */
+    val hasStoredSettings: Flow<Boolean> = context.appDataStore.data.map { prefs -> key in prefs }
+
     suspend fun current(): AppSettings = settings.first()
 
     /** 以函式轉換的方式原子更新設定。 */

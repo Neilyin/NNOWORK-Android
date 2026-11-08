@@ -1,37 +1,45 @@
 package com.neilyin.nnowork.feature.onboarding
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import com.neilyin.nnowork.ui.theme.NnoworkSize
+import com.neilyin.nnowork.ui.theme.NnoworkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neilyin.nnowork.data.settings.SettingsRepository
 import com.neilyin.nnowork.di.ServiceLocator
 import com.neilyin.nnowork.ui.theme.CardTheme
 import com.neilyin.nnowork.ui.theme.PixelButton
-import com.neilyin.nnowork.ui.theme.PixelColors
+import com.neilyin.nnowork.ui.theme.NnoworkCenteredPage
+import com.neilyin.nnowork.ui.theme.NnoworkElevation
+import com.neilyin.nnowork.ui.theme.NnoworkRadius
+import com.neilyin.nnowork.ui.theme.NnoworkSpacing
+import com.neilyin.nnowork.ui.theme.NnoworkTextField
+import com.neilyin.nnowork.ui.theme.palette
+import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 import kotlinx.coroutines.launch
 
@@ -44,77 +52,86 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     settingsRepository: SettingsRepository = ServiceLocator.settingsRepository,
 ) {
-    var company by remember { mutableStateOf("") }
-    var maxStamps by remember { mutableIntStateOf(10) }
-    var styleId by remember { mutableIntStateOf(1) }
+    var company by rememberSaveable { mutableStateOf("") }
+    var maxStamps by rememberSaveable { mutableIntStateOf(10) }
+    var styleId by rememberSaveable { mutableIntStateOf(1) }
     val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PixelColors.darkGray)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text("🐂", style = pixelTextStyle(64.sp))
-        Spacer(Modifier.height(8.dp))
-        Text("離職集點卡", style = pixelTextStyle(28.sp, FontWeight.Bold, PixelColors.white))
-        Spacer(Modifier.height(4.dp))
-        Text("把每個爆氣的日子，蓋成一枚印章", style = pixelTextStyle(13.sp, color = PixelColors.gray), textAlign = TextAlign.Center)
-        Spacer(Modifier.height(32.dp))
-
-        Text("讓你想離職的公司叫什麼？", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.white), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        androidx.compose.foundation.layout.Box(
+    NnoworkCenteredPage {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(PixelColors.white)
-                .border(3.dp, PixelColors.black, RectangleShape)
-                .padding(14.dp),
+                .size(86.dp)
+                .pixelCard(
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                    borderColor = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(NnoworkRadius.hero),
+                    elevation = NnoworkElevation.hero,
+                ),
+            contentAlignment = Alignment.Center,
         ) {
-            BasicTextField(
-                value = company,
-                onValueChange = { company = it },
-                singleLine = true,
-                textStyle = pixelTextStyle(18.sp, FontWeight.Medium, PixelColors.black),
-                cursorBrush = SolidColor(PixelColors.black),
-                modifier = Modifier.fillMaxWidth(),
+            Icon(
+                Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(NnoworkSize.minTouchTarget),
             )
-            if (company.isEmpty()) {
-                Text("例如：血汗科技", style = pixelTextStyle(16.sp, color = PixelColors.gray))
-            }
         }
+        Spacer(Modifier.height(NnoworkSpacing.md))
+        Text("離職集點卡", style = MaterialTheme.typography.headlineLarge.copy(color = MaterialTheme.colorScheme.onBackground))
+        Spacer(Modifier.height(NnoworkSpacing.xxs))
+        Text(
+            "把每個爆氣的日子，蓋成一枚印章",
+            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.78f)),
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(NnoworkSpacing.xl))
 
-        Spacer(Modifier.height(24.dp))
-        Text("一張卡幾格？", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.white), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("讓你想離職的公司叫什麼？", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onBackground), modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(NnoworkSpacing.xs))
+        NnoworkTextField(
+            value = company,
+            onValueChange = { company = it },
+            label = "公司名稱",
+            placeholder = "例如：血汗科技",
+        )
+
+        Spacer(Modifier.height(NnoworkSpacing.lg))
+        Text("一張卡幾格？", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onBackground), modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(NnoworkSpacing.xs))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             listOf(10, 20, 30).forEach { n ->
                 PixelButton(
                     onClick = { maxStamps = n },
-                    backgroundColor = if (maxStamps == n) PixelColors.green else PixelColors.gray,
+                    backgroundColor = if (maxStamps == n) NnoworkTheme.colors.success else NnoworkTheme.colors.disabledBG,
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text("$n 格", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.black))
+                    Text("$n 格", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, NnoworkTheme.colors.primaryText))
                 }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-        Text("選個風格", style = pixelTextStyle(16.sp, FontWeight.Bold, PixelColors.white), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.height(NnoworkSpacing.lg))
+        Text("選個風格", style = pixelTextStyle(NnoworkTheme.type.bodyLarge, FontWeight.Bold, MaterialTheme.colorScheme.onBackground), modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(NnoworkSpacing.xs))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(NnoworkSpacing.xs)) {
             listOf(CardTheme.RPG, CardTheme.CYBERPUNK, CardTheme.VACATION).forEach { t ->
                 PixelButton(
                     onClick = { styleId = t.id },
-                    backgroundColor = if (styleId == t.id) t.primaryColor else PixelColors.gray,
+                    backgroundColor = if (styleId == t.id) t.primaryColor else NnoworkTheme.colors.disabledBG,
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text(t.title, style = pixelTextStyle(13.sp, FontWeight.Bold, PixelColors.white))
+                    val textColor = if (styleId == t.id) t.palette.onPrimary else NnoworkTheme.colors.primaryText
+                    Text(
+                        t.title,
+                        style = MaterialTheme.typography.labelMedium.copy(color = textColor),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                    )
                 }
             }
         }
 
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(NnoworkSpacing.xxl))
         PixelButton(
             onClick = {
                 scope.launch {
@@ -125,15 +142,17 @@ fun OnboardingScreen(
                             cardStyle = styleId,
                             currentRound = 1,
                             isOnboardingFinished = true,
+                            // 新用戶不需要看「這次更新了什麼」
+                            lastSeenNoticeVersion = com.neilyin.nnowork.feature.update.UPDATE_NOTICE_VERSION,
                         )
                     }
                     onFinished()
                 }
             },
-            backgroundColor = PixelColors.yellow,
+            backgroundColor = NnoworkTheme.colors.highlight,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("開始集點！", style = pixelTextStyle(20.sp, FontWeight.Bold, PixelColors.black))
+            Text("開始集點！", style = pixelTextStyle(NnoworkTheme.type.title, FontWeight.Bold, NnoworkTheme.colors.primaryText))
         }
     }
 }
