@@ -213,16 +213,18 @@ class PlanViewModel(
         // 這一年還沒有任何設定（舊資料只預選到 2026）：先把這一年的預設休假補進來，再切換這一天
         val base = if (SalaryCalculator.restDaysCoverYear(it, key)) it.customRestDays
         else it.customRestDays + SalaryCalculator.defaultRestDaysForYear(it, key.take(4).toInt())
-        val next = if (base.contains(key)) base - key else base + key
+        val next = (if (base.contains(key)) base - key else base + key) + SalaryCalculator.yearMarker(key.take(4))
         it.copy(customRestDays = next)
     }
 
     /** 匯入手機地區的國定假日：切到見紅休，休假日改成「週末＋國定假日」（覆蓋目前的見紅休設定）。 */
     fun importRegionHolidays() = update {
-        it.copy(
-            monthlyScheduleMode = 0,
-            customRestDays = SalaryCalculator.defaultRedRestDays(System.currentTimeMillis()),
-        )
+        val now = System.currentTimeMillis()
+        val fresh = SalaryCalculator.defaultRedRestDays(now)
+        // 本月以前的設定保留（已經過去的日子不改）
+        val monthStart = SalaryCalculator.dateKey(now).take(7)
+        val past = it.customRestDays.filter { k -> k.take(7) < monthStart }
+        it.copy(monthlyScheduleMode = 0, customRestDays = fresh + past)
     }
 
     fun cycleDayShift(key: String) = update { plan ->

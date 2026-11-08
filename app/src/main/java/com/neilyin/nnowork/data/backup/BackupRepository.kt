@@ -648,7 +648,7 @@ private fun ResignationPlan.toNiuMaConfigBackup(
     lunchUnpaid = lunchUnpaid,
     lunchMinutes = lunchMinutes,
     monthlyScheduleMode = monthlyScheduleMode,
-    customRestDays = customRestDays.sorted(),
+    customRestDays = customRestDays.filterNot { it.endsWith("-00-00") }.sorted(), // 去掉「這一年已設定」標記（不是日期）
     shifts = shifts.map(Shift::toBackup),
     dayShifts = dayShifts,
     shiftUseTemplates = shiftUseTemplates,

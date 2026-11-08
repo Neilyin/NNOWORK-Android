@@ -58,6 +58,9 @@ object SalaryCalculator {
      * customRestDays 有沒有涵蓋這一年：舊資料只預選到 2026 年底，2027 年還沒有任何 key 時，
      * 這一年用預設規則（見紅休：週末＋國定假日；排班固定工時：週末），不會整年變成上班日。
      */
+    /** 「這一年已設定過」的標記：不是真的日期，不會被當成休假日；讓整年都改成上班日也不會退回預設。 */
+    fun yearMarker(year: String): String = "$year-00-00"
+
     fun restDaysCoverYear(plan: ResignationPlan, key: String): Boolean {
         val year = key.take(4)
         return plan.customRestDays.any { it.startsWith(year) }
@@ -107,7 +110,8 @@ object SalaryCalculator {
         } else {
             when {
                 key > CALENDAR_END_KEY -> isWeekend(dayMillis)
-                restDaysCoverYear(plan, key) -> key in plan.customRestDays
+                // 完全沒設定過的舊計畫維持原本行為（沒有休假日）
+                plan.customRestDays.isEmpty() || restDaysCoverYear(plan, key) -> key in plan.customRestDays
                 plan.monthlyScheduleMode == 0 -> isDefaultRedRestDay(dayMillis)
                 else -> isWeekend(dayMillis)
             }

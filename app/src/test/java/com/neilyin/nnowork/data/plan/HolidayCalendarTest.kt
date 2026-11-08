@@ -52,6 +52,17 @@ class HolidayCalendarTest {
         assertFalse(SalaryCalculator.isRestDay(plan, day("2026-12-25")))
     }
 
+    @Test fun emptyRestDaysKeepOldBehaviour() {
+        HolidayCalendar.regionOverride = "TW"
+        assertFalse(SalaryCalculator.isRestDay(ResignationPlan(monthlyScheduleMode = 0), day("2027-01-02")))
+    }
+
+    @Test fun yearMarkerKeepsAllWorkdayYear() {
+        HolidayCalendar.regionOverride = "TW"
+        val plan = ResignationPlan(monthlyScheduleMode = 0, customRestDays = setOf("2026-12-26", SalaryCalculator.yearMarker("2027")))
+        assertFalse(SalaryCalculator.isRestDay(plan, day("2027-01-02")))
+    }
+
     @Test fun defaultRestDaysForYearIncludesHolidays() {
         HolidayCalendar.regionOverride = "JP"
         val set = SalaryCalculator.defaultRestDaysForYear(ResignationPlan(monthlyScheduleMode = 0), 2027)

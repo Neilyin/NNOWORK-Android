@@ -72,7 +72,7 @@ object HolidayCalendar {
 
     /** 目前地區碼（大寫）；不支援的地區回 null。 */
     fun currentRegion(): String? {
-        val region = (regionOverride ?: systemCountry()).uppercase(Locale.ROOT)
+        val region = (regionOverride ?: cachedSystemCountry()).uppercase(Locale.ROOT)
         return region.takeIf { it in holidaysByRegion }
     }
 
@@ -80,6 +80,15 @@ object HolidayCalendar {
      * 手機系統的國家／地區。不用 Locale.getDefault()：App 內切換語言（例如英文手機把 App 設成繁中）會改掉它，
      * 那是語言不是所在地。
      */
+    @Volatile private var cachedCountry: Pair<String, Long>? = null
+
+    /** 月曆一次會查幾百格：系統地區快取 5 秒。 */
+    private fun cachedSystemCountry(): String {
+        val now = System.currentTimeMillis()
+        cachedCountry?.let { (value, at) -> if (now - at < 5_000) return value }
+        return systemCountry().also { cachedCountry = it to now }
+    }
+
     private fun systemCountry(): String = try {
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             // Android 13+ 的 App 語言會連 Resources.getSystem() 一起改，要問 LocaleManager 拿系統的
