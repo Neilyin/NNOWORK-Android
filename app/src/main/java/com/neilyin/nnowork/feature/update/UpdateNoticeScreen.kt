@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Forum
@@ -63,7 +64,7 @@ import com.neilyin.nnowork.ui.theme.PixelButton
 import com.neilyin.nnowork.ui.theme.pixelCard
 import com.neilyin.nnowork.ui.theme.pixelTextStyle
 
-const val UPDATE_NOTICE_VERSION = "android-3.7"
+const val UPDATE_NOTICE_VERSION = "android-3.7.1"
 
 private data class UpdatePage(
     val icon: ImageVector,
@@ -78,8 +79,12 @@ private data class UpdatePage(
 
 private data class VersionEntry(val version: String, val items: List<String>)
 
-/** 3.0～3.7 版本紀錄（只列 Android 也有的功能；新到舊）。 */
+/** 3.0～3.7.1 版本紀錄（只列 Android 也有的功能；新到舊）。 */
 private val versionHistory = listOf(
+    VersionEntry("3.7.1", listOf(
+        "國定假日一鍵匯入：依手機地區自動判斷，支援 9 個地區的 2027 年假日",
+        "排休月曆延長到 2027 年底",
+    )),
     VersionEntry("3.7", listOf(
         "集滿第 3 張起成為「忍耐大師」，先看階段性總結",
         "離職結算改成 RPG 破關風格",
@@ -116,7 +121,7 @@ private val updatePages = listOf(
     UpdatePage(
         icon = Icons.Filled.Campaign,
         accent = { it.highlight },
-        eyebrow = "V3.7 更新說明",
+        eyebrow = "V3.7.1 更新說明",
         title = "3.7 版本帶了很多更新",
         body = "體驗與 iOS 版本相同\n一起來看看吧",
     ),
@@ -165,6 +170,14 @@ private val updatePages = listOf(
         location = "長按桌面 → 小工具 → 離職集點卡",
     ),
     UpdatePage(
+        icon = Icons.Filled.CalendarMonth,
+        accent = { it.danger },
+        eyebrow = "見紅休更省事",
+        title = "國定假日一鍵匯入",
+        body = "App 會依手機的地區判斷你在哪裡，問你要不要把國定假日（含補假）匯入薪水計時器，假日自動放假。\n\n支援台灣、美國、日本、中國大陸、香港、馬來西亞、新加坡、加拿大、澳洲的 2027 年假日；中國大陸的調休補班也會一起排好。",
+        location = "離職計畫 → 薪水計時器",
+    ),
+    UpdatePage(
         icon = Icons.AutoMirrored.Filled.MenuBook,
         accent = { it.info },
         eyebrow = "更多貼心小功能",
@@ -183,7 +196,7 @@ private val updatePages = listOf(
         icon = Icons.Filled.RocketLaunch,
         accent = { it.success },
         eyebrow = "版本紀錄",
-        title = "3.0～3.7 更新了什麼",
+        title = "3.0～3.7.1 更新了什麼",
         body = "謝謝大家喜歡離職集點卡，我們會持續進步與努力。",
         showHistory = true,
     ),

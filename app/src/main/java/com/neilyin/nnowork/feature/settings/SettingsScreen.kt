@@ -744,7 +744,7 @@ private fun SettingsContent(
         )
         SettingsSection(icon = Icons.Filled.Campaign, title = "更新說明", modifier = Modifier.settingsColumn(SettingsColumn.Trailing, order = 4)) {
             Text(
-                "看看 V3.7 新增了什麼，以及 3.0～3.7 的版本紀錄。",
+                "看看 V3.7.1 新增了什麼，以及 3.0～3.7.1 的版本紀錄。",
                 style = pixelTextStyle(NnoworkTheme.type.small, color = NnoworkTheme.colors.secondaryText),
             )
             Spacer(Modifier.height(NnoworkSpacing.snug))
